@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Profile - Wellbeing Assistant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            display: flex;
+            background-color: #f0f2f5;
+        }
+
+        .sidebar {
+            width: 250px;
+            background-color: #1f2937;
+            height: 100vh;
+            padding: 20px;
+            color: white;
+            position: fixed;
+        }
+
+        .sidebar-title {
+            font-size: 24px;
+            margin-bottom: 30px;
+            color: white;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            color: white;
+            text-decoration: none;
+            margin-bottom: 10px;
+            border-radius: 6px;
+        }
+
+        .nav-item:hover {
+            background-color: #374151;
+        }
+
+        .nav-item.active {
+            background-color: #374151;
+        }
+
+        .main-content {
+            margin-left: 250px;
+            padding: 30px;
+            width: calc(100% - 250px);
+        }
+
+        .profile-card {
+            background: white;
+            border-radius: 8px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .card-title {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .edit-button {
+            background-color: #1f2937;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .edit-button:hover {
+            background-color: #374151;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        .form-section {
+            margin-bottom: 24px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 16px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .form-input:disabled {
+            background-color: #f5f5f5;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <h1 class="sidebar-title">Wellbeing Assistant</h1>
+        <nav>
+            <a href="dashboard.html" class="nav-item">Dashboard</a>
+            <a href="chat.html" class="nav-item">Chat</a>
+            <a href="profile.html" class="nav-item active">Profile</a>
+            <a href="resources.html" class="nav-item">Resources</a>
+            <a href="settings.html" class="nav-item">Settings</a>
+        </nav>
+    </div>
+
+    <main class="main-content">
+        <div class="profile-card">
+            <div class="card-header">
+                <div>
+                    <h2 class="card-title">Student Profile</h2>
+                    <p style="color: #666;">Manage your personal information</p>
+                </div>
+                <button class="edit-button" onclick="toggleEdit()">
+                    <span id="buttonText">Edit Profile</span>
+                </button>
+            </div>
+
+            <form id="profileForm" onsubmit="handleSubmit(event)">
+                <div class="form-grid">
+                    <div class="form-section">
+                        <h3 class="section-title">Personal Information</h3>
+                        <div class="form-group">
+                            <label class="form-label">Full Name</label>
+                            <input type="text" class="form-input" value="Brian Smith" disabled required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Student ID</label>
+                            <input type="text" class="form-input" value="123456" disabled readonly>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-input" value="briankip@university.edu" disabled required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Emergency Contact</label>
+                            <input type="tel" class="form-input" value="+254 712345678" disabled required>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3 class="section-title">Academic Information</h3>
+                        <div class="form-group">
+                            <label class="form-label">University</label>
+                            <input type="text" class="form-input" value="Catholic University of Eastern Africa" disabled required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Faculty</label>
+                            <input type="text" class="form-input" value="Faculty of Science" disabled required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Department</label>
+                            <input type="text" class="form-input" value="Department of Computer Science" disabled required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Year of Study</label>
+                            <select class="form-input" disabled required>
+                                <option>1st Year</option>
+                                <option>2nd Year</option>
+                                <option selected>3rd Year</option>
+                                <option>4th Year</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <script>
+        function toggleEdit() {
+            const inputs = document.querySelectorAll('.form-input');
+            const button = document.querySelector('.edit-button');
+            const buttonText = document.getElementById('buttonText');
+            
+            const isDisabled = inputs[0].disabled;
+            
+            inputs.forEach(input => {
+                if (input.type !== 'text' || input.value !== '2024CS1234') {
+                    input.disabled = !isDisabled;
+                }
+            });
+
+            if (isDisabled) {
+                buttonText.textContent = 'Save Changes';
+            } else {
+                buttonText.textContent = 'Edit Profile';
+                // Here you would typically save the changes to a server
+                alert('Changes saved successfully!');
+            }
+        }
+
+        function handleSubmit(event) {
+            event.preventDefault();
+            // Handle form submission here
+        }
+    </script>
+</body>
+</html>
