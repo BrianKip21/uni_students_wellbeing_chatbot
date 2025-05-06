@@ -1,168 +1,233 @@
 <!DOCTYPE html>
 <html lang="en">
-<style>
-       @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500&display=swap');
-
-*{
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    font-family: 'Poppins',sans-serif;
-}
-body{
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    background: #dfdfdf;
-}
-.login-box{
-    display: flex;
-    justify-content: center;
-    flex-direction: column;
-    width: 440px;
-    height: 480px;
-    padding: 30px;
-}
-.login-header{
-    text-align: center;
-    margin: 20px 0 40px 0;
-}
-.login-header header{
-    color: #333;
-    font-size: 30px;
-    font-weight: 600;
-}
-.input-box .input-field{
-    width: 100%;
-    height: 60px;
-    font-size: 17px;
-    padding: 0 25px;
-    margin-bottom: 15px;
-    border-radius: 30px;
-    border: none;
-    box-shadow: 0px 5px 10px 1px rgba(0,0,0, 0.05);
-    outline: none;
-    transition: .3s;
-}
-::placeholder{
-    font-weight: 500;
-    color: #222;
-}
-.input-field:focus{
-    width: 105%;
-}
-.forgot{
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 40px;
-}
-section{
-    display: flex;
-    align-items: center;
-    font-size: 14px;
-    color: #555;
-}
-#check{
-    margin-right: 10px;
-}
-a{
-    text-decoration: none;
-}
-a:hover{
-    text-decoration: underline;
-}
-section a{
-    color: #555;
-}
-.input-submit{
-    position: relative;
-}
-.submit-btn {
-    width: 100%;
-    height: 60px;
-    background: #d3d3d3; /* Light grey */
-    border: none;
-    border-radius: 30px;
-    cursor: pointer;
-    transition: .3s;
-    color: #333; /* Darker text for better contrast */
-    font-size: 18px;
-    font-weight: bold;
-}
-.input-submit label{
-    position: absolute;
-    top: 45%;
-    left: 50%;
-    color: #fff;
-    -webkit-transform: translate(-50%, -50%);
-    -ms-transform: translate(-50%, -50%);
-    transform: translate(-50%, -50%);
-    cursor: pointer;
-}
-.submit-btn:hover{
-    background: #000;
-    transform: scale(1.05,1);
-}
-.sign-up-link{
-    text-align: center;
-    font-size: 15px;
-    margin-top: 20px;
-}
-.sign-up-link a{
-    color: #000;
-    font-weight: 600;
-} 
-</style>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register | Wellbeing chatbot</title>
-    
+    <title>Register | Wellbeing Assistant</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: #f3f4f6;
+        }
+
+        .login-box {
+            display: flex;
+            justify-content: center;
+            flex-direction: column;
+            width: 440px;
+            padding: 30px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0px 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .login-header {
+            text-align: center;
+            margin: 20px 0 30px 0;
+        }
+
+        .login-header header {
+            color: #1e3a8a;
+            font-size: 28px;
+            font-weight: 600;
+        }
+
+        .input-box .input-field {
+            width: 100%;
+            height: 50px;
+            font-size: 16px;
+            padding: 0 20px;
+            margin-bottom: 15px;
+            border-radius: 25px;
+            border: 1px solid #d1d5db;
+            outline: none;
+            transition: .3s;
+        }
+
+        .input-field:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+        }
+
+        ::placeholder {
+            font-weight: 500;
+            color: #6b7280;
+        }
+
+        .error-message {
+            color: #ef4444;
+            font-size: 14px;
+            display: none;
+            margin-bottom: 10px;
+        }
+
+        .submit-btn {
+            width: 100%;
+            height: 50px;
+            background: #3b82f6;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: .3s;
+            color: white;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .submit-btn:hover {
+            background: #2563eb;
+            transform: translateY(-2px);
+        }
+
+        .sign-up-link {
+            text-align: center;
+            font-size: 15px;
+            margin-top: 20px;
+            color: #4b5563;
+        }
+
+        .sign-up-link a {
+            color: #1e3a8a;
+            font-weight: 600;
+            text-decoration: none;
+        }
+        
+        .sign-up-link a:hover {
+            text-decoration: underline;
+        }
+        
+        .input-row {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .input-row .input-box {
+            flex: 1;
+        }
+    </style>
 </head>
 <body>
-    
     <div class="login-box">
         <div class="login-header">
             <header>Register</header>
         </div>
-        <form action="{{ url_for('register') }}" method="POST" onsubmit="return validatePasswords()">
-            <div class="input-box">
-                <input type="text" name="name" class="input-field" placeholder="Full Name" autocomplete="off" required>
+        <form action="{{ url_for('auth.register') }}" method="POST" onsubmit="return validateForm()">
+            <div class="input-row">
+                <div class="input-box">
+                    <input type="text" id="first_name" name="first_name" class="input-field" placeholder="First Name" autocomplete="off" required>
+                    <p id="first-name-error" class="error-message">Enter a valid first name.</p>
+                </div>
+                <div class="input-box">
+                    <input type="text" id="last_name" name="last_name" class="input-field" placeholder="Last Name" autocomplete="off" required>
+                    <p id="last-name-error" class="error-message">Enter a valid last name.</p>
+                </div>
             </div>
             <div class="input-box">
-                <input type="email" name="email" class="input-field" placeholder="Email" autocomplete="off" required>
+                <input type="email" id="email" name="email" class="input-field" placeholder="Email" autocomplete="off" required>
+                <p id="email-error" class="error-message">Email must be at least 12 characters long.</p>
+            </div>
+            <div class="input-box">
+                <input type="text" id="student_id" name="student_id" class="input-field" placeholder="Student ID" autocomplete="off" required>
+                <p id="reg-error" class="error-message">Student ID must be numbers only.</p>
             </div>
             <div class="input-box">
                 <input type="password" id="password" name="password" class="input-field" placeholder="Password" autocomplete="off" required>
+                <p id="password-error" class="error-message">Password must be at least 8 characters long and contain letters and numbers.</p>
             </div>
             <div class="input-box">
                 <input type="password" id="confirm_password" name="confirm_password" class="input-field" placeholder="Confirm Password" autocomplete="off" required>
+                <p id="confirm-error" class="error-message">Passwords do not match!</p>
             </div>
-            <p id="error-message" style="color: red; display: none;">Passwords do not match!</p>
             <div class="input-submit">
                 <button type="submit" class="submit-btn">Sign Up</button>
             </div>
         </form>
-        
+
         <script>
-            function validatePasswords() {
+            function validateForm() {
+                var firstName = document.getElementById("first_name").value.trim();
+                var lastName = document.getElementById("last_name").value.trim();
+                var email = document.getElementById("email").value;
+                var student_id = document.getElementById("student_id").value;
                 var password = document.getElementById("password").value;
                 var confirmPassword = document.getElementById("confirm_password").value;
-                var errorMessage = document.getElementById("error-message");
-        
-                if (password !== confirmPassword) {
-                    errorMessage.style.display = "block";
-                    return false;
+
+                var firstNameError = document.getElementById("first-name-error");
+                var lastNameError = document.getElementById("last-name-error");
+                var emailError = document.getElementById("email-error");
+                var regError = document.getElementById("reg-error");
+                var passwordError = document.getElementById("password-error");
+                var confirmError = document.getElementById("confirm-error");
+
+                var isValid = true;
+
+                // First name validation
+                if (!/^[A-Za-z]+$/.test(firstName)) {
+                    firstNameError.style.display = "block";
+                    isValid = false;
                 } else {
-                    errorMessage.style.display = "none";
-                    return true;
+                    firstNameError.style.display = "none";
                 }
+                
+                // Last name validation
+                if (!/^[A-Za-z]+$/.test(lastName)) {
+                    lastNameError.style.display = "block";
+                    isValid = false;
+                } else {
+                    lastNameError.style.display = "none";
+                }
+
+                // Email validation (min 12 characters)
+                if (email.length < 12) {
+                    emailError.style.display = "block";
+                    isValid = false;
+                } else {
+                    emailError.style.display = "none";
+                }
+
+                // Registration number validation (must be only numbers)
+                if (!/^\d+$/.test(student_id)) {
+                    regError.style.display = "block";
+                    isValid = false;
+                } else {
+                    regError.style.display = "none";
+                }
+
+                // Password validation (min 8 characters with letters & numbers)
+                var passwordPattern = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/;
+                if (!passwordPattern.test(password)) {
+                    passwordError.style.display = "block";
+                    isValid = false;
+                } else {
+                    passwordError.style.display = "none";
+                }
+
+                // Confirm password validation
+                if (password !== confirmPassword) {
+                    confirmError.style.display = "block";
+                    isValid = false;
+                } else {
+                    confirmError.style.display = "none";
+                }
+
+                return isValid;
             }
         </script>
-        
+
         <div class="sign-up-link">
-            <p>Already have an account? <a href="login.html">Login</a></p>
+            <p>Already have an account? <a href="{{ url_for('auth.login') }}">Login</a></p>
         </div>
     </div>
 </body>

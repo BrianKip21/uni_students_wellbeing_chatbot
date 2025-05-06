@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,19 +7,54 @@
     <title>Dashboard - Wellbeing Chatbot Admin</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Inline critical CSS to ensure confidence bars work */
+        .confidence-bar {
+            width: 100%;
+            height: 15px;
+            background-color: #e0e0e0;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 5px;
+            display: block;
+            position: relative;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            background-color: #4a6fa5;
+            border-radius: 5px;
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+        
+        .debug-text {
+            font-size: 10px;
+            color: #888;
+            margin-bottom: 3px;
+            display: block;
+        }
+        
+        #activity-table th:last-child,
+        #activity-table td:last-child {
+            min-width: 120px;
+            width: 15%;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
         <aside class="sidebar">
             <h2>Admin Panel</h2>
             <ul>
-                <li class="active"><a href="#">Dashboard</a></li>
-                <li><a href="{{ url_for('users_management') }}">User Management</a></li>
-                <li><a href="{{ url_for('chat_logs') }}">Chat Logs</a></li>
-                <li><a href="{{ url_for('admin_resources') }}">Resource Management</a></li>
-                <li><a href="{{ url_for('analytics') }}">Analytics</a></li>
-                <li><a href="{{ url_for('admin_settings') }}">Settings</a></li>
-                <li><a href="{{ url_for('admin_logout') }}">Logout</a></li>
+                <li><a href="{{ url_for('admin.dashboard') }}">Dashboard</a></li>
+                <li><a href="{{ url_for('admin.user_management') }}">User Management</a></li>
+                <li><a href="{{ url_for('admin.chat_logs') }}">Chat Logs</a></li>
+                <li><a href="{{ url_for('admin.feedback_dashboard') }}">Feedback Analysis</a></li>
+                <li><a href="{{ url_for('admin.resources') }}">Resource Management</a></li>
+                <li><a href="{{ url_for('auth.logout') }}">Logout</a></li>
             </ul>
         </aside>
         
@@ -28,15 +64,15 @@
             <div class="stats">
                 <div class="card">
                     <h3>Total Users</h3>
-                    <span id="total-users">{{ total_users }}</span>
+                    <span id="total-users" class="stat-number">{{ total_users }}</span>
                 </div>
                 <div class="card">
                     <h3>Total Chats</h3>
-                    <span id="total-chats">{{ total_chats }}</span>
+                    <span id="total-chats" class="stat-number">{{ total_chats }}</span>
                 </div>
                 <div class="card">
                     <h3>Active Users Today</h3>
-                    <span id="active-today">{{ active_today }}</span>
+                    <span id="active-today" class="stat-number">{{ active_today }}</span>
                 </div>
             </div>
             
@@ -53,30 +89,38 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {% for activity in recent_activity %}
-                        <tr>
-                            <td>{{ activity.user }}</td>
-                            <td>{{ activity.message }}</td>
-                            <td>{{ activity.response | truncate(50) }}</td>
-                            <td>{{ activity.timestamp.strftime('%Y-%m-%d %H:%M') if activity.timestamp else '' }}</td>
-                            <td>
-                                <div class="confidence-bar">
-                                    <div class="confidence-fill" style="width: {{ activity.confidence }}%;"></div>
-                                </div>
-                            </td>
-                        </tr>
-                        {% endfor %}
+                        {% if recent_activity and recent_activity|length > 0 %}
+                            {% for activity in recent_activity %}
+                            <tr>
+                                <td>{{ activity.user }}</td>
+                                <td>{{ activity.message }}</td>
+                                <td>{{ activity.response | truncate(50) }}</td>
+                                <td>{{ activity.timestamp }}</td>
+                                <td>
+                                    <!-- Showing raw value temporarily for debugging -->
+                                    <span class="debug-text">{{ activity.confidence | round(1) }}%</span>
+                                    <div class="confidence-bar">
+                                        <div class="confidence-fill" style="width: {{ activity.confidence }}%;"></div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="5" class="empty-table-message">No chat activity recorded yet</td>
+                            </tr>
+                        {% endif %}
                     </tbody>
                 </table>
             </div>
         </div>
     </div>
 
-    <!-- Adding basic script to refresh dashboard data -->
+    <!-- Dashboard data auto-refresh functionality -->
     <script>
         // Refresh dashboard data every 30 seconds
         function refreshDashboard() {
-            fetch('{{ url_for("dashboard_data") }}')
+            fetch('{{ url_for("admin.dashboard_data") }}')
                 .then(response => response.json())
                 .then(data => {
                     document.getElementById('total-users').textContent = data.total_users;
@@ -87,51 +131,92 @@
                     const tableBody = document.querySelector('#activity-table tbody');
                     tableBody.innerHTML = '';
                     
-                    data.recent_activity.forEach(activity => {
+                    if (data.recent_activity && data.recent_activity.length > 0) {
+                        data.recent_activity.forEach(activity => {
+                            const row = document.createElement('tr');
+                            
+                            // User column
+                            const userCell = document.createElement('td');
+                            userCell.textContent = activity.user;
+                            row.appendChild(userCell);
+                            
+                            // Message column
+                            const messageCell = document.createElement('td');
+                            messageCell.textContent = activity.message;
+                            row.appendChild(messageCell);
+                            
+                            // Response column
+                            const responseCell = document.createElement('td');
+                            responseCell.textContent = activity.response && activity.response.length > 50 ? 
+                                activity.response.substring(0, 50) + '...' : activity.response;
+                            row.appendChild(responseCell);
+                            
+                            // Time column
+                            const timeCell = document.createElement('td');
+                            timeCell.textContent = activity.timestamp;
+                            row.appendChild(timeCell);
+                            
+                            // Confidence column
+                            const confidenceCell = document.createElement('td');
+                            
+                            // Add percentage text
+                            const debugSpan = document.createElement('span');
+                            debugSpan.textContent = parseFloat(activity.confidence).toFixed(1) + '%';
+                            debugSpan.className = 'debug-text';
+                            confidenceCell.appendChild(debugSpan);
+                            
+                            // Add confidence bar
+                            const confidenceBar = document.createElement('div');
+                            confidenceBar.className = 'confidence-bar';
+                            
+                            const confidenceFill = document.createElement('div');
+                            confidenceFill.className = 'confidence-fill';
+                            
+                            // Make sure width is a valid percentage
+                            let confWidth = parseFloat(activity.confidence);
+                            if (isNaN(confWidth) || confWidth < 0) confWidth = 0;
+                            if (confWidth > 100) confWidth = 100;
+                            
+                            confidenceFill.style.width = confWidth + '%';
+                            
+                            confidenceBar.appendChild(confidenceFill);
+                            confidenceCell.appendChild(confidenceBar);
+                            row.appendChild(confidenceCell);
+                            
+                            tableBody.appendChild(row);
+                        });
+                    } else {
+                        // Display empty message when no activities
                         const row = document.createElement('tr');
-                        
-                        // User column
-                        const userCell = document.createElement('td');
-                        userCell.textContent = activity.user;
-                        row.appendChild(userCell);
-                        
-                        // Message column
-                        const messageCell = document.createElement('td');
-                        messageCell.textContent = activity.message;
-                        row.appendChild(messageCell);
-                        
-                        // Response column
-                        const responseCell = document.createElement('td');
-                        responseCell.textContent = activity.response.length > 50 ? 
-                            activity.response.substring(0, 50) + '...' : activity.response;
-                        row.appendChild(responseCell);
-                        
-                        // Time column
-                        const timeCell = document.createElement('td');
-                        timeCell.textContent = activity.timestamp;
-                        row.appendChild(timeCell);
-                        
-                        // Confidence column
-                        const confidenceCell = document.createElement('td');
-                        const confidenceBar = document.createElement('div');
-                        confidenceBar.className = 'confidence-bar';
-                        
-                        const confidenceFill = document.createElement('div');
-                        confidenceFill.className = 'confidence-fill';
-                        confidenceFill.style.width = activity.confidence + '%';
-                        
-                        confidenceBar.appendChild(confidenceFill);
-                        confidenceCell.appendChild(confidenceBar);
-                        row.appendChild(confidenceCell);
-                        
+                        const emptyCell = document.createElement('td');
+                        emptyCell.className = 'empty-table-message';
+                        emptyCell.setAttribute('colspan', '5');
+                        emptyCell.textContent = 'No chat activity recorded yet';
+                        row.appendChild(emptyCell);
                         tableBody.appendChild(row);
-                    });
+                    }
                 })
-                .catch(error => console.error('Error refreshing dashboard:', error));
+                .catch(error => {
+                    console.error('Error refreshing dashboard:', error);
+                    // Display error message in the table on failure
+                    const tableBody = document.querySelector('#activity-table tbody');
+                    tableBody.innerHTML = '';
+                    const row = document.createElement('tr');
+                    const errorCell = document.createElement('td');
+                    errorCell.className = 'empty-table-message';
+                    errorCell.setAttribute('colspan', '5');
+                    errorCell.textContent = 'Error loading activity data';
+                    row.appendChild(errorCell);
+                    tableBody.appendChild(row);
+                });
         }
         
-        // Set up auto-refresh
-        setInterval(refreshDashboard, 30000);
+        // Initial load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set up auto-refresh
+            setInterval(refreshDashboard, 30000);
+        });
+    </script>
     </script>
 </body>
 </html>
