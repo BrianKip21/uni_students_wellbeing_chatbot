@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Wellbeing Chatbot Admin</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <h2>Admin Panel</h2>
+            <ul>
+                <li class="active"><a href="#">Dashboard</a></li>
+                <li><a href="{{ url_for('users_management') }}">User Management</a></li>
+                <li><a href="{{ url_for('chat_logs') }}">Chat Logs</a></li>
+                <li><a href="{{ url_for('admin_resources') }}">Resource Management</a></li>
+                <li><a href="{{ url_for('analytics') }}">Analytics</a></li>
+                <li><a href="{{ url_for('admin_settings') }}">Settings</a></li>
+                <li><a href="{{ url_for('admin_logout') }}">Logout</a></li>
+            </ul>
+        </aside>
+        
+        <div class="main-content">
+            <h1>Dashboard</h1>
+            
+            <div class="stats">
+                <div class="card">
+                    <h3>Total Users</h3>
+                    <span id="total-users">{{ total_users }}</span>
+                </div>
+                <div class="card">
+                    <h3>Total Chats</h3>
+                    <span id="total-chats">{{ total_chats }}</span>
+                </div>
+                <div class="card">
+                    <h3>Active Users Today</h3>
+                    <span id="active-today">{{ active_today }}</span>
+                </div>
+            </div>
+            
+            <h2>Recent Activity</h2>
+            <div class="table-container">
+                <table id="activity-table">
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Message</th>
+                            <th>Response</th>
+                            <th>Time</th>
+                            <th>Confidence</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for activity in recent_activity %}
+                        <tr>
+                            <td>{{ activity.user }}</td>
+                            <td>{{ activity.message }}</td>
+                            <td>{{ activity.response | truncate(50) }}</td>
+                            <td>{{ activity.timestamp.strftime('%Y-%m-%d %H:%M') if activity.timestamp else '' }}</td>
+                            <td>
+                                <div class="confidence-bar">
+                                    <div class="confidence-fill" style="width: {{ activity.confidence }}%;"></div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Adding basic script to refresh dashboard data -->
+    <script>
+        // Refresh dashboard data every 30 seconds
+        function refreshDashboard() {
+            fetch('{{ url_for("dashboard_data") }}')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('total-users').textContent = data.total_users;
+                    document.getElementById('total-chats').textContent = data.total_chats;
+                    document.getElementById('active-today').textContent = data.active_today;
+                    
+                    // Refresh activity table
+                    const tableBody = document.querySelector('#activity-table tbody');
+                    tableBody.innerHTML = '';
+                    
+                    data.recent_activity.forEach(activity => {
+                        const row = document.createElement('tr');
+                        
+                        // User column
+                        const userCell = document.createElement('td');
+                        userCell.textContent = activity.user;
+                        row.appendChild(userCell);
+                        
+                        // Message column
+                        const messageCell = document.createElement('td');
+                        messageCell.textContent = activity.message;
+                        row.appendChild(messageCell);
+                        
+                        // Response column
+                        const responseCell = document.createElement('td');
+                        responseCell.textContent = activity.response.length > 50 ? 
+                            activity.response.substring(0, 50) + '...' : activity.response;
+                        row.appendChild(responseCell);
+                        
+                        // Time column
+                        const timeCell = document.createElement('td');
+                        timeCell.textContent = activity.timestamp;
+                        row.appendChild(timeCell);
+                        
+                        // Confidence column
+                        const confidenceCell = document.createElement('td');
+                        const confidenceBar = document.createElement('div');
+                        confidenceBar.className = 'confidence-bar';
+                        
+                        const confidenceFill = document.createElement('div');
+                        confidenceFill.className = 'confidence-fill';
+                        confidenceFill.style.width = activity.confidence + '%';
+                        
+                        confidenceBar.appendChild(confidenceFill);
+                        confidenceCell.appendChild(confidenceBar);
+                        row.appendChild(confidenceCell);
+                        
+                        tableBody.appendChild(row);
+                    });
+                })
+                .catch(error => console.error('Error refreshing dashboard:', error));
+        }
+        
+        // Set up auto-refresh
+        setInterval(refreshDashboard, 30000);
+    </script>
+</body>
+</html>

@@ -28,6 +28,18 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+def csrf_protected(f):
+    """
+    Decorator to enforce CSRF token validation on POST requests.
+    """
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if request.method == 'POST':
+            if not verify_csrf_token():
+                abort(403, description="CSRF token missing or invalid.")
+        return f(*args, **kwargs)
+    return decorated_function
+
 def verify_csrf_token():
     token = request.headers.get('X-CSRF-Token')
     cookie_token = request.cookies.get('csrf_token')

@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Chat - Admin Panel</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        .chat-detail-container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        
+        .chat-detail-header {
+            background-color: #304973;
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .user-details {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            background-color: #4a6fa5;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+        }
+        
+        .meta-info {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .timestamp {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+        
+        .chat-detail-body {
+            padding: 20px;
+        }
+        
+        .message-container {
+            margin-bottom: 30px;
+        }
+        
+        .message-label {
+            font-weight: 500;
+            margin-bottom: 10px;
+            color: #555;
+        }
+        
+        .message-content {
+            background-color: #f5f7fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 5px;
+        }
+        
+        .response-container {
+            margin-bottom: 30px;
+        }
+        
+        .response-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .bot-label {
+            background-color: #4a6fa5;
+            color: white;
+            padding: 3px 10px;
+            border-radius: 4px;
+            font-size: 14px;
+            margin-right: 10px;
+        }
+        
+        .confidence-pill {
+            padding: 3px 10px;
+            border-radius: 4px;
+            font-size: 14px;
+            color: white;
+        }
+        
+        .high-confidence {
+            background-color: #4CAF50;
+        }
+        
+        .medium-confidence {
+            background-color: #FFC107;
+            color: #333;
+        }
+        
+        .low-confidence {
+            background-color: #F44336;
+        }
+        
+        .response-content {
+            background-color: #f0f7ff;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #4a6fa5;
+        }
+        
+        .context-container {
+            margin-top: 30px;
+        }
+        
+        .context-header {
+            font-weight: 500;
+            margin-bottom: 15px;
+            color: #333;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        
+        .context-item {
+            margin-bottom: 10px;
+        }
+        
+        .topic-tag {
+            display: inline-block;
+            background-color: #e0e0e0;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 14px;
+            margin-right: 5px;
+            margin-bottom: 5px;
+        }
+        
+        .meta-data-container {
+            margin-top: 20px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            padding: 15px;
+        }
+        
+        .meta-data-header {
+            font-weight: 500;
+            margin-bottom: 10px;
+            color: #555;
+        }
+        
+        .meta-data-row {
+            display: flex;
+            margin-bottom: 8px;
+        }
+        
+        .meta-data-label {
+            width: 150px;
+            font-weight: 500;
+            color: #666;
+        }
+        
+        .meta-data-value {
+            flex: 1;
+        }
+        
+        .action-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        
+        .primary-button {
+            background-color: #4a6fa5;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .secondary-button {
+            background-color: #e0e0e0;
+            color: #333;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .primary-button:hover {
+            background-color: #304973;
+        }
+        
+        .secondary-button:hover {
+            background-color: #ccc;
+        }
+        
+        .related-chats-container {
+            margin-top: 30px;
+        }
+        
+        .related-chats-header {
+            font-weight: 500;
+            margin-bottom: 15px;
+            color: #333;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        
+        .related-chat-item {
+            background-color: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            margin-bottom: 10px;
+        }
+        
+        .related-chat-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .related-chat-content {
+            margin-bottom: 10px;
+        }
+        
+        .related-chat-link {
+            text-align: right;
+        }
+        
+        .related-chat-link a {
+            color: #4a6fa5;
+            text-decoration: none;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <h2>Admin Panel</h2>
+            <ul>
+                <li><a href="{{ url_for('admin_dashboard') }}">Dashboard</a></li>
+                <li><a href="{{ url_for('user_management') }}">User Management</a></li>
+                <li class="active"><a href="{{ url_for('chat_logs') }}">Chat Logs</a></li>
+                <li><a href="{{ url_for('admin_resources') }}">Resource Management</a></li>
+                <li><a href="{{ url_for('analytics') }}">Analytics</a></li>
+                <li><a href="{{ url_for('admin_settings') }}">Settings</a></li>
+                <li><a href="{{ url_for('logout') }}">Logout</a></li>
+            </ul>
+        </aside>
+    
+        <div class="main-content">
+            <h1>View Chat</h1>
+            
+            <div class="chat-detail-container">
+                <div class="chat-detail-header">
+                    <div class="user-details">
+                        <div class="user-avatar">
+                            {{ username[0]|upper if username else 'U' }}
+                        </div>
+                        <div class="meta-info">
+                            <div class="username">{{ username }}</div>
+                            <div class="timestamp">{{ chat.timestamp.strftime('%d %b %Y, %H:%M') if chat.timestamp else 'Unknown date' }}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="chat-id">
+                        ID: {{ chat._id }}
+                    </div>
+                </div>
+                
+                <div class="chat-detail-body">
+                    <div class="message-container">
+                        <div class="message-label">User Message:</div>
+                        <div class="message-content">{{ chat.message }}</div>
+                    </div>
+                    
+                    <div class="response-container">
+                        <div class="response-header">
+                            <div class="bot-label">BOT</div>
+                            {% if chat.confidence %}
+                                {% set conf_class = 'high-confidence' if chat.confidence > 85 else ('medium-confidence' if chat.confidence > 50 else 'low-confidence') %}
+                                <div class="confidence-pill {{ conf_class }}">
+                                    {{ "%.1f"|format(chat.confidence) }}% confidence
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="response-content">{{ chat.response }}</div>
+                    </div>
+                    
+                    {% if chat.get('conversation_context') %}
+                        <div class="context-container">
+                            <div class="context-header">Conversation Context</div>
+                            
+                            {% if chat.conversation_context.get('topic') %}
+                                <div class="context-item">
+                                    <strong>Topic:</strong> 
+                                    <span class="topic-tag">{{ chat.conversation_context.topic }}</span>
+                                </div>
+                            {% endif %}
+                            
+                            {% if chat.conversation_context.get('previous_message') %}
+                                <div class="context-item">
+                                    <strong>Previous Message:</strong> 
+                                    <div>User: {{ chat.conversation_context.previous_message.message }}</div>
+                                    <div>Bot: {{ chat.conversation_context.previous_message.response }}</div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                    <div class="meta-data-container">
+                        <div class="meta-data-header">Message Metadata</div>
+                        
+                        <div class="meta-data-row">
+                            <div class="meta-data-label">Model Used:</div>
+                            <div class="meta-data-value">{{ chat.get('model_used', 'Unknown') }}</div>
+                        </div>
+                        
+                        <div class="meta-data-row">
+                            <div class="meta-data-label">Response Time:</div>
+                            <div class="meta-data-value">
+                                {% if chat.get('response_metadata', {}).get('response_time_ms') %}
+                                    {{ chat.response_metadata.response_time_ms }} ms
+                                {% else %}
+                                    Unknown
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="meta-data-row">
+                            <div class="meta-data-label">Detected Intent:</div>
+                            <div class="meta-data-value">
+                                {% if chat.get('response_metadata', {}).get('detected_intent') %}
+                                    {{ chat.response_metadata.detected_intent }}
+                                {% else %}
+                                    Unknown
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="meta-data-row">
+                            <div class="meta-data-label">Session ID:</div>
+                            <div class="meta-data-value">{{ chat.get('session_id', 'Unknown') }}</div>
+                        </div>
+                        
+                        {% if chat.get('feedback') %}
+                            <div class="meta-data-row">
+                                <div class="meta-data-label">User Feedback:</div>
+                                <div class="meta-data-value">
+                                    {% if chat.feedback.get('rating') %}
+                                        Rating: {{ chat.feedback.rating }}/5
+                                    {% endif %}
+                                    {% if chat.feedback.get('was_helpful') is not none %}
+                                        <br>Helpful: {{ 'Yes' if chat.feedback.was_helpful else 'No' }}
+                                    {% endif %}
+                                    {% if chat.feedback.get('feedback_text') %}
+                                        <br>Comment: {{ chat.feedback.feedback_text }}
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="action-buttons">
+                        <a href="{{ url_for('chat_logs') }}" class="secondary-button">Back to Chat Logs</a>
+                        
+                        <div>
+                            <a href="javascript:void(0)" onclick="document.getElementById('delete-form').submit();" class="secondary-button" style="background-color: #ffcccc; margin-right: 10px;">Delete Chat</a>
+                            <a href="{{ url_for('admin_dashboard') }}" class="primary-button">Dashboard</a>
+                        </div>
+                    </div>
+                    
+                    <!-- Hidden form for delete action -->
+                    <form id="delete-form" action="{{ url_for('delete_chat', chat_id=chat._id) }}" method="post" style="display: none;">
+                        <input type="hidden" name="_method" value="DELETE">
+                    </form>
+                </div>
+            </div>
+            
+            {% if related_chats %}
+                <div class="related-chats-container">
+                    <div class="related-chats-header">Related Chats from Same User</div>
+                    
+                    {% for related in related_chats %}
+                        <div class="related-chat-item">
+                            <div class="related-chat-header">
+                                <div>{{ related.timestamp.strftime('%d %b %Y, %H:%M') if related.timestamp else 'Unknown date' }}</div>
+                                {% if related.get('confidence') %}
+                                    {% set conf_class = 'high-confidence' if related.confidence > 85 else ('medium-confidence' if related.confidence > 50 else 'low-confidence') %}
+                                    <div class="confidence-pill {{ conf_class }}" style="font-size: 12px; padding: 2px 8px;">
+                                        {{ "%.1f"|format(related.confidence) }}%
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="related-chat-content">
+                                <strong>User:</strong> {{ related.message|truncate(100, True) }}
+                                <br>
+                                <strong>Bot:</strong> {{ related.response|truncate(100, True) }}
+                            </div>
+                            <div class="related-chat-link">
+                                <a href="{{ url_for('view_chat', chat_id=related._id) }}">View Chat</a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

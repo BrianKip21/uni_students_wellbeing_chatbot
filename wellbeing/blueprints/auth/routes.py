@@ -31,7 +31,12 @@ def login():
                 return jsonify({'error': 'All fields are required'}), 400
 
             # Select appropriate user collection based on role
-            user_collection = mongo.db.admin if role == 'admin' else mongo.db.users
+            if role == 'admin':
+                user_collection = mongo.db.admin
+            elif role == 'therapist':
+                user_collection = mongo.db.therapists
+            else:
+                user_collection = mongo.db.users
             
             # Find user
             user = user_collection.find_one({'email': email})
@@ -46,6 +51,10 @@ def login():
             # Verify role
             if user.get('role', '').lower() != role:
                 return jsonify({'error': 'Incorrect role selection'}), 401
+                
+            # Check if user account is active
+            if user.get('status', 'Active') != 'Active':
+                return jsonify({'error': 'Your account has been disabled. Please contact an admin.'}), 403
 
             # Create session
             session['user'] = str(user['_id'])

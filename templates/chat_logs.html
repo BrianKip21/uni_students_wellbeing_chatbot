@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Chat Logs</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        /* Add specific styles for chat logs page */
+        .search-filter-container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+        }
+        
+        .search-box, .date-picker, .dropdown {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .search-box {
+            flex-grow: 1;
+            min-width: 200px;
+        }
+        
+        .filter-button {
+            background-color: #4a6fa5;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        
+        .filter-button:hover {
+            background-color: #304973;
+        }
+        
+        .chat-logs-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .chat-log {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            overflow: hidden;
+        }
+        
+        .chat-header {
+            background-color: #f5f7fa;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .student-id {
+            font-weight: 500;
+            color: #304973;
+        }
+        
+        .chat-timestamp {
+            color: #888;
+            font-size: 14px;
+        }
+        
+        .chat-message {
+            padding: 15px;
+            color: #333;
+        }
+        
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+            gap: 10px;
+        }
+        
+        .pagination-button {
+            padding: 8px 15px;
+            background-color: #4a6fa5;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .pagination-button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .chat-response {
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-top: 1px dashed #ddd;
+        }
+        
+        .view-full-button {
+            display: block;
+            text-align: center;
+            padding: 8px;
+            background-color: #eee;
+            color: #555;
+            text-decoration: none;
+            font-size: 14px;
+            border-top: 1px solid #ddd;
+        }
+        
+        .view-full-button:hover {
+            background-color: #e0e0e0;
+        }
+        
+        .bot-tag {
+            background-color: #4a6fa5;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-right: 10px;
+        }
+        
+        .confidence-indicator {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            background-color: #4CAF50;
+            color: white;
+        }
+        
+        .confidence-high {
+            background-color: #4CAF50;  /* Green */
+        }
+        
+        .confidence-medium {
+            background-color: #FFC107;  /* Yellow */
+        }
+        
+        .confidence-low {
+            background-color: #F44336;  /* Red */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <h2>Admin Panel</h2>
+            <ul>
+                <li><a href="{{ url_for('admin_dashboard') }}">Dashboard</a></li>
+                <li><a href="{{ url_for('user_management') }}">User Management</a></li>
+                <li class="active"><a href="{{ url_for('chat_logs') }}">Chat Logs</a></li>
+                <li><a href="{{ url_for('admin_resources') }}">Resource Management</a></li>
+                <li><a href="{{ url_for('analytics') }}">Analytics</a></li>
+                <li><a href="{{ url_for('admin_settings') }}">Settings</a></li>
+                <li><a href="{{ url_for('logout') }}">Logout</a></li>
+            </ul>
+        </aside>
+    
+        <div class="main-content">
+            <h1>Chat Logs</h1>
+            
+            <div class="search-filter-container">
+                <form method="get" action="{{ url_for('chat_logs') }}">
+                    <input type="text" name="search" class="search-box" placeholder="Search by user ID or keywords" value="{{ request.args.get('search', '') }}">
+                    <input type="date" name="date" class="date-picker" value="{{ request.args.get('date', '') }}">
+                    <select name="topic" class="dropdown">
+                        <option value="">All Topics</option>
+                        {% for topic in topics %}
+                            <option value="{{ topic }}" {% if request.args.get('topic') == topic %}selected{% endif %}>{{ topic|capitalize }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit" class="filter-button">Filter</button>
+                </form>
+            </div>
+            
+            <div class="chat-logs-container">
+                {% if chat_logs %}
+                    {% for chat in chat_logs %}
+                        <div class="chat-log">
+                            <div class="chat-header">
+                                <span class="student-id">
+                                    {% if chat.username %}
+                                        {{ chat.username }}
+                                    {% else %}
+                                        {{ chat.user_id|truncate(12, True) }}
+                                    {% endif %}
+                                </span>
+                                <span class="chat-timestamp">
+                                    {{ chat.timestamp.strftime('%d %b %Y, %H:%M') if chat.timestamp else 'Unknown date' }}
+                                </span>
+                            </div>
+                            <div class="chat-message">
+                                {{ chat.message }}
+                            </div>
+                            <div class="chat-response">
+                                <span class="bot-tag">BOT</span>
+                                {% if chat.confidence %}
+                                    {% set conf_class = 'confidence-high' if chat.confidence > 85 else ('confidence-medium' if chat.confidence > 50 else 'confidence-low') %}
+                                    <span class="confidence-indicator {{ conf_class }}">
+                                        {{ "%.1f"|format(chat.confidence) }}%
+                                    </span>
+                                {% endif %}
+                                {{ chat.response|truncate(150, True) }}
+                            </div>
+                            <a href="{{ url_for('view_chat', chat_id=chat._id) }}" class="view-full-button">View Full Conversation</a>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-message">
+                        <p>No chat logs found matching your criteria.</p>
+                    </div>
+                {% endif %}
+            </div>
+            
+            {% if total_pages > 1 %}
+                <div class="pagination">
+                    <a href="{{ url_for('chat_logs', page=1, search=request.args.get('search', ''), date=request.args.get('date', ''), topic=request.args.get('topic', '')) }}" 
+                       class="pagination-button" {% if page == 1 %}disabled{% endif %}>First</a>
+                    
+                    <a href="{{ url_for('chat_logs', page=page-1, search=request.args.get('search', ''), date=request.args.get('date', ''), topic=request.args.get('topic', '')) }}" 
+                       class="pagination-button" {% if page <= 1 %}disabled{% endif %}>Previous</a>
+                    
+                    <span>Page {{ page }} of {{ total_pages }}</span>
+                    
+                    <a href="{{ url_for('chat_logs', page=page+1, search=request.args.get('search', ''), date=request.args.get('date', ''), topic=request.args.get('topic', '')) }}" 
+                       class="pagination-button" {% if page >= total_pages %}disabled{% endif %}>Next</a>
+                    
+                    <a href="{{ url_for('chat_logs', page=total_pages, search=request.args.get('search', ''), date=request.args.get('date', ''), topic=request.args.get('topic', '')) }}" 
+                       class="pagination-button" {% if page == total_pages %}disabled{% endif %}>Last</a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>
