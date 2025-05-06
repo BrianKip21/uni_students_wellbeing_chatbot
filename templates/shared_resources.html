@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shared Resources | Wellbeing Assistant</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css"> 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+
+    <style>
+        {% if settings.theme_mode == 'dark' %}
+        /* Dark mode styles */
+        body {
+            background-color: #121212 !important;
+            color: #e0e0e0 !important;
+        }
+        
+        .bg-white {
+            background-color: #1e1e1e !important;
+        }
+        
+        .text-gray-700, .text-gray-800, .text-gray-900 {
+            color: #e0e0e0 !important;
+        }
+        
+        .text-gray-500, .text-gray-600 {
+            color: #a0a0a0 !important;
+        }
+        
+        .bg-gray-50, .bg-gray-100, .bg-gray-200 {
+            background-color: #2a2a2a !important;
+        }
+        
+        .border-gray-200, .border-gray-300 {
+            border-color: #333 !important;
+        }
+
+        .hover\:bg-gray-100:hover {
+            background-color: #333333 !important;
+        }
+        
+        .resource-card {
+            background-color: #1e1e1e !important;
+            border-color: #333 !important;
+        }
+        {% endif %}
+        
+        {% if settings.contrast == 'high' %}
+        /* High contrast styles */
+        body {
+            background-color: #ffffff !important;
+            color: #000000 !important;
+        }
+        
+        .text-gray-500, .text-gray-600, .text-gray-700, .text-gray-800, .text-gray-900 {
+            color: #000000 !important;
+        }
+        
+        .bg-gray-800 {
+            background-color: #000000 !important;
+        }
+        
+        .text-gray-200 {
+            color: #ffffff !important;
+        }
+        
+        input, select, button {
+            border: 2px solid #000000 !important;
+        }
+
+        .bg-green-100, .bg-blue-100, .bg-gray-100 {
+            background-color: #ffffff !important;
+            border: 2px solid #000000 !important;
+        }
+
+        .text-green-500, .text-blue-500, .text-purple-500 {
+            color: #000000 !important;
+        }
+        {% endif %}
+        
+        {% if settings.text_size == 'lg' %}
+        /* Large text */
+        body {
+            font-size: 1.125rem !important;
+        }
+        
+        .text-sm {
+            font-size: 0.9375rem !important;
+        }
+        
+        .text-lg, .text-xl, .text-2xl, .text-3xl {
+            font-size: 1.3125rem !important;
+        }
+        {% elif settings.text_size == 'xl' %}
+        /* Extra large text */
+        body {
+            font-size: 1.25rem !important;
+        }
+        
+        .text-sm {
+            font-size: 1.0625rem !important;
+        }
+        
+        .text-lg, .text-xl {
+            font-size: 1.5rem !important;
+        }
+
+        .text-2xl, .text-3xl {
+            font-size: 1.75rem !important;
+        }
+        {% endif %}
+        
+        /* Resource card styles */
+        .resource-card {
+            transition: all 0.2s ease;
+        }
+        
+        .resource-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        
+        .resource-icon {
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+        }
+        
+        .category-filter {
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        
+        .category-filter:hover {
+            transform: translateY(-2px);
+        }
+        
+        .category-filter.active {
+            border-width: 2px;
+            font-weight: 600;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-200 flex text-gray-900">
+    <!-- Sidebar Navigation -->
+    <aside class="w-64 h-screen bg-gray-800 text-gray-200 p-4 fixed">
+        <h1 class="text-2xl font-bold mb-6">Wellbeing Assistant</h1>
+        <nav>
+            <ul class="space-y-4">
+                <li><a href="{{ url_for('dashboard.index') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-chart-line"></i> Dashboard</a></li>
+                <li><a href="{{ url_for('tracking.index') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-chart-bar"></i> Wellness Tracker</a></li>
+                <li><a href="{{ url_for('chatbot.chatbot_page') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-comments"></i> Chat</a></li>
+                <li><a href="{{ url_for('dashboard.therapist_appointments') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-calendar-alt"></i> Therapist</a></li>
+                <li><a href="{{ url_for('dashboard.profile') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-user"></i> Profile</a></li>
+                <li><a href="{{ url_for('dashboard.resources') }}" class="block p-2 bg-gray-700 rounded"> <i class="fas fa-book"></i> Resources</a></li>
+                <li><a href="{{ url_for('dashboard.settings') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-cog"></i> Settings</a></li>
+                <li><a href="{{ url_for('auth.logout') }}" class="block p-2 hover:bg-gray-700 rounded mt-8"> <i class="fas fa-sign-out-alt"></i> Logout</a></li>
+            </ul>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="ml-64 p-8 w-full">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    {% set bg_color = "bg-blue-100 border-blue-500" %}
+                    {% set text_color = "text-blue-700" %}
+                    
+                    {% if category == 'error' %}
+                        {% set bg_color = "bg-red-100 border-red-500" %}
+                        {% set text_color = "text-red-700" %}
+                    {% elif category == 'success' %}
+                        {% set bg_color = "bg-green-100 border-green-500" %}
+                        {% set text_color = "text-green-700" %}
+                    {% elif category == 'warning' %}
+                        {% set bg_color = "bg-yellow-100 border-yellow-500" %}
+                        {% set text_color = "text-yellow-700" %}
+                    {% endif %}
+                    
+                    <div class="{{ bg_color }} border-l-4 {{ text_color }} p-4 mb-6" role="alert">
+                        <p>{{ message }}</p>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        <!-- Breadcrumb Navigation -->
+        <div class="flex text-sm text-gray-500 mb-6">
+            <a href="{{ url_for('dashboard.index') }}" class="hover:text-gray-700">Dashboard</a>
+            <span class="mx-2">/</span>
+            <a href="{{ url_for('dashboard.therapist_appointments') }}" class="hover:text-gray-700">Therapist</a>
+            <span class="mx-2">/</span>
+            <span class="text-gray-700">Shared Resources</span>
+        </div>
+    
+        <div class="flex justify-between items-center mb-6">
+            <div>
+                <h2 class="text-3xl font-bold text-gray-800">Resources from Your Therapist</h2>
+                <p class="text-gray-700">Materials shared by Dr. {{ therapist.first_name }} {{ therapist.last_name }} to support your wellbeing journey</p>
+            </div>
+            
+            <a href="{{ url_for('dashboard.therapist_chat') }}" class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                <i class="fas fa-comments mr-2"></i> Chat with Therapist
+            </a>
+        </div>
+        
+        <!-- Search & Filter -->
+        <div class="bg-white p-4 rounded shadow mb-6">
+            <div class="flex flex-col md:flex-row md:items-center space-y-4 md:space-y-0 md:space-x-4">
+                <div class="relative flex-grow">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fas fa-search text-gray-400"></i>
+                    </div>
+                    <input type="text" id="resource-search" placeholder="Search resources..." class="pl-10 pr-3 py-2 w-full border border-gray-300 rounded-md">
+                </div>
+                
+                <div class="flex space-x-2 overflow-x-auto pb-2 md:pb-0">
+                    <button class="category-filter active px-3 py-2 border border-blue-500 bg-blue-50 text-blue-700 rounded-full text-sm whitespace-nowrap" data-filter="all">
+                        All Types
+                    </button>
+                    <button class="category-filter px-3 py-2 border border-purple-200 bg-purple-50 text-purple-700 rounded-full text-sm whitespace-nowrap" data-filter="article">
+                        <i class="fas fa-newspaper mr-1"></i> Articles
+                    </button>
+                    <button class="category-filter px-3 py-2 border border-red-200 bg-red-50 text-red-700 rounded-full text-sm whitespace-nowrap" data-filter="video">
+                        <i class="fas fa-video mr-1"></i> Videos
+                    </button>
+                    <button class="category-filter px-3 py-2 border border-green-200 bg-green-50 text-green-700 rounded-full text-sm whitespace-nowrap" data-filter="exercise">
+                        <i class="fas fa-dumbbell mr-1"></i> Exercises
+                    </button>
+                    <button class="category-filter px-3 py-2 border border-blue-200 bg-blue-50 text-blue-700 rounded-full text-sm whitespace-nowrap" data-filter="worksheet">
+                        <i class="fas fa-file-alt mr-1"></i> Worksheets
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Resources Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6" id="resources-grid">
+            {% if resources and resources|length > 0 %}
+                {% for resource in resources %}
+                    <div class="resource-card bg-white rounded shadow overflow-hidden" data-type="{{ resource.type }}">
+                        <div class="p-6">
+                            <div class="flex items-center mb-4">
+                                {% if resource.type == 'article' %}
+                                    <div class="resource-icon bg-purple-100 text-purple-500 mr-4">
+                                        <i class="fas fa-newspaper text-xl"></i>
+                                    </div>
+                                    <div>
+                                        <span class="text-xs text-purple-600 font-medium uppercase tracking-wider">Article</span>
+                                        <h3 class="text-lg font-medium">{{ resource.title }}</h3>
+                                    </div>
+                                {% elif resource.type == 'video' %}
+                                    <div class="resource-icon bg-red-100 text-red-500 mr-4">
+                                        <i class="fas fa-video text-xl"></i>
+                                    </div>
+                                    <div>
+                                        <span class="text-xs text-red-600 font-medium uppercase tracking-wider">Video</span>
+                                        <h3 class="text-lg font-medium">{{ resource.title }}</h3>
+                                    </div>
+                                {% elif resource.type == 'exercise' %}
+                                    <div class="resource-icon bg-green-100 text-green-500 mr-4">
+                                        <i class="fas fa-dumbbell text-xl"></i>
+                                    </div>
+                                    <div>
+                                        <span class="text-xs text-green-600 font-medium uppercase tracking-wider">Exercise</span>
+                                        <h3 class="text-lg font-medium">{{ resource.title }}</h3>
+                                    </div>
+                                {% elif resource.type == 'worksheet' %}
+                                    <div class="resource-icon bg-blue-100 text-blue-500 mr-4">
+                                        <i class="fas fa-file-alt text-xl"></i>
+                                    </div>
+                                    <div>
+                                        <span class="text-xs text-blue-600 font-medium uppercase tracking-wider">Worksheet</span>
+                                        <h3 class="text-lg font-medium">{{ resource.title }}</h3>
+                                    </div>
+                                {% else %}
+                                    <div class="resource-icon bg-gray-100 text-gray-500 mr-4">
+                                        <i class="fas fa-book text-xl"></i>
+                                    </div>
+                                    <div>
+                                        <span class="text-xs text-gray-600 font-medium uppercase tracking-wider">Resource</span>
+                                        <h3 class="text-lg font-medium">{{ resource.title }}</h3>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <p class="text-gray-600 mb-4">{{ resource.description }}</p>
+                            
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm text-gray-500">Shared: {{ resource.shared_at.strftime('%b %d, %Y') }}</span>
+                                
+                                <a href="{{ resource.url }}" target="_blank" class="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                    <i class="fas fa-external-link-alt mr-1.5"></i> Open Resource
+                                </a>
+                            </div>
+                            
+                            {% if resource.custom_message %}
+                                <div class="mt-4 p-3 bg-blue-50 rounded-md border border-blue-200">
+                                    <div class="flex">
+                                        <div class="flex-shrink-0">
+                                            <i class="fas fa-comment-alt text-blue-500"></i>
+                                        </div>
+                                        <div class="ml-3">
+                                            <h4 class="text-sm font-medium text-blue-800">Note from Dr. {{ therapist.first_name }} {{ therapist.last_name }}</h4>
+                                            <p class="text-sm text-blue-700 mt-1">{{ resource.custom_message }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="col-span-3 bg-white p-8 rounded shadow text-center">
+                    <div class="mb-4">
+                        <i class="fas fa-book text-4xl text-gray-400"></i>
+                    </div>
+                    <h3 class="text-xl font-medium text-gray-700 mb-2">No Resources Yet</h3>
+                    <p class="text-gray-500 mb-4">Your therapist hasn't shared any resources with you yet.</p>
+                    <p class="text-gray-500">Resources will appear here when your therapist shares articles, videos, or other helpful materials.</p>
+                    <div class="mt-6">
+                        <a href="{{ url_for('dashboard.therapist_chat') }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            <i class="fas fa-comments mr-2"></i> Chat with Your Therapist
+                        </a>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+        
+        <!-- Resource Note Modal -->
+        <div id="noteModal" class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center hidden z-50">
+            <div class="bg-white rounded-lg max-w-md w-full mx-4">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium" id="note-title">Resource Note</h3>
+                </div>
+                
+                <div class="px-6 py-4">
+                    <p id="note-content" class="text-gray-700"></p>
+                </div>
+                
+                <div class="px-6 py-3 bg-gray-50 flex justify-end">
+                    <button type="button" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50" onclick="hideNoteModal()">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Search functionality
+        document.getElementById('resource-search').addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            filterResources();
+        });
+        
+        // Category filter functionality
+        document.querySelectorAll('.category-filter').forEach(button => {
+            button.addEventListener('click', function() {
+                // Update active state
+                document.querySelectorAll('.category-filter').forEach(btn => {
+                    btn.classList.remove('active');
+                    btn.classList.remove('border-blue-500');
+                    
+                    if (btn.getAttribute('data-filter') === 'article') {
+                        btn.classList.add('border-purple-200');
+                    } else if (btn.getAttribute('data-filter') === 'video') {
+                        btn.classList.add('border-red-200');
+                    } else if (btn.getAttribute('data-filter') === 'exercise') {
+                        btn.classList.add('border-green-200');
+                    } else if (btn.getAttribute('data-filter') === 'worksheet') {
+                        btn.classList.add('border-blue-200');
+                    }
+                });
+                
+                this.classList.add('active', 'border-blue-500');
+                
+                // Filter resources
+                filterResources();
+            });
+        });
+        
+        function filterResources() {
+            const searchTerm = document.getElementById('resource-search').value.toLowerCase();
+            const activeFilter = document.querySelector('.category-filter.active').getAttribute('data-filter');
+            
+            document.querySelectorAll('.resource-card').forEach(card => {
+                const title = card.querySelector('h3').textContent.toLowerCase();
+                const description = card.querySelector('p').textContent.toLowerCase();
+                const type = card.getAttribute('data-type');
+                
+                // Check if card matches search term
+                const matchesSearch = title.includes(searchTerm) || description.includes(searchTerm);
+                
+                // Check if card matches active filter
+                const matchesFilter = activeFilter === 'all' || type === activeFilter;
+                
+                if (matchesSearch && matchesFilter) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+            
+            // Show empty message if no results
+            const visibleCards = document.querySelectorAll('.resource-card[style="display: block;"]').length;
+            const emptyState = document.querySelector('#empty-state');
+            
+            if (visibleCards === 0 && emptyState) {
+                emptyState.style.display = 'block';
+            } else if (emptyState) {
+                emptyState.style.display = 'none';
+            }
+        }
+        
+        // Note modal functionality
+        function showNoteModal(title, content) {
+            document.getElementById('note-title').textContent = title;
+            document.getElementById('note-content').textContent = content;
+            document.getElementById('noteModal').classList.remove('hidden');
+        }
+        
+        function hideNoteModal() {
+            document.getElementById('noteModal').classList.add('hidden');
+        }
+        
+        // Close modal when clicking outside
+        window.addEventListener('click', function(e) {
+            if (e.target === document.getElementById('noteModal')) {
+                hideNoteModal();
+            }
+        });
+    </script>
+</body>
+</html>

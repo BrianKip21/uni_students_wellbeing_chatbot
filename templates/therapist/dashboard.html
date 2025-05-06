@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Therapist Dashboard | Wellbeing Assistant</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css"> 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+
+    <style>
+        {% if settings.theme_mode == 'dark' %}
+        /* Dark mode styles */
+        body {
+            background-color: #121212 !important;
+            color: #e0e0e0 !important;
+        }
+        
+        .bg-white {
+            background-color: #1e1e1e !important;
+        }
+        
+        .text-gray-700, .text-gray-800, .text-gray-900 {
+            color: #e0e0e0 !important;
+        }
+        
+        .text-gray-500, .text-gray-600 {
+            color: #a0a0a0 !important;
+        }
+        
+        .bg-gray-50, .bg-gray-100, .bg-gray-200 {
+            background-color: #2a2a2a !important;
+        }
+        
+        .border-gray-200, .border-gray-300 {
+            border-color: #333 !important;
+        }
+
+        .hover\:bg-gray-100:hover {
+            background-color: #333333 !important;
+        }
+
+        .hover\:bg-gray-200:hover {
+            background-color: #444444 !important;
+        }
+
+        .hover\:bg-green-200:hover {
+            background-color: #0d503c !important;
+        }
+
+        .hover\:bg-blue-200:hover {
+            background-color: #0d365e !important;
+        }
+
+        .bg-green-100 {
+            background-color: #064e3b !important;
+        }
+
+        .bg-blue-100 {
+            background-color: #0c4a6e !important;
+        }
+        {% endif %}
+        
+        {% if settings.contrast == 'high' %}
+        /* High contrast styles */
+        body {
+            background-color: #ffffff !important;
+            color: #000000 !important;
+        }
+        
+        .text-gray-500, .text-gray-600, .text-gray-700, .text-gray-800, .text-gray-900 {
+            color: #000000 !important;
+        }
+        
+        .bg-gray-800 {
+            background-color: #000000 !important;
+        }
+        
+        .text-gray-200 {
+            color: #ffffff !important;
+        }
+        
+        input, select, button {
+            border: 2px solid #000000 !important;
+        }
+
+        .bg-green-100, .bg-blue-100, .bg-gray-100 {
+            background-color: #ffffff !important;
+            border: 2px solid #000000 !important;
+        }
+
+        .text-green-500, .text-blue-500, .text-purple-500 {
+            color: #000000 !important;
+        }
+        {% endif %}
+        
+        {% if settings.text_size == 'lg' %}
+        /* Large text */
+        body {
+            font-size: 1.125rem !important;
+        }
+        
+        .text-sm {
+            font-size: 0.9375rem !important;
+        }
+        
+        .text-lg, .text-xl, .text-2xl, .text-3xl {
+            font-size: 1.3125rem !important;
+        }
+        {% elif settings.text_size == 'xl' %}
+        /* Extra large text */
+        body {
+            font-size: 1.25rem !important;
+        }
+        
+        .text-sm {
+            font-size: 1.0625rem !important;
+        }
+        
+        .text-lg, .text-xl {
+            font-size: 1.5rem !important;
+        }
+
+        .text-2xl, .text-3xl {
+            font-size: 1.75rem !important;
+        }
+        {% endif %}
+
+        /* Custom styles for therapist dashboard */
+        .status-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        
+        .status-active {
+            background-color: #dcfce7;
+            color: #15803d;
+        }
+        
+        .status-pending {
+            background-color: #fef3c7;
+            color: #b45309;
+        }
+        
+        .status-completed {
+            background-color: #dbeafe;
+            color: #1e40af;
+        }
+        
+        .status-cancelled {
+            background-color: #fee2e2;
+            color: #b91c1c;
+        }
+
+        .appointment-card {
+            transition: transform 0.2s;
+        }
+        
+        .appointment-card:hover {
+            transform: translateY(-4px);
+        }
+
+        {% if settings.theme_mode == 'dark' %}
+        .status-active {
+            background-color: #064e3b;
+            color: #dcfce7;
+        }
+        
+        .status-pending {
+            background-color: #78350f;
+            color: #fef3c7;
+        }
+        
+        .status-completed {
+            background-color: #1e3a8a;
+            color: #dbeafe;
+        }
+        
+        .status-cancelled {
+            background-color: #7f1d1d;
+            color: #fee2e2;
+        }
+        {% endif %}
+    </style>
+</head>
+
+<body class="bg-gray-200 flex text-gray-900">
+    <!-- Sidebar Navigation -->
+    <aside class="w-64 h-screen bg-gray-800 text-gray-200 p-4 fixed">
+        <h1 class="text-2xl font-bold mb-6">Therapist Portal</h1>
+        <nav>
+            <ul class="space-y-4">
+                <li><a href="{{ url_for('therapist.dashboard') }}" class="block p-2 bg-gray-700 rounded"> <i class="fas fa-chart-line"></i> Dashboard</a></li>
+                <li><a href="{{ url_for('therapist.appointments') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-calendar-alt"></i> Appointments</a></li>
+                <li><a href="{{ url_for('therapist.students') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-user-graduate"></i> My Students</a></li>
+                <li><a href="{{ url_for('therapist.profile') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-user"></i> Profile</a></li>
+                <li><a href="{{ url_for('therapist.settings') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-cog"></i> Settings</a></li>
+                <li><a href="{{ url_for('auth.logout') }}" class="block p-2 hover:bg-gray-700 rounded mt-8"> <i class="fas fa-sign-out-alt"></i> Logout</a></li>
+            </ul>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="ml-64 p-8 w-full">
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <div class="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 mb-6" role="alert">
+                    {% for message in messages %}
+                        <p>{{ message }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+    
+        <h2 class="text-3xl font-bold text-gray-800">Welcome, Dr. {{ therapist.last_name }}!</h2>
+        <p class="text-gray-700 mb-6">Here's an overview of your therapy activities</p>
+        
+        <!-- Stats Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+            <!-- Total Students -->
+            <div class="bg-white p-6 rounded shadow dashboard-card">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-blue-100 text-blue-500 mr-4">
+                        <i class="fas fa-users text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-gray-500 text-sm">Total Students</p>
+                        <h3 class="text-2xl font-bold">{{ total_students }}</h3>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Total Sessions -->
+            <div class="bg-white p-6 rounded shadow dashboard-card">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-green-100 text-green-500 mr-4">
+                        <i class="fas fa-calendar-check text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-gray-500 text-sm">Total Sessions</p>
+                        <h3 class="text-2xl font-bold">{{ total_sessions }}</h3>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Today's Appointments -->
+            <div class="bg-white p-6 rounded shadow dashboard-card">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-purple-100 text-purple-500 mr-4">
+                        <i class="fas fa-calendar-day text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-gray-500 text-sm">Today's Appointments</p>
+                        <h3 class="text-2xl font-bold">{{ todays_appointments|default(0) }}</h3>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Pending Requests -->
+            <div class="bg-white p-6 rounded shadow dashboard-card">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-yellow-100 text-yellow-500 mr-4">
+                        <i class="fas fa-clock text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-gray-500 text-sm">Pending Requests</p>
+                        <h3 class="text-2xl font-bold">{{ pending_requests|default(0) }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Upcoming Appointments and Recent Students -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <!-- Upcoming Appointments -->
+            <div class="bg-white p-6 rounded shadow dashboard-card">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-semibold">Upcoming Appointments</h3>
+                    <a href="{{ url_for('therapist.appointments') }}" class="text-blue-500 hover:underline text-sm">View All</a>
+                </div>
+                
+                {% if upcoming_appointments %}
+                    {% for appointment in upcoming_appointments %}
+                        <div class="bg-gray-50 p-4 rounded mb-3 appointment-card">
+                            <div class="flex justify-between">
+                                <div>
+                                    <h4 class="font-medium">{{ appointment.student_name }}</h4>
+                                    <p class="text-sm text-gray-600">{{ appointment.date.strftime('%B %d, %Y') }} at {{ appointment.time }}</p>
+                                </div>
+                                <span class="status-badge status-{{ appointment.status }}">{{ appointment.status }}</span>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-gray-600">No upcoming appointments scheduled.</p>
+                {% endif %}
+            </div>
+            
+            <!-- Recent Students -->
+            <div class="bg-white p-6 rounded shadow dashboard-card">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-semibold">My Students</h3>
+                    <a href="{{ url_for('therapist.students') }}" class="text-blue-500 hover:underline text-sm">View All</a>
+                </div>
+                
+                {% if assigned_students %}
+                    {% for student in assigned_students %}
+                        <div class="flex items-center py-3 {% if not loop.last %}border-b border-gray-200{% endif %}">
+                            <div class="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center mr-3 text-gray-600">
+                                {{ student.student_name[:1] }}
+                            </div>
+                            <div>
+                                <h4 class="font-medium">{{ student.student_name }}</h4>
+                                <p class="text-sm text-gray-600">{{ student.session_count|default(0) }} sessions completed</p>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-gray-600">No students assigned to you yet.</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Recent Session Notes -->
+        <div class="bg-white p-6 rounded shadow dashboard-card">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-semibold">Recent Session Notes</h3>
+            </div>
+            
+            {% if recent_sessions %}
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                {% for session in recent_sessions %}
+                    <div class="border border-gray-200 rounded p-4">
+                        <div class="flex justify-between items-start mb-2">
+                            <h4 class="font-medium">{{ session.student_name }}</h4>
+                            <span class="text-sm text-gray-500">{{ session.date.strftime('%b %d') }}</span>
+                        </div>
+                        <p class="text-sm text-gray-700 mb-3">{{ session.notes|truncate(100) }}</p>
+                        <a href="{{ url_for('therapist.view_session', session_id=session._id) }}" class="text-sm text-blue-500 hover:underline">View Full Notes</a>
+                    </div>
+                {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-gray-600">No recent session notes available.</p>
+            {% endif %}
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="bg-white p-6 rounded shadow dashboard-card">
+            <h3 class="text-xl font-semibold mb-4">Quick Actions</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <a href="{{ url_for('therapist.appointments') }}" class="bg-blue-50 hover:bg-blue-100 p-4 rounded text-center transition duration-200">
+                    <i class="fas fa-calendar-plus text-blue-500 text-2xl mb-2"></i>
+                    <p class="text-gray-800">Schedule Appointment</p>
+                </a>
+                <a href="{{ url_for('therapist.students') }}" class="bg-green-50 hover:bg-green-100 p-4 rounded text-center transition duration-200">
+                    <i class="fas fa-user-plus text-green-500 text-2xl mb-2"></i>
+                    <p class="text-gray-800">Add New Student</p>
+                </a>
+                <a href="#" class="bg-purple-50 hover:bg-purple-100 p-4 rounded text-center transition duration-200">
+                    <i class="fas fa-clipboard-list text-purple-500 text-2xl mb-2"></i>
+                    <p class="text-gray-800">Create Session Report</p>
+                </a>
+                <a href="#" class="bg-yellow-50 hover:bg-yellow-100 p-4 rounded text-center transition duration-200">
+                    <i class="fas fa-book-medical text-yellow-500 text-2xl mb-2"></i>
+                    <p class="text-gray-800">Access Resources</p>
+                </a>
+            </div>
+        </div>
+    </main>
+
+    <!-- Optional JavaScript -->
+    <script src="{{ url_for('static', filename='therapist.js') }}"></script>
+</body>
+</html>

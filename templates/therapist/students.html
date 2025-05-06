@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Students | Therapist Portal</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css"> 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+
+    <style>
+        {% if settings.theme_mode == 'dark' %}
+        /* Dark mode styles */
+        body {
+            background-color: #121212 !important;
+            color: #e0e0e0 !important;
+        }
+        
+        .bg-white {
+            background-color: #1e1e1e !important;
+        }
+        
+        .text-gray-700, .text-gray-800, .text-gray-900 {
+            color: #e0e0e0 !important;
+        }
+        
+        .text-gray-500, .text-gray-600 {
+            color: #a0a0a0 !important;
+        }
+        
+        .bg-gray-50, .bg-gray-100, .bg-gray-200 {
+            background-color: #2a2a2a !important;
+        }
+        
+        .border-gray-200, .border-gray-300 {
+            border-color: #333 !important;
+        }
+        
+        .student-card {
+            background-color: #1e1e1e !important;
+            border-color: #333 !important;
+        }
+        
+        .student-card:hover {
+            background-color: #2a2a2a !important;
+        }
+        {% endif %}
+        
+        .student-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .student-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.5rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        
+        .badge-blue {
+            background-color: #dbeafe;
+            color: #1e40af;
+        }
+        
+        .badge-green {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+        
+        .badge-yellow {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+        
+        .badge-red {
+            background-color: #fee2e2;
+            color: #b91c1c;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-200 flex text-gray-900">
+    <!-- Sidebar Navigation -->
+    <aside class="w-64 h-screen bg-gray-800 text-gray-200 p-4 fixed">
+        <h1 class="text-2xl font-bold mb-6">Therapist Portal</h1>
+        <nav>
+            <ul class="space-y-4">
+                <li><a href="{{ url_for('therapist.dashboard') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-chart-line"></i> Dashboard</a></li>
+                <li><a href="{{ url_for('therapist.appointments') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-calendar-alt"></i> Appointments</a></li>
+                <li><a href="{{ url_for('therapist.students') }}" class="block p-2 bg-gray-700 rounded"> <i class="fas fa-user-graduate"></i> My Students</a></li>
+                <li><a href="{{ url_for('therapist.profile') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-user"></i> Profile</a></li>
+                <li><a href="{{ url_for('therapist.settings') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-cog"></i> Settings</a></li>
+                <li><a href="{{ url_for('auth.logout') }}" class="block p-2 hover:bg-gray-700 rounded mt-8"> <i class="fas fa-sign-out-alt"></i> Logout</a></li>
+            </ul>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="ml-64 p-8 w-full">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    {% set bg_color = "bg-blue-100 border-blue-500" %}
+                    {% set text_color = "text-blue-700" %}
+                    
+                    {% if category == 'error' %}
+                        {% set bg_color = "bg-red-100 border-red-500" %}
+                        {% set text_color = "text-red-700" %}
+                    {% elif category == 'success' %}
+                        {% set bg_color = "bg-green-100 border-green-500" %}
+                        {% set text_color = "text-green-700" %}
+                    {% elif category == 'warning' %}
+                        {% set bg_color = "bg-yellow-100 border-yellow-500" %}
+                        {% set text_color = "text-yellow-700" %}
+                    {% endif %}
+                    
+                    <div class="{{ bg_color }} border-l-4 {{ text_color }} p-4 mb-6" role="alert">
+                        <p>{{ message }}</p>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        <div class="flex justify-between items-center mb-6">
+            <div>
+                <h2 class="text-3xl font-bold text-gray-800">My Students</h2>
+                <p class="text-gray-600">Manage your assigned students and their therapy progress</p>
+            </div>
+            
+            <div class="flex space-x-2">
+                <button id="toggle-table-view" class="bg-white text-gray-700 px-3 py-2 rounded border border-gray-300 flex items-center">
+                    <i class="fas fa-table mr-2"></i> Table View
+                </button>
+                <button id="toggle-card-view" class="bg-blue-500 text-white px-3 py-2 rounded border border-blue-500 flex items-center">
+                    <i class="fas fa-th-large mr-2"></i> Card View
+                </button>
+            </div>
+        </div>
+        
+        <!-- Search & Filter -->
+        <div class="bg-white p-4 rounded shadow mb-6">
+            <div class="flex flex-wrap items-center gap-4">
+                <div class="relative flex-grow">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fas fa-search text-gray-400"></i>
+                    </div>
+                    <input type="text" id="student-search" placeholder="Search students by name..." class="pl-10 pr-3 py-2 w-full border border-gray-300 rounded-md">
+                </div>
+                
+                <div>
+                    <select id="filter-status" class="border border-gray-300 rounded-md px-3 py-2">
+                        <option value="all">All Students</option>
+                        <option value="recent">Recent Activity</option>
+                        <option value="upcoming">Upcoming Session</option>
+                        <option value="unread">Unread Messages</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <select id="sort-by" class="border border-gray-300 rounded-md px-3 py-2">
+                        <option value="name">Sort by Name</option>
+                        <option value="sessions">Sort by Session Count</option>
+                        <option value="recent">Sort by Recent Activity</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Card View -->
+        <div id="card-view" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% if students_data and students_data|length > 0 %}
+                {% for data in students_data %}
+                    <div class="student-card bg-white rounded shadow overflow-hidden" data-student-name="{{ data.student.first_name }} {{ data.student.last_name }}" data-session-count="{{ data.total_sessions }}">
+                        <div class="p-6">
+                            <div class="flex justify-between items-start mb-4">
+                                <div class="flex items-center">
+                                    <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 mr-3">
+                                        {{ data.student.first_name[0] }}{{ data.student.last_name[0] }}
+                                    </div>
+                                    <div>
+                                        <h3 class="text-lg font-medium">{{ data.student.first_name }} {{ data.student.last_name }}</h3>
+                                        <p class="text-sm text-gray-500">{% if data.student.student_id %}ID: {{ data.student.student_id }}{% else %}No ID{% endif %}</p>
+                                    </div>
+                                </div>
+                                
+                                {% if data.unread_messages > 0 %}
+                                    <span class="badge badge-red">
+                                        <i class="fas fa-envelope mr-1"></i> {{ data.unread_messages }}
+                                    </span>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="space-y-2 mb-4">
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-gray-600">Total Sessions:</span>
+                                    <span class="font-medium">{{ data.total_sessions }}</span>
+                                </div>
+                                
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-gray-600">Last Session:</span>
+                                    <span class="font-medium">
+                                        {% if data.latest_appointment %}
+                                            {{ data.latest_appointment.date.strftime('%b %d, %Y') }}
+                                        {% else %}
+                                            None
+                                        {% endif %}
+                                    </span>
+                                </div>
+                                
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-gray-600">Next Session:</span>
+                                    <span class="font-medium">
+                                        {% if data.next_appointment %}
+                                            {{ data.next_appointment.date.strftime('%b %d, %Y') }}
+                                        {% else %}
+                                            Not Scheduled
+                                        {% endif %}
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <div class="border-t border-gray-200 pt-4 mt-4 flex space-x-2">
+                                <a href="{{ url_for('therapist.student_details', student_id=data.student._id) }}" class="flex-1 text-center py-2 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 text-sm">
+                                    <i class="fas fa-user mr-1"></i> View Profile
+                                </a>
+                                <a href="{{ url_for('therapist.chat', student_id=data.student._id) }}" class="flex-1 text-center py-2 bg-green-100 text-green-700 rounded hover:bg-green-200 text-sm">
+                                    <i class="fas fa-comments mr-1"></i> Chat
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="col-span-3 bg-white p-8 rounded shadow text-center">
+                    <div class="mb-4">
+                        <i class="fas fa-user-graduate text-4xl text-gray-400"></i>
+                    </div>
+                    <h3 class="text-xl font-medium text-gray-700 mb-2">No Students Assigned</h3>
+                    <p class="text-gray-500 mb-4">You currently don't have any students assigned to you.</p>
+                    <p class="text-gray-500">New students will appear here once they are assigned through the admin panel.</p>
+                </div>
+            {% endif %}
+        </div>
+        
+        <!-- Table View (hidden by default) -->
+        <div id="table-view" class="bg-white rounded shadow overflow-hidden hidden">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead>
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Sessions</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Session</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Next Session</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Messages</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% if students_data and students_data|length > 0 %}
+                        {% for data in students_data %}
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 mr-3">
+                                            {{ data.student.first_name[0] }}{{ data.student.last_name[0] }}
+                                        </div>
+                                        <div>
+                                            <div class="text-sm font-medium text-gray-900">{{ data.student.first_name }} {{ data.student.last_name }}</div>
+                                            <div class="text-sm text-gray-500">{% if data.student.student_id %}ID: {{ data.student.student_id }}{% else %}No ID{% endif %}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ data.total_sessions }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {% if data.latest_appointment %}
+                                        {{ data.latest_appointment.date.strftime('%b %d, %Y') }}
+                                    {% else %}
+                                        None
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {% if data.next_appointment %}
+                                        {{ data.next_appointment.date.strftime('%b %d, %Y') }}
+                                    {% else %}
+                                        Not Scheduled
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    {% if data.unread_messages > 0 %}
+                                        <span class="badge badge-red">
+                                            <i class="fas fa-envelope mr-1"></i> {{ data.unread_messages }} unread
+                                        </span>
+                                    {% else %}
+                                        <span class="text-sm text-gray-500">No unread</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <a href="{{ url_for('therapist.student_details', student_id=data.student._id) }}" class="text-blue-600 hover:text-blue-900 mr-3">
+                                        <i class="fas fa-user"></i> Profile
+                                    </a>
+                                    <a href="{{ url_for('therapist.chat', student_id=data.student._id) }}" class="text-green-600 hover:text-green-900 mr-3">
+                                        <i class="fas fa-comments"></i> Chat
+                                    </a>
+                                    <a href="{{ url_for('therapist.schedule_appointment', student_id=data.student._id) }}" class="text-purple-600 hover:text-purple-900">
+                                        <i class="fas fa-calendar-plus"></i> Schedule
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="6" class="px-6 py-8 text-center text-gray-500">
+                                You currently don't have any students assigned to you.
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Pending Student Requests -->
+        {% if new_student_requests and new_student_requests|length > 0 %}
+            <div class="mt-8">
+                <h2 class="text-xl font-bold text-gray-800 mb-4">Pending Student Assignments</h2>
+                <div class="bg-white rounded shadow overflow-hidden">
+                    {% for req in new_student_requests %}
+                        <div class="border-b border-gray-200 p-4">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h3 class="font-medium">{{ req.student_name }}</h3>
+                                    <p class="text-sm text-gray-500">Request received: {{ req.created_at.strftime('%b %d, %Y') }}</p>
+                                    <div class="mt-2">
+                                        <span class="badge badge-yellow">Pending Approval</span>
+                                    </div>
+                                </div>
+                                <div class="flex space-x-2">
+                                    <form action="{{ url_for('therapist.approve_student', request_id=req._id) }}" method="post">
+                                        <button type="submit" class="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 text-sm">
+                                            <i class="fas fa-check mr-1"></i> Accept
+                                        </button>
+                                    </form>
+                                    <button type="button" onclick="showRejectModal('{{ req._id }}')" class="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm">
+                                        <i class="fas fa-times mr-1"></i> Decline
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="mt-3 p-3 bg-gray-50 rounded text-sm">
+                                <p class="font-medium mb-1">Student's reason:</p>
+                                <p class="text-gray-700">{{ req.reason or "No reason provided" }}</p>
+                                <p class="mt-2 font-medium mb-1">Concerns:</p>
+                                <div class="flex flex-wrap gap-1">
+                                    {% for concern in req.concerns %}
+                                        <span class="badge badge-blue">{{ concern }}</span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+    </main>
+    
+    <!-- Reject Student Modal -->
+    <div id="rejectModal" class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center hidden z-50">
+        <div class="bg-white rounded-lg max-w-md w-full mx-4">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-medium">Decline Student Assignment</h3>
+            </div>
+            
+            <form id="rejectForm" action="" method="POST">
+                <div class="px-6 py-4">
+                    <div class="mb-4">
+                        <p class="text-gray-700 mb-4">Please provide a reason for declining this student assignment. This information will be reviewed by the administrator.</p>
+                        
+                        <div>
+                            <label for="reason" class="block text-sm font-medium text-gray-700 mb-1">Reason for Declining</label>
+                            <textarea id="reason" name="reason" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="Please explain why you're declining this assignment..."></textarea>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-gray-50 px-6 py-3 flex justify-end">
+                    <button type="button" class="mr-2 inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" id="cancelReject">
+                        Cancel
+                    </button>
+                    <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                        Decline Assignment
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Search functionality
+        document.getElementById('student-search').addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            
+            // Filter cards
+            document.querySelectorAll('#card-view .student-card').forEach(card => {
+                const studentName = card.getAttribute('data-student-name').toLowerCase();
+                if (studentName.includes(searchTerm)) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+            
+            // Filter table rows
+            document.querySelectorAll('#table-view tbody tr').forEach(row => {
+                const studentName = row.querySelector('.text-sm.font-medium').textContent.toLowerCase();
+                if (studentName.includes(searchTerm)) {
+                    row.style.display = 'table-row';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+        
+        // Filter functionality
+        document.getElementById('filter-status').addEventListener('change', function() {
+            const filterValue = this.value;
+            
+            // Implement filtering logic based on the selected filter
+            // This would need to be customized based on your data structure
+        });
+        
+        // Sort functionality
+        document.getElementById('sort-by').addEventListener('change', function() {
+            const sortBy = this.value;
+            const cardContainer = document.getElementById('card-view');
+            const cards = Array.from(cardContainer.getElementsByClassName('student-card'));
+            
+            cards.sort((a, b) => {
+                if (sortBy === 'name') {
+                    return a.getAttribute('data-student-name').localeCompare(b.getAttribute('data-student-name'));
+                } else if (sortBy === 'sessions') {
+                    return parseInt(b.getAttribute('data-session-count')) - parseInt(a.getAttribute('data-session-count'));
+                }
+                // Add additional sorting options as needed
+                return 0;
+            });
+            
+            // Re-append sorted cards
+            cards.forEach(card => cardContainer.appendChild(card));
+        });
+        
+        // Toggle view buttons
+        document.getElementById('toggle-table-view').addEventListener('click', function() {
+            document.getElementById('card-view').classList.add('hidden');
+            document.getElementById('table-view').classList.remove('hidden');
+            
+            this.classList.add('bg-blue-500', 'text-white', 'border-blue-500');
+            this.classList.remove('bg-white', 'text-gray-700', 'border-gray-300');
+            
+            document.getElementById('toggle-card-view').classList.add('bg-white', 'text-gray-700', 'border-gray-300');
+            document.getElementById('toggle-card-view').classList.remove('bg-blue-500', 'text-white', 'border-blue-500');
+        });
+        
+        document.getElementById('toggle-card-view').addEventListener('click', function() {
+            document.getElementById('table-view').classList.add('hidden');
+            document.getElementById('card-view').classList.remove('hidden');
+            
+            this.classList.add('bg-blue-500', 'text-white', 'border-blue-500');
+            this.classList.remove('bg-white', 'text-gray-700', 'border-gray-300');
+            
+            document.getElementById('toggle-table-view').classList.add('bg-white', 'text-gray-700', 'border-gray-300');
+            document.getElementById('toggle-table-view').classList.remove('bg-blue-500', 'text-white', 'border-blue-500');
+        });
+        
+        // Reject modal functionality
+        function showRejectModal(requestId) {
+            document.getElementById('rejectForm').action = "{{ url_for('therapist.reject_student', request_id='') }}" + requestId;
+            document.getElementById('rejectModal').classList.remove('hidden');
+        }
+        
+        document.getElementById('cancelReject').addEventListener('click', function() {
+            document.getElementById('rejectModal').classList.add('hidden');
+        });
+    </script>
+</body>
+</html>

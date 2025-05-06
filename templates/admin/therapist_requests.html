@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Therapist Requests - Admin Panel</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        .request-card {
+            padding: 15px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            background-color: #fff;
+        }
+        
+        .request-card:hover {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .status-pending {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn-assign {
+            background-color: #2563eb;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .btn-reject {
+            background-color: #dc2626;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .filter-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f9fafb;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <h2>Admin Panel</h2>
+            <ul>
+                <li><a href="{{ url_for('admin.dashboard') }}">Dashboard</a></li>
+                <li><a href="{{ url_for('admin.user_management') }}">User Management</a></li>
+                <li><a href="{{ url_for('admin.therapist_management') }}">Therapist Management</a></li>
+                <li><a href="{{ url_for('admin.therapist_assignments') }}" class="active">Therapist Assignments</a></li>
+                <li><a href="{{ url_for('admin.assignment_stats') }}">Therapist Assignment Stats</a></li>
+                <li><a href="{{ url_for('admin.chat_logs') }}">Chat Logs</a></li>
+                <li><a href="{{ url_for('admin.feedback_dashboard') }}">Feedback Analysis</a></li>
+                <li><a href="{{ url_for('admin.model_management') }}">Model Management</a></li>
+                <li><a href="{{ url_for('admin.resources') }}">Resource Management</a></li>
+                <li><a href="{{ url_for('admin.analytics') }}">Analytics</a></li>
+                <li><a href="{{ url_for('admin.settings') }}">Settings</a></li>
+                <li><a href="{{ url_for('auth.logout') }}">Logout</a></li>
+            </ul>
+        </aside>
+        
+        <div class="main-content">
+            <h1>Pending Therapist Requests</h1>
+            
+            <div class="filter-section">
+                <h3>Filter Requests</h3>
+                <form action="{{ url_for('admin.therapist_requests') }}" method="GET">
+                    <div class="form-group">
+                        <label for="date_from">From Date:</label>
+                        <input type="date" id="date_from" name="date_from" value="{{ request.args.get('date_from', '') }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="date_to">To Date:</label>
+                        <input type="date" id="date_to" name="date_to" value="{{ request.args.get('date_to', '') }}">
+                    </div>
+                    <button type="submit" class="btn">Apply Filter</button>
+                    <a href="{{ url_for('admin.therapist_requests') }}" class="btn-secondary">Clear</a>
+                </form>
+            </div>
+            
+            <div class="requests-container">
+                {% if requests and requests|length > 0 %}
+                    {% for req in requests %}
+                        <div class="request-card">
+                            <div class="request-header">
+                                <h3>Request #{{ req._id }}</h3>
+                                <span class="status-badge status-pending">Pending</span>
+                            </div>
+                            <div class="request-details">
+                                <p><strong>Student:</strong> {{ req.student_name }} ({{ req.student_email }})</p>
+                                <p><strong>Date Submitted:</strong> {{ req.created_at.strftime('%B %d, %Y at %I:%M %p') }}</p>
+                                <p><strong>Concerns:</strong> {{ req.concerns|join(', ') }}</p>
+                                
+                                {% if req.urgency_level == 'urgent' %}
+                                    <p class="urgency-high"><strong>Urgency:</strong> High - Requires immediate attention</p>
+                                {% elif req.urgency_level == 'soon' %}
+                                    <p class="urgency-medium"><strong>Urgency:</strong> Medium - Needs attention this week</p>
+                                {% else %}
+                                    <p><strong>Urgency:</strong> Normal</p>
+                                {% endif %}
+                                
+                                <div class="description-box">
+                                    <h4>Student Description:</h4>
+                                    <p>{{ req.issue_description }}</p>
+                                </div>
+                                
+                                <div class="action-buttons">
+                                    <a href="{{ url_for('admin.assign_therapist', request_id=req._id) }}" class="btn-assign">Assign Therapist</a>
+                                    <button type="button" class="btn-reject" onclick="showRejectModal('{{ req._id }}')">Reject Request</button>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state">
+                        <h3>No pending requests</h3>
+                        <p>There are currently no pending therapist requests in the system.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Reject Request Modal -->
+    <div id="rejectModal" class="modal">
+        <div class="modal-content">
+            <h2>Reject Therapist Request</h2>
+            <form id="rejectForm" action="" method="POST">
+                <div class="form-group">
+                    <label for="reason">Reason for Rejection:</label>
+                    <textarea id="reason" name="reason" rows="4" required></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="button" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="btn-danger">Reject Request</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script>
+        function showRejectModal(requestId) {
+            document.getElementById('rejectForm').action = "/admin/reject-request/" + requestId;
+            document.getElementById('rejectModal').style.display = "block";
+        }
+        
+        function closeModal() {
+            document.getElementById('rejectModal').style.display = "none";
+        }
+        
+        // Close modal when clicking outside of it
+        window.onclick = function(event) {
+            if (event.target == document.getElementById('rejectModal')) {
+                closeModal();
+            }
+        }
+    </script>
+</body>
+</html>

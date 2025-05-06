@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assign Therapist - Admin Panel</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        .request-details {
+            background-color: #f9fafb;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .therapist-card {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+        }
+        
+        .therapist-card:hover {
+            border-color: #2563eb;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .therapist-card.selected {
+            background-color: #eff6ff;
+            border-color: #2563eb;
+        }
+        
+        .therapist-icon {
+            width: 50px;
+            height: 50px;
+            background-color: #dbeafe;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            font-size: 20px;
+            color: #2563eb;
+        }
+        
+        .therapist-details {
+            flex-grow: 1;
+        }
+        
+        .therapist-meta {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 5px;
+        }
+        
+        .capacity-indicator {
+            width: 100px;
+            height: 8px;
+            background-color: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 5px;
+        }
+        
+        .capacity-fill {
+            height: 100%;
+            background-color: #2563eb;
+        }
+        
+        .therapist-actions {
+            margin-top: 30px;
+            display: flex;
+            justify-content: space-between;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <h2>Admin Panel</h2>
+            <ul>
+                <li><a href="{{ url_for('admin.dashboard') }}">Dashboard</a></li>
+                <li><a href="{{ url_for('admin.user_management') }}">User Management</a></li>
+                <li><a href="{{ url_for('admin.therapist_management') }}">Therapist Management</a></li>
+                <li><a href="{{ url_for('admin.therapist_assignments') }}" class="active">Therapist Assignments</a></li>
+                <li><a href="{{ url_for('admin.assignment_stats') }}">Therapist Assignment Stats</a></li>
+                <li><a href="{{ url_for('admin.chat_logs') }}">Chat Logs</a></li>
+                <li><a href="{{ url_for('admin.feedback_dashboard') }}">Feedback Analysis</a></li>
+                <li><a href="{{ url_for('admin.model_management') }}">Model Management</a></li>
+                <li><a href="{{ url_for('admin.resources') }}">Resource Management</a></li>
+                <li><a href="{{ url_for('admin.analytics') }}">Analytics</a></li>
+                <li><a href="{{ url_for('admin.settings') }}">Settings</a></li>
+                <li><a href="{{ url_for('auth.logout') }}">Logout</a></li>
+            </ul>
+        </aside>
+        
+        <div class="main-content">
+            <h1>Assign Therapist</h1>
+            
+            <div class="breadcrumbs">
+                <a href="{{ url_for('admin.therapist_requests') }}">← Back to Therapist Requests</a>
+            </div>
+            
+            <div class="request-details">
+                <h2>Request Information</h2>
+                <p><strong>Student:</strong> {{ student.first_name }} {{ student.last_name }} ({{ student.email }})</p>
+                <p><strong>Date Submitted:</strong> {{ request.created_at.strftime('%B %d, %Y at %I:%M %p') }}</p>
+                <p><strong>Concerns:</strong> {{ request.concerns|join(', ') }}</p>
+                <p><strong>Preferred Session Type:</strong> 
+                    {% if request.preferred_session_type == 'online' %}
+                        Online (Video)
+                    {% elif request.preferred_session_type == 'in_person' %}
+                        In-Person
+                    {% else %}
+                        No Preference
+                    {% endif %}
+                </p>
+                <p><strong>Urgency Level:</strong> 
+                    {% if request.urgency_level == 'urgent' %}
+                        <span class="urgent-label">High - Requires immediate attention</span>
+                    {% elif request.urgency_level == 'soon' %}
+                        <span class="soon-label">Medium - Needs attention this week</span>
+                    {% else %}
+                        Normal
+                    {% endif %}
+                </p>
+                
+                <div class="description-box">
+                    <h3>Student Description:</h3>
+                    <p>{{ request.issue_description }}</p>
+                </div>
+            </div>
+            
+            <h2>Select a Therapist</h2>
+            <div class="therapist-filter">
+                <input type="text" id="therapistSearch" placeholder="Search therapists by name or specialization..." class="search-input">
+                <div class="sort-options">
+                    <label for="sortBy">Sort by:</label>
+                    <select id="sortBy" onchange="sortTherapists()">
+                        <option value="load">Current Load</option>
+                        <option value="name">Name</option>
+                        <option value="specialization">Specialization</option>
+                    </select>
+                </div>
+            </div>
+            
+            <form action="{{ url_for('admin.assign_therapist', request_id=request._id) }}" method="POST" id="assignForm">
+                <div class="therapists-list">
+                    {% if therapists and therapists|length > 0 %}
+                        {% for therapist in therapists %}
+                            <div class="therapist-card" data-specialization="{{ therapist.specialization }}" onclick="selectTherapist('{{ therapist._id }}')">
+                                <div class="therapist-icon">
+                                    {{ therapist.first_name[0] }}{{ therapist.last_name[0] }}
+                                </div>
+                                <div class="therapist-details">
+                                    <h3>Dr. {{ therapist.first_name }} {{ therapist.last_name }}</h3>
+                                    <p>{{ therapist.specialization }}</p>
+                                    <div class="therapist-meta">
+                                        <span>{{ therapist.current_students }} / {{ therapist.max_students }} students</span>
+                                        <span>{{ therapist.office_hours.description }}</span>
+                                    </div>
+                                    <div class="capacity-indicator">
+                                        <div class="capacity-fill" style="width: {{ (therapist.current_students / therapist.max_students) * 100 }}%;"></div>
+                                    </div>
+                                </div>
+                                <input type="radio" name="therapist_id" value="{{ therapist._id }}" id="therapist-{{ therapist._id }}" style="display: none;">
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="empty-state">
+                            <h3>No available therapists</h3>
+                            <p>There are currently no therapists available or all therapists have reached their maximum capacity.</p>
+                            <a href="{{ url_for('admin.therapist_management') }}" class="btn">Manage Therapists</a>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="therapist-actions">
+                    <a href="{{ url_for('admin.therapist_requests') }}" class="btn-secondary">Cancel</a>
+                    <button type="submit" class="btn" id="assignBtn" disabled>Assign Therapist</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script>
+        function selectTherapist(therapistId) {
+            // Remove selected class from all cards
+            document.querySelectorAll('.therapist-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            
+            // Select clicked therapist card
+            const therapistCard = document.querySelector(`[onclick="selectTherapist('${therapistId}')"]`);
+            therapistCard.classList.add('selected');
+            
+            // Check the radio button
+            document.getElementById(`therapist-${therapistId}`).checked = true;
+            
+            // Enable the assign button
+            document.getElementById('assignBtn').disabled = false;
+        }
+        
+        function sortTherapists() {
+            const sortBy = document.getElementById('sortBy').value;
+            const therapistsList = document.querySelector('.therapists-list');
+            const therapists = Array.from(therapistsList.querySelectorAll('.therapist-card'));
+            
+            therapists.sort((a, b) => {
+                if (sortBy === 'load') {
+                    // Sort by current load (lowest first)
+                    const loadA = parseFloat(a.querySelector('.capacity-fill').style.width) || 0;
+                    const loadB = parseFloat(b.querySelector('.capacity-fill').style.width) || 0;
+                    return loadA - loadB;
+                } else if (sortBy === 'name') {
+                    // Sort by name
+                    const nameA = a.querySelector('h3').textContent;
+                    const nameB = b.querySelector('h3').textContent;
+                    return nameA.localeCompare(nameB);
+                } else if (sortBy === 'specialization') {
+                    // Sort by specialization
+                    const specA = a.getAttribute('data-specialization');
+                    const specB = b.getAttribute('data-specialization');
+                    return specA.localeCompare(specB);
+                }
+                return 0;
+            });
+            
+            // Clear the list and append sorted therapists
+            therapistsList.innerHTML = '';
+            therapists.forEach(therapist => {
+                therapistsList.appendChild(therapist);
+            });
+        }
+        
+        // Filter therapists by search input
+        document.getElementById('therapistSearch').addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            document.querySelectorAll('.therapist-card').forEach(card => {
+                const name = card.querySelector('h3').textContent.toLowerCase();
+                const specialization = card.getAttribute('data-specialization').toLowerCase();
+                
+                if (name.includes(searchTerm) || specialization.includes(searchTerm)) {
+                    card.style.display = 'flex';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

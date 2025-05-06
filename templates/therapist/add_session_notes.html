@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Session Notes | Therapist Portal</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css"> 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+
+    <style>
+        {% if settings.theme_mode == 'dark' %}
+        /* Dark mode styles */
+        body {
+            background-color: #121212 !important;
+            color: #e0e0e0 !important;
+        }
+        
+        .bg-white {
+            background-color: #1e1e1e !important;
+        }
+        
+        .text-gray-700, .text-gray-800, .text-gray-900 {
+            color: #e0e0e0 !important;
+        }
+        
+        .text-gray-500, .text-gray-600 {
+            color: #a0a0a0 !important;
+        }
+        
+        .bg-gray-50, .bg-gray-100, .bg-gray-200 {
+            background-color: #2a2a2a !important;
+        }
+        
+        .border-gray-200, .border-gray-300 {
+            border-color: #333 !important;
+        }
+        {% endif %}
+        
+        /* Custom styles for tag input */
+        .tag-container {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            padding: 0.25rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            min-height: 2.5rem;
+        }
+        
+        .tag {
+            display: flex;
+            align-items: center;
+            background-color: #e5e7eb;
+            border-radius: 0.25rem;
+            padding: 0.25rem 0.5rem;
+            margin: 0.25rem;
+            font-size: 0.875rem;
+        }
+        
+        .tag-dark {
+            background-color: #374151;
+            color: #e5e7eb;
+        }
+        
+        .tag-close {
+            margin-left: 0.25rem;
+            font-size: 0.75rem;
+            cursor: pointer;
+        }
+        
+        .tag-input {
+            flex: 1;
+            border: none;
+            outline: none;
+            padding: 0.25rem 0.5rem;
+            margin: 0.25rem;
+            font-size: 0.875rem;
+            min-width: 10rem;
+            background-color: transparent;
+        }
+        
+        /* Resource card styles */
+        .resource-card {
+            transition: transform 0.1s ease;
+        }
+        
+        .resource-card:hover {
+            transform: translateY(-2px);
+        }
+        
+        .resource-card.selected {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+        }
+        
+        {% if settings.theme_mode == 'dark' %}
+        .resource-card.selected {
+            border-color: #3b82f6;
+            background-color: #1e3a8a;
+        }
+        {% endif %}
+    </style>
+</head>
+
+<body class="bg-gray-200 flex text-gray-900">
+    <!-- Sidebar Navigation -->
+    <aside class="w-64 h-screen bg-gray-800 text-gray-200 p-4 fixed">
+        <h1 class="text-2xl font-bold mb-6">Therapist Portal</h1>
+        <nav>
+            <ul class="space-y-4">
+                <li><a href="{{ url_for('therapist.dashboard') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-chart-line"></i> Dashboard</a></li>
+                <li><a href="{{ url_for('therapist.appointments') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-calendar-alt"></i> Appointments</a></li>
+                <li><a href="{{ url_for('therapist.students') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-user-graduate"></i> My Students</a></li>
+                <li><a href="{{ url_for('therapist.profile') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-user"></i> Profile</a></li>
+                <li><a href="{{ url_for('therapist.settings') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-cog"></i> Settings</a></li>
+                <li><a href="{{ url_for('auth.logout') }}" class="block p-2 hover:bg-gray-700 rounded mt-8"> <i class="fas fa-sign-out-alt"></i> Logout</a></li>
+            </ul>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="ml-64 p-8 w-full">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    {% set bg_color = "bg-blue-100 border-blue-500" %}
+                    {% set text_color = "text-blue-700" %}
+                    
+                    {% if category == 'error' %}
+                        {% set bg_color = "bg-red-100 border-red-500" %}
+                        {% set text_color = "text-red-700" %}
+                    {% elif category == 'success' %}
+                        {% set bg_color = "bg-green-100 border-green-500" %}
+                        {% set text_color = "text-green-700" %}
+                    {% elif category == 'warning' %}
+                        {% set bg_color = "bg-yellow-100 border-yellow-500" %}
+                        {% set text_color = "text-yellow-700" %}
+                    {% endif %}
+                    
+                    <div class="{{ bg_color }} border-l-4 {{ text_color }} p-4 mb-6" role="alert">
+                        <p>{{ message }}</p>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        <!-- Breadcrumb Navigation -->
+        <div class="flex text-sm text-gray-500 mb-6">
+            <a href="{{ url_for('therapist.dashboard') }}" class="hover:text-gray-700">Dashboard</a>
+            <span class="mx-2">/</span>
+            <a href="{{ url_for('therapist.student_details', student_id=student._id) }}" class="hover:text-gray-700">{{ student.first_name }} {{ student.last_name }}</a>
+            <span class="mx-2">/</span>
+            <span class="text-gray-700">{% if existing_notes %}Edit{% else %}Add{% endif %} Session Notes</span>
+        </div>
+        
+        <div class="flex justify-between items-start mb-6">
+            <h2 class="text-3xl font-bold text-gray-800">{% if existing_notes %}Edit{% else %}Add{% endif %} Session Notes</h2>
+        </div>
+        
+        <!-- Session Information Card -->
+        <div class="bg-white p-6 rounded shadow mb-6">
+            <h3 class="text-lg font-medium mb-4">Session Information</h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                    <h4 class="text-sm font-medium text-gray-500">Student</h4>
+                    <p class="font-medium">{{ student.first_name }} {{ student.last_name }}</p>
+                </div>
+                
+                <div>
+                    <h4 class="text-sm font-medium text-gray-500">Session Date</h4>
+                    <p class="font-medium">{{ appointment.date.strftime('%A, %B %d, %Y') }}</p>
+                </div>
+                
+                <div>
+                    <h4 class="text-sm font-medium text-gray-500">Session Type</h4>
+                    <p class="font-medium">{{ appointment.session_type|title }}</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Session Notes Form -->
+        <form action="{{ url_for('therapist.add_session_notes', appointment_id=appointment._id) }}" method="POST" class="bg-white p-6 rounded shadow">
+            <h3 class="text-lg font-medium mb-6">Session Notes</h3>
+            
+            <!-- Summary -->
+            <div class="mb-6">
+                <label for="summary" class="block text-sm font-medium text-gray-700 mb-1">Session Summary <span class="text-red-500">*</span></label>
+                <textarea id="summary" name="summary" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" required>{{ existing_notes.summary if existing_notes else '' }}</textarea>
+                <p class="mt-1 text-sm text-gray-500">Provide a brief summary of the session, including main themes and accomplishments.</p>
+            </div>
+            
+            <!-- Topics Discussed -->
+            <div class="mb-6">
+                <label for="topics-container" class="block text-sm font-medium text-gray-700 mb-1">Topics Discussed</label>
+                
+                <div id="topics-container" class="tag-container">
+                    {% if existing_notes and existing_notes.topics_discussed %}
+                        {% for topic in existing_notes.topics_discussed %}
+                            <div class="tag {% if settings.theme_mode == 'dark' %}tag-dark{% endif %}">
+                                <span>{{ topic }}</span>
+                                <span class="tag-close" onclick="removeTag(this, 'topics')">&times;</span>
+                                <input type="hidden" name="topics_discussed[]" value="{{ topic }}">
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    <input type="text" id="topics-input" class="tag-input" placeholder="Add a topic and press Enter...">
+                </div>
+                <p class="mt-1 text-sm text-gray-500">Press Enter to add a new topic.</p>
+            </div>
+            
+            <!-- Progress -->
+            <div class="mb-6">
+                <label for="progress" class="block text-sm font-medium text-gray-700 mb-1">Progress Notes</label>
+                <textarea id="progress" name="progress" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">{{ existing_notes.progress if existing_notes else '' }}</textarea>
+                <p class="mt-1 text-sm text-gray-500">Note the student's progress, insights gained, or challenges faced.</p>
+            </div>
+            
+            <!-- Action Items / Homework -->
+            <div class="mb-6">
+                <label for="action-items-container" class="block text-sm font-medium text-gray-700 mb-1">Action Items & Homework</label>
+                
+                <div id="action-items-container" class="tag-container">
+                    {% if existing_notes and existing_notes.action_items %}
+                        {% for item in existing_notes.action_items %}
+                            <div class="tag {% if settings.theme_mode == 'dark' %}tag-dark{% endif %}">
+                                <span>{{ item }}</span>
+                                <span class="tag-close" onclick="removeTag(this, 'action-items')">&times;</span>
+                                <input type="hidden" name="action_items[]" value="{{ item }}">
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    <input type="text" id="action-items-input" class="tag-input" placeholder="Add an action item and press Enter...">
+                </div>
+                <p class="mt-1 text-sm text-gray-500">Press Enter to add a new action item or homework assignment.</p>
+            </div>
+            
+            <!-- Recommendations -->
+            <div class="mb-6">
+                <label for="recommendations" class="block text-sm font-medium text-gray-700 mb-1">Recommendations</label>
+                <textarea id="recommendations" name="recommendations" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">{{ existing_notes.recommendations if existing_notes else '' }}</textarea>
+                <p class="mt-1 text-sm text-gray-500">Provide any professional recommendations for the student.</p>
+            </div>
+            
+            <!-- Next Steps -->
+            <div class="mb-6">
+                <label for="next_steps" class="block text-sm font-medium text-gray-700 mb-1">Next Steps</label>
+                <textarea id="next_steps" name="next_steps" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">{{ existing_notes.next_steps if existing_notes else '' }}</textarea>
+                <p class="mt-1 text-sm text-gray-500">Outline the plan for future sessions or interventions.</p>
+            </div>
+            
+            <!-- Shared Resources -->
+            <div class="mb-6 border-t border-gray-200 pt-6 mt-6">
+                <h3 class="text-lg font-medium mb-4">Share Resources</h3>
+                <p class="text-sm text-gray-600 mb-4">Select resources to share with the student as part of this session's notes.</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {% if available_resources %}
+                        {% for resource in available_resources %}
+                            <div class="resource-card border border-gray-200 rounded-lg p-4 cursor-pointer" onclick="toggleResource(this, '{{ resource._id }}')">
+                                <div class="flex items-center">
+                                    {% if resource.type == 'article' %}
+                                        <i class="fas fa-newspaper text-purple-500 mr-2"></i>
+                                    {% elif resource.type == 'video' %}
+                                        <i class="fas fa-video text-red-500 mr-2"></i>
+                                    {% elif resource.type == 'exercise' %}
+                                        <i class="fas fa-dumbbell text-green-500 mr-2"></i>
+                                    {% else %}
+                                        <i class="fas fa-file-alt text-blue-500 mr-2"></i>
+                                    {% endif %}
+                                    <h4 class="font-medium">{{ resource.title }}</h4>
+                                </div>
+                                <p class="text-sm text-gray-600 mt-2">{{ resource.description|truncate(100) }}</p>
+                                <input type="checkbox" name="shared_resources[]" value="{{ resource._id }}" class="hidden" 
+                                {% if existing_notes and existing_notes.shared_resources %}
+                                    {% for shared in existing_notes.shared_resources %}
+                                        {% if shared.id == resource._id %}checked{% endif %}
+                                    {% endfor %}
+                                {% endif %}
+                                >
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="col-span-3 text-center py-4">
+                            <p class="text-gray-500">No resources available to share.</p>
+                            <a href="{{ url_for('therapist.resources') }}" class="text-blue-500 hover:text-blue-700 mt-2 inline-block">
+                                <i class="fas fa-plus mr-1"></i> Add Resources
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Form Actions -->
+            <div class="border-t border-gray-200 pt-6 mt-6 flex justify-between">
+                <a href="{{ url_for('therapist.student_details', student_id=student._id) }}" class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    Cancel
+                </a>
+                
+                <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    {% if existing_notes %}Update{% else %}Save{% endif %} Session Notes
+                </button>
+            </div>
+        </form>
+    </main>
+
+    <script>
+        // Handle tag input for topics discussed
+        const topicsInput = document.getElementById('topics-input');
+        topicsInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                
+                const value = this.value.trim();
+                if (value) {
+                    addTag(value, 'topics');
+                    this.value = '';
+                }
+            }
+        });
+        
+        // Handle tag input for action items
+        const actionItemsInput = document.getElementById('action-items-input');
+        actionItemsInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                
+                const value = this.value.trim();
+                if (value) {
+                    addTag(value, 'action-items');
+                    this.value = '';
+                }
+            }
+        });
+        
+        // Function to add a tag
+        function addTag(value, type) {
+            const container = document.getElementById(`${type}-container`);
+            const input = document.getElementById(`${type}-input`);
+            
+            const tag = document.createElement('div');
+            tag.className = 'tag {% if settings.theme_mode == "dark" %}tag-dark{% endif %}';
+            
+            const tagText = document.createElement('span');
+            tagText.textContent = value;
+            
+            const closeBtn = document.createElement('span');
+            closeBtn.className = 'tag-close';
+            closeBtn.textContent = '×';
+            closeBtn.onclick = function() {
+                removeTag(this, type);
+            };
+            
+            const hiddenInput = document.createElement('input');
+            hiddenInput.type = 'hidden';
+            hiddenInput.name = type === 'topics' ? 'topics_discussed[]' : 'action_items[]';
+            hiddenInput.value = value;
+            
+            tag.appendChild(tagText);
+            tag.appendChild(closeBtn);
+            tag.appendChild(hiddenInput);
+            
+            container.insertBefore(tag, input);
+        }
+        
+        // Function to remove a tag
+        function removeTag(element, type) {
+            const tag = element.parentNode;
+            const container = document.getElementById(`${type}-container`);
+            container.removeChild(tag);
+        }
+        
+        // Toggle resource selection
+        function toggleResource(element, resourceId) {
+            const checkbox = element.querySelector('input[type="checkbox"]');
+            checkbox.checked = !checkbox.checked;
+            
+            if (checkbox.checked) {
+                element.classList.add('selected');
+            } else {
+                element.classList.remove('selected');
+            }
+        }
+        
+        // Initialize selected resources
+        document.addEventListener('DOMContentLoaded', function() {
+            const resourceCards = document.querySelectorAll('.resource-card');
+            
+            resourceCards.forEach(card => {
+                const checkbox = card.querySelector('input[type="checkbox"]');
+                if (checkbox && checkbox.checked) {
+                    card.classList.add('selected');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
