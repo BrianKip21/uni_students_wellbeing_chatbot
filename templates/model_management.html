@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Model Management - Wellbeing Chatbot Admin</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Base styles from admin dashboard */
+        .confidence-bar {
+            width: 100%;
+            height: 15px;
+            background-color: #e0e0e0;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 5px;
+            display: block;
+            position: relative;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            background-color: #4a6fa5;
+            border-radius: 5px;
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+        
+        .stats {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .card {
+            flex: 1;
+            min-width: 200px;
+            padding: 20px;
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .card h3 {
+            margin-top: 0;
+            color: #555;
+        }
+        
+        .stat-number {
+            font-size: 32px;
+            font-weight: bold;
+            color: #4a6fa5;
+        }
+        
+        .stat-percent {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        /* Specific styles for model management */
+        .model-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .model-card {
+            flex: 1;
+            min-width: 300px;
+            padding: 20px;
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .model-card h3 {
+            margin-top: 0;
+            color: #555;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .model-card .tag {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: normal;
+            color: white;
+        }
+        
+        .tag-bert {
+            background-color: #4a6fa5;
+        }
+        
+        .tag-original {
+            background-color: #6b8e23;
+        }
+        
+        .model-metrics {
+            margin-top: 15px;
+        }
+        
+        .metric-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #f2f2f2;
+        }
+        
+        .metric-row:last-child {
+            border-bottom: none;
+        }
+        
+        .metric-label {
+            font-weight: bold;
+            color: #555;
+        }
+        
+        .metric-value {
+            color: #333;
+        }
+        
+        .metric-value.positive {
+            color: #28a745;
+        }
+        
+        .metric-value.negative {
+            color: #dc3545;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 8px 15px;
+            background-color: #4a6fa5;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        
+        .btn:hover {
+            background-color: #3a5a80;
+        }
+        
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+        
+        .controls-section {
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        
+        .controls-section h3 {
+            margin-top: 0;
+            color: #555;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        
+        .form-group input[type="number"],
+        .form-group input[type="text"],
+        .form-group select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        
+        .form-row {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .form-row .form-group {
+            flex: 1;
+        }
+        
+        .table-container {
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
+        
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .data-table th,
+        .data-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .data-table th {
+            background-color: #f5f5f5;
+            font-weight: bold;
+            color: #555;
+        }
+        
+        .data-table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .data-table tr:hover {
+            background-color: #f9f9f9;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            color: white;
+        }
+        
+        .status-success {
+            background-color: #28a745;
+        }
+        
+        .status-warning {
+            background-color: #ffc107;
+            color: #212529;
+        }
+        
+        .status-error {
+            background-color: #dc3545;
+        }
+        
+        .chart-container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <h2>Admin Panel</h2>
+            <ul>
+                <li><a href="{{ url_for('admin.dashboard') }}">Dashboard</a></li>
+                <li><a href="{{ url_for('admin.user_management') }}">User Management</a></li>
+                <li><a href="{{ url_for('admin.chat_logs') }}">Chat Logs</a></li>
+                <li><a href="{{ url_for('admin.feedback_analysis') }}">Feedback Analysis</a></li>
+                <li class="active"><a href="{{ url_for('admin.model_management') }}">Model Management</a></li>
+                <li><a href="{{ url_for('admin.resources') }}">Resource Management</a></li>
+                <li><a href="{{ url_for('admin.analytics') }}">Analytics</a></li>
+                <li><a href="{{ url_for('admin.settings') }}">Settings</a></li>
+                <li><a href="{{ url_for('auth.logout') }}">Logout</a></li>
+            </ul>
+        </aside>
+        
+        <div class="main-content">
+            <h1>Model Management</h1>
+            
+            <!-- Model Performance Overview -->
+            <div class="model-container">
+                <!-- BERT Model Card -->
+                <div class="model-card">
+                    <h3>BERT Model <span class="tag tag-bert">Neural</span></h3>
+                    <div class="model-metrics">
+                        <div class="metric-row">
+                            <span class="metric-label">Usage:</span>
+                            <span class="metric-value">{{ bert_stats.usage }} chats</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Feedback Rate:</span>
+                            <span class="metric-value">{{ (bert_stats.feedback_count / bert_stats.usage * 100)|round(1) if bert_stats.usage > 0 else 0 }}%</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Average Rating:</span>
+                            <span class="metric-value {{ 'positive' if bert_stats.avg_rating >= 3.5 else ('negative' if bert_stats.avg_rating < 2.5 else '') }}">
+                                {{ bert_stats.avg_rating|round(2) }}/5
+                            </span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Positive Feedback:</span>
+                            <span class="metric-value {{ 'positive' if bert_stats.positive_percentage >= 70 else ('negative' if bert_stats.positive_percentage < 50 else '') }}">
+                                {{ bert_stats.positive_percentage|round(1) }}%
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Original Model Card -->
+                <div class="model-card">
+                    <h3>Original Model <span class="tag tag-original">Rule-based</span></h3>
+                    <div class="model-metrics">
+                        <div class="metric-row">
+                            <span class="metric-label">Usage:</span>
+                            <span class="metric-value">{{ original_stats.usage }} chats</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Feedback Rate:</span>
+                            <span class="metric-value">{{ (original_stats.feedback_count / original_stats.usage * 100)|round(1) if original_stats.usage > 0 else 0 }}%</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Average Rating:</span>
+                            <span class="metric-value {{ 'positive' if original_stats.avg_rating >= 3.5 else ('negative' if original_stats.avg_rating < 2.5 else '') }}">
+                                {{ original_stats.avg_rating|round(2) }}/5
+                            </span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Positive Feedback:</span>
+                            <span class="metric-value {{ 'positive' if original_stats.positive_percentage >= 70 else ('negative' if original_stats.positive_percentage < 50 else '') }}">
+                                {{ original_stats.positive_percentage|round(1) }}%
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Model Configuration Section -->
+            <h2>Model Configuration</h2>
+            <div class="controls-section">
+                <h3>Confidence Thresholds & Fallback Behavior</h3>
+                <form action="{{ url_for('admin.model_config') }}" method="post">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="bert_confidence_threshold">BERT Confidence Threshold</label>
+                            <input type="number" id="bert_confidence_threshold" name="bert_confidence_threshold" 
+                                  min="0" max="1" step="0.05" 
+                                  value="{{ settings.bert_confidence_threshold if settings else 0.7 }}">
+                            <small>Responses below this threshold will trigger fallback behavior</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="original_confidence_threshold">Original Model Threshold</label>
+                            <input type="number" id="original_confidence_threshold" name="original_confidence_threshold" 
+                                  min="0" max="1" step="0.05" 
+                                  value="{{ settings.original_confidence_threshold if settings else 0.5 }}">
+                            <small>Responses below this threshold will use generic responses</small>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="fallback_behavior">Fallback Behavior</label>
+                            <select id="fallback_behavior" name="fallback_behavior">
+                                <option value="highest_confidence" {{ 'selected' if settings and settings.fallback_behavior == 'highest_confidence' else '' }}>
+                                    Use Model with Highest Confidence
+                                </option>
+                                <option value="bert_first" {{ 'selected' if settings and settings.fallback_behavior == 'bert_first' else '' }}>
+                                    BERT First, Fallback to Original
+                                </option>
+                                <option value="original_first" {{ 'selected' if settings and settings.fallback_behavior == 'original_first' else '' }}>
+                                    Original First, Fallback to BERT
+                                </option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="default_model">Default Model</label>
+                            <select id="default_model" name="default_model">
+                                <option value="bert" {{ 'selected' if settings and settings.default_model == 'bert' else '' }}>
+                                    BERT Model
+                                </option>
+                                <option value="original" {{ 'selected' if settings and settings.default_model == 'original' else '' }}>
+                                    Original Model
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <button type="submit" class="btn">Update Configuration</button>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Retraining History -->
+            <h2>Retraining History</h2>
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Admin</th>
+                            <th>Action</th>
+                            <th>BERT Examples</th>
+                            <th>Original Examples</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if retraining_history and retraining_history|length > 0 %}
+                            {% for entry in retraining_history %}
+                                <tr>
+                                    <td>{{ entry.timestamp }}</td>
+                                    <td>{{ entry.admin }}</td>
+                                    <td>
+                                        {% if entry.action == 'retrain_models' %}
+                                            Model Retraining
+                                        {% elif entry.action == 'create_retraining_dataset' %}
+                                            Create Training Dataset
+                                        {% else %}
+                                            {{ entry.action|replace('_', ' ')|title }}
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ entry.bert_count }}</td>
+                                    <td>{{ entry.original_count }}</td>
+                                    <td>
+                                        <span class="status-badge {{ 'status-success' if entry.success else 'status-error' }}">
+                                            {{ 'Success' if entry.success else 'Failed' }}
+                                        </span>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="6" style="text-align: center;">No retraining history available</td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Performance Over Time Chart -->
+            <h2>Performance Metrics Over Time</h2>
+            <div class="chart-container">
+                <canvas id="performanceChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize the performance chart
+        document.addEventListener('DOMContentLoaded', function() {
+            // Create the chart
+            createPerformanceChart();
+            
+            // Add event listeners to form inputs to show changes visually
+            document.querySelectorAll('input[type="number"]').forEach(input => {
+                input.addEventListener('input', function() {
+                    const value = parseFloat(this.value);
+                    if (value < 0) this.value = 0;
+                    if (value > 1) this.value = 1;
+                });
+            });
+        });
+        
+        // Function to create the performance chart
+        function createPerformanceChart() {
+            // Fetch performance data
+            fetch('{{ url_for("admin.model_performance") }}')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.improvement_data && data.improvement_data.length > 0) {
+                        renderPerformanceChart(data.improvement_data);
+                    } else {
+                        // Show a message if no data available
+                        document.querySelector('.chart-container').innerHTML = 
+                            '<p style="text-align: center; padding: 50px;">No performance data available yet. This will populate as you retrain models.</p>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching performance data:', error);
+                    document.querySelector('.chart-container').innerHTML = 
+                        '<p style="text-align: center; padding: 50px; color: #dc3545;">Error loading performance data. Please try refreshing the page.</p>';
+                });
+        }
+        
+        // Function to render the chart with data
+        function renderPerformanceChart(data) {
+            const ctx = document.getElementById('performanceChart').getContext('2d');
+            
+            // Extract data for the chart
+            const labels = data.map(item => item.period_start);
+            const bertRatings = data.map(item => item.bert.rating);
+            const originalRatings = data.map(item => item.original.rating);
+            const bertPositive = data.map(item => item.bert.positive_rate);
+            const originalPositive = data.map(item => item.original.positive_rate);
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'BERT Rating',
+                            data: bertRatings,
+                            borderColor: '#4a6fa5',
+                            backgroundColor: 'rgba(74, 111, 165, 0.1)',
+                            fill: false,
+                            tension: 0.4,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Original Rating',
+                            data: originalRatings,
+                            borderColor: '#6b8e23',
+                            backgroundColor: 'rgba(107, 142, 35, 0.1)',
+                            fill: false,
+                            tension: 0.4,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'BERT Positive %',
+                            data: bertPositive,
+                            borderColor: '#4a6fa5',
+                            backgroundColor: 'rgba(74, 111, 165, 0.1)',
+                            borderDash: [5, 5],
+                            fill: false,
+                            tension: 0.4,
+                            yAxisID: 'y1'
+                        },
+                        {
+                            label: 'Original Positive %',
+                            data: originalPositive,
+                            borderColor: '#6b8e23',
+                            backgroundColor: 'rgba(107, 142, 35, 0.1)',
+                            borderDash: [5, 5],
+                            fill: false,
+                            tension: 0.4,
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: 'Average Rating (0-5)'
+                            },
+                            min: 0,
+                            max: 5,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            title: {
+                                display: true,
+                                text: 'Positive Feedback %'
+                            },
+                            min: 0,
+                            max: 100,
+                            grid: {
+                                drawOnChartArea: false
+                            }
+                        }
+                    },
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Model Performance Metrics After Retraining',
+                            font: {
+                                size: 16
+                            },
+                            padding: {
+                                bottom: 20
+                            }
+                        },
+                        legend: {
+                            position: 'bottom'
+                        },
+                        tooltip: {
+                            usePointStyle: true
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>

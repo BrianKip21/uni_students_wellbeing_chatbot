@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feedback Analysis - Wellbeing Chatbot Admin</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Matching styles from admin dashboard */
+        .confidence-bar {
+            width: 100%;
+            height: 15px;
+            background-color: #e0e0e0;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 5px;
+            display: block;
+            position: relative;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            background-color: #4a6fa5;
+            border-radius: 5px;
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+        
+        .debug-text {
+            font-size: 10px;
+            color: #888;
+            margin-bottom: 3px;
+            display: block;
+        }
+        
+        /* Additional feedback dashboard styles */
+        .rating-bar {
+            width: 100%;
+            height: 15px;
+            background-color: #e0e0e0;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 5px;
+            display: block;
+            position: relative;
+        }
+
+        .rating-fill {
+            height: 100%;
+            background-color: #4a6fa5;
+            border-radius: 5px;
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+        
+        .stats {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .card {
+            flex: 1;
+            min-width: 200px;
+            padding: 20px;
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .card h3 {
+            margin-top: 0;
+            color: #555;
+        }
+        
+        .stat-number {
+            font-size: 32px;
+            font-weight: bold;
+            color: #4a6fa5;
+        }
+        
+        .stat-percent {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        .actions-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .action-card {
+            flex: 1;
+            min-width: 300px;
+            padding: 20px;
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .action-card h3 {
+            margin-top: 0;
+            color: #555;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 8px 15px;
+            background-color: #4a6fa5;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        
+        .btn:hover {
+            background-color: #3a5a80;
+        }
+        
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+        
+        .file-input-container {
+            margin-top: 15px;
+        }
+        
+        .file-input-container input[type="file"] {
+            margin-bottom: 10px;
+        }
+        
+        .topic-bar {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .topic-name {
+            width: 30%;
+            font-weight: bold;
+        }
+        
+        .topic-count {
+            width: 20%;
+            text-align: center;
+        }
+        
+        .topic-rating {
+            flex: 1;
+        }
+        
+        .collapsible {
+            background-color: #f9f9f9;
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            border: 1px solid #eee;
+        }
+        
+        .collapsible-content {
+            display: none;
+            padding: 15px;
+            border: 1px solid #eee;
+            border-top: none;
+            border-radius: 0 0 5px 5px;
+            background-color: white;
+            margin-bottom: 15px;
+        }
+        
+        .collapsible.active {
+            border-radius: 5px 5px 0 0;
+            background-color: #f0f0f0;
+        }
+        
+        .collapsible.active + .collapsible-content {
+            display: block;
+        }
+        
+        .collapsible:hover {
+            background-color: #f0f0f0;
+        }
+        
+        .example-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        
+        .example-table th, 
+        .example-table td {
+            padding: 8px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+        
+        .example-table th {
+            background-color: #f5f5f5;
+        }
+        
+        .empty-table-message {
+            background-color: white;
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        /* New styles for model performance section */
+        .model-stats {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .model-card {
+            flex: 1;
+            min-width: 300px;
+            padding: 20px;
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .model-card h3 {
+            margin-top: 0;
+            color: #555;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        .model-metric {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding: 5px 0;
+            border-bottom: 1px solid #f5f5f5;
+        }
+
+        .model-metric:last-child {
+            border-bottom: none;
+        }
+
+        .metric-name {
+            font-weight: bold;
+        }
+
+        .retraining-history {
+            margin-top: 30px;
+        }
+
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .history-table th,
+        .history-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        .history-table th {
+            background-color: #f5f5f5;
+            font-weight: bold;
+        }
+
+        .history-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border: 1px solid transparent;
+            border-bottom: none;
+            margin-right: 5px;
+            border-radius: 5px 5px 0 0;
+        }
+
+        .tab.active {
+            background-color: white;
+            border-color: #ddd;
+            margin-bottom: -1px;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            color: white;
+            margin-left: 5px;
+        }
+
+        .tag-bert {
+            background-color: #4a6fa5;
+        }
+
+        .tag-original {
+            background-color: #6b8e23;
+        }
+
+        .tag-combined {
+            background-color: #9370db;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <h2>Admin Panel</h2>
+            <ul>
+                <li><a href="{{ url_for('admin.dashboard') }}">Dashboard</a></li>
+                <li><a href="{{ url_for('admin.user_management') }}">User Management</a></li>
+                <li><a href="{{ url_for('admin.chat_logs') }}">Chat Logs</a></li>
+                <li class="active"><a href="{{ url_for('admin.feedback_analysis') }}">Feedback Analysis</a></li>
+                <li><a href="{{ url_for('admin.model_management') }}">Model Management</a></li>
+                <li><a href="{{ url_for('admin.resources') }}">Resource Management</a></li>
+                <li><a href="{{ url_for('admin.analytics') }}">Analytics</a></li>
+                <li><a href="{{ url_for('admin.settings') }}">Settings</a></li>
+                <li><a href="{{ url_for('auth.logout') }}">Logout</a></li>
+            </ul>
+        </aside>
+        
+        <div class="main-content">
+            <h1>Feedback Analysis</h1>
+
+            <!-- Tabs -->
+            <div class="tabs">
+                <div class="tab active" onclick="switchTab('feedback-tab')">Feedback Analysis</div>
+                <div class="tab" onclick="switchTab('retraining-tab')">Retraining Management</div>
+                <div class="tab" onclick="switchTab('model-performance-tab')">Model Performance</div>
+            </div>
+            
+            <!-- Feedback Analysis Tab -->
+            <div id="feedback-tab" class="tab-content active">
+                <!-- Statistics Cards -->
+                <div class="stats">
+                    <div class="card">
+                        <h3>Total Chats</h3>
+                        <span class="stat-number">{{ stats.total_chats }}</span>
+                    </div>
+                    <div class="card">
+                        <h3>Feedback Rate</h3>
+                        <span class="stat-percent">{{ stats.feedback_rate|round(1) }}%</span>
+                    </div>
+                    <div class="card">
+                        <h3>Positive Feedback</h3>
+                        <span class="stat-percent">{{ stats.positive_rate|round(1) }}%</span>
+                    </div>
+                    <div class="card">
+                        <h3>Average Rating</h3>
+                        <span class="stat-number">{{ stats.avg_rating }} <span style="font-size: 16px; color: #888;">/5</span></span>
+                    </div>
+                </div>
+                
+                <!-- Problematic Topics Section -->
+                <h2>Topics Needing Improvement</h2>
+                
+                <div class="table-container">
+                    {% if problematic_topics and problematic_topics|length > 0 %}
+                        {% for topic in problematic_topics %}
+                            <div class="topic-bar">
+                                <div class="topic-name">{{ topic._id }}</div>
+                                <div class="topic-count">{{ topic.count }} issues</div>
+                                <div class="topic-rating">
+                                    <span class="debug-text">Avg Rating: {{ topic.avg_rating|round(1) }}/5</span>
+                                    <div class="rating-bar">
+                                        <div class="rating-fill" style="width: {{ (topic.avg_rating / 5 * 100)|round(1) }}%;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="empty-table-message">No problematic topics identified yet.</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Improvement Recommendations -->
+                <h2>Latest Improvement Recommendations</h2>
+                
+                {% if recommendations and recommendations|length > 0 %}
+                    {% for rec in recommendations %}
+                        <div class="collapsible" onclick="toggleCollapsible(this)">
+                            <strong>{{ rec.topic }}</strong> - {{ rec.count }} issues, avg confidence: {{ rec.avg_confidence|round(2) }}
+                        </div>
+                        <div class="collapsible-content">
+                            <p><strong>Suggestion:</strong> {{ rec.suggestion }}</p>
+                            <h4>Example Issues:</h4>
+                            <table class="example-table">
+                                <thead>
+                                    <tr>
+                                        <th>Query</th>
+                                        <th>Response</th>
+                                        <th>Feedback</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for example in rec.examples %}
+                                    <tr>
+                                        <td>{{ example.query }}</td>
+                                        <td>{{ example.response }}</td>
+                                        <td>{{ example.feedback }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="empty-table-message">No recommendations available yet.</p>
+                    <div style="text-align: center; margin-top: 20px;">
+                        <button onclick="runManualAnalysis()" class="btn">Run Analysis Now</button>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Retraining Management Tab -->
+            <div id="retraining-tab" class="tab-content">
+                <h2>Model Retraining Management</h2>
+                
+                <!-- Action Cards -->
+                <div class="actions-container">
+                    <!-- Export Positive Examples -->
+                    <div class="action-card">
+                        <h3>Export Training Data</h3>
+                        <p>Export high-quality responses for model training based on positive user feedback.</p>
+                        <div>
+                            <form action="{{ url_for('admin.export_positive') }}" method="post">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn">Export Positive Examples</button>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <!-- Export Problem Cases -->
+                    <div class="action-card">
+                        <h3>Identify Problem Areas</h3>
+                        <p>Export responses that received negative feedback for improvement.</p>
+                        <div>
+                            <form action="{{ url_for('admin.export_problems') }}" method="post">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn">Export Problem Cases</button>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <!-- Import Improved Responses -->
+                    <div class="action-card">
+                        <h3>Import Improved Responses</h3>
+                        <p>Upload revised responses to problematic queries and retrain models.</p>
+                        <div class="file-input-container">
+                            <form action="{{ url_for('admin.import_improved_responses') }}" method="post" enctype="multipart/form-data">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <input type="file" name="file" accept=".csv" required>
+                                <button type="submit" class="btn">Upload & Retrain</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Retraining History -->
+                <h2>Recent Retraining Activities</h2>
+                <div class="retraining-history">
+                    <table class="history-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Action</th>
+                                <th>BERT Examples</th>
+                                <th>Original Examples</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="retraining-history-body">
+                            <tr>
+                                <td colspan="5" class="empty-table-message">Loading retraining history...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Model Performance Tab -->
+            <div id="model-performance-tab" class="tab-content">
+                <h2>Model Performance Comparison</h2>
+                
+                <div class="model-stats">
+                    <!-- BERT Model Stats -->
+                    <div class="model-card">
+                        <h3>BERT Model <span class="tag tag-bert">Neural</span></h3>
+                        <div id="bert-stats">
+                            <div class="model-metric">
+                                <span class="metric-name">Total Uses:</span>
+                                <span class="metric-value">Loading...</span>
+                            </div>
+                            <div class="model-metric">
+                                <span class="metric-name">Positive Feedback:</span>
+                                <span class="metric-value">Loading...</span>
+                            </div>
+                            <div class="model-metric">
+                                <span class="metric-name">Avg. Rating:</span>
+                                <span class="metric-value">Loading...</span>
+                            </div>
+                            <div class="model-metric">
+                                <span class="metric-name">Avg. Confidence:</span>
+                                <span class="metric-value">Loading...</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Original Model Stats -->
+                    <div class="model-card">
+                        <h3>Original Model <span class="tag tag-original">Rule-based</span></h3>
+                        <div id="original-stats">
+                            <div class="model-metric">
+                                <span class="metric-name">Total Uses:</span>
+                                <span class="metric-value">Loading...</span>
+                            </div>
+                            <div class="model-metric">
+                                <span class="metric-name">Positive Feedback:</span>
+                                <span class="metric-value">Loading...</span>
+                            </div>
+                            <div class="model-metric">
+                                <span class="metric-name">Avg. Rating:</span>
+                                <span class="metric-value">Loading...</span>
+                            </div>
+                            <div class="model-metric">
+                                <span class="metric-name">Avg. Confidence:</span>
+                                <span class="metric-value">Loading...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Performance Improvements Chart -->
+                <h2>Performance Improvements Over Time</h2>
+                <div style="background-color: white; padding: 20px; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                    <canvas id="performance-chart" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleCollapsible(element) {
+            element.classList.toggle('active');
+        }
+        
+        function runManualAnalysis() {
+            // You would implement an AJAX call to trigger the analysis
+            if (confirm('Run feedback analysis now? This may take a moment.')) {
+                fetch('{{ url_for("admin.run_manual_analysis") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Analysis complete. Refreshing page...');
+                        location.reload();
+                    } else {
+                        alert('Error: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while running the analysis.');
+                });
+            }
+        }
+
+        function switchTab(tabId) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Deactivate all tabs
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Activate the selected tab and content
+            document.getElementById(tabId).classList.add('active');
+            document.querySelector(`.tab[onclick="switchTab('${tabId}')"]`).classList.add('active');
+            
+            // Load data for specific tabs if needed
+            if (tabId === 'retraining-tab') {
+                loadRetrainingHistory();
+            } else if (tabId === 'model-performance-tab') {
+                loadModelPerformance();
+            }
+        }
+
+        function loadRetrainingHistory() {
+            fetch('{{ url_for("admin.retraining_status") }}')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const historyBody = document.getElementById('retraining-history-body');
+                        
+                        if (data.logs && data.logs.length > 0) {
+                            let html = '';
+                            
+                            data.logs.forEach(log => {
+                                let actionText = '';
+                                let bertCount = '-';
+                                let originalCount = '-';
+                                
+                                if (log.action === 'retrain_models') {
+                                    actionText = 'Model Retraining';
+                                    bertCount = log.details.bert_count || 0;
+                                    originalCount = log.details.original_count || 0;
+                                } else if (log.action === 'export_positive_examples') {
+                                    actionText = 'Export Positive Examples';
+                                    bertCount = '-';
+                                    originalCount = '-';
+                                } else if (log.action === 'export_problem_cases') {
+                                    actionText = 'Export Problem Cases';
+                                    bertCount = '-';
+                                    originalCount = '-';
+                                } else if (log.action === 'create_retraining_dataset') {
+                                    actionText = 'Create Training Dataset';
+                                    bertCount = log.details.bert_count || 0;
+                                    originalCount = log.details.original_count || 0;
+                                }
+                                
+                                html += `
+                                    <tr>
+                                        <td>${log.timestamp}</td>
+                                        <td>${actionText}</td>
+                                        <td>${bertCount}</td>
+                                        <td>${originalCount}</td>
+                                        <td>${log.success ? 'Success' : 'Failed'}</td>
+                                    </tr>
+                                `;
+                            });
+                            
+                            historyBody.innerHTML = html;
+                        } else {
+                            historyBody.innerHTML = '<tr><td colspan="5" class="empty-table-message">No retraining activities found.</td></tr>';
+                        }
+                    } else {
+                        console.error('Error loading retraining history:', data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        }
+
+        function loadModelPerformance() {
+            fetch('{{ url_for("admin.model_performance") }}')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Update BERT stats
+                        if (data.bert_stats) {
+                            const bertStats = document.getElementById('bert-stats');
+                            bertStats.innerHTML = `
+                                <div class="model-metric">
+                                    <span class="metric-name">Total Uses:</span>
+                                    <span class="metric-value">${data.bert_stats.total_uses}</span>
+                                </div>
+                                <div class="model-metric">
+                                    <span class="metric-name">Positive Feedback:</span>
+                                    <span class="metric-value">${data.bert_stats.positive_rate.toFixed(1)}%</span>
+                                </div>
+                                <div class="model-metric">
+                                    <span class="metric-name">Avg. Rating:</span>
+                                    <span class="metric-value">${data.bert_stats.avg_rating.toFixed(2)}/5</span>
+                                </div>
+                                <div class="model-metric">
+                                    <span class="metric-name">Avg. Confidence:</span>
+                                    <span class="metric-value">${data.bert_stats.avg_confidence.toFixed(1)}%</span>
+                                </div>
+                            `;
+                        }
+                        
+                        // Update Original stats
+                        if (data.original_stats) {
+                            const originalStats = document.getElementById('original-stats');
+                            originalStats.innerHTML = `
+                                <div class="model-metric">
+                                    <span class="metric-name">Total Uses:</span>
+                                    <span class="metric-value">${data.original_stats.total_uses}</span>
+                                </div>
+                                <div class="model-metric">
+                                    <span class="metric-name">Positive Feedback:</span>
+                                    <span class="metric-value">${data.original_stats.positive_rate.toFixed(1)}%</span>
+                                </div>
+                                <div class="model-metric">
+                                    <span class="metric-name">Avg. Rating:</span>
+                                    <span class="metric-value">${data.original_stats.avg_rating.toFixed(2)}/5</span>
+                                </div>
+                                <div class="model-metric">
+                                    <span class="metric-name">Avg. Confidence:</span>
+                                    <span class="metric-value">${data.original_stats.avg_confidence.toFixed(1)}%</span>
+                                </div>
+                            `;
+                        }
+                        
+                        // Create performance improvement chart
+                        if (data.improvement_data && data.improvement_data.length > 0) {
+                            createPerformanceChart(data.improvement_data);
+                        }
+                    } else {
+                        console.error('Error loading model performance:', data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        }
+
+        function createPerformanceChart(improvementData) {
+            const ctx = document.getElementById('performance-chart').getContext('2d');
+            
+            // Extract data for chart
+            const labels = improvementData.map(item => item.period_start);
+            const bertRatings = improvementData.map(item => item.bert.rating);
+            const originalRatings = improvementData.map(item => item.original.rating);
+            const bertPositiveRates = improvementData.map(item => item.bert.positive_rate);
+            const originalPositiveRates = improvementData.map(item => item.original.positive_rate);
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'BERT Avg Rating',
+                            data: bertRatings,
+                            borderColor: '#4a6fa5',
+                            backgroundColor: 'rgba(74, 111, 165, 0.1)',
+                            borderWidth: 2,
+                            tension: 0.2,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Original Avg Rating',
+                            data: originalRatings,
+                            borderColor: '#6b8e23',
+                            backgroundColor: 'rgba(107, 142, 35, 0.1)',
+                            borderWidth: 2,
+                            tension: 0.2,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'BERT Positive %',
+                            data: bertPositiveRates,
+                            borderColor: '#4a6fa5',
+                            backgroundColor: 'rgba(74, 111, 165, 0.1)',
+                            borderWidth: 2,
+                            borderDash: [5, 5],
+                            tension: 0.2,
+                            yAxisID: 'y1'
+                        },
+                        {
+                            label: 'Original Positive %',
+                            data: originalPositiveRates,
+                            borderColor: '#6b8e23',
+                            backgroundColor: 'rgba(107, 142, 35, 0.1)',
+                            borderWidth: 2,
+                            borderDash: [5, 5],
+                            tension: 0.2,
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: 'Average Rating (0-5)'
+                            },
+                            min: 0,
+                            max: 5
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            title: {
+                                display: true,
+                                text: 'Positive Feedback %'
+                            },
+                            min: 0,
+                            max: 100,
+                            grid: {
+                                drawOnChartArea: false
+                            }
+                        }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Model Performance After Retraining'
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false
+                        },
+                        legend: {
+                            position: 'bottom'
+                        }
+                    },
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+        }
+
+        // Initialize data loading for the first tab
+        document.addEventListener('DOMContentLoaded', function() {
+            // If there's a hash in the URL, switch to that tab
+            const hash = window.location.hash.substring(1);
+            if (hash) {
+                const tabId = hash + '-tab';
+                if (document.getElementById(tabId)) {
+                    switchTab(tabId);
+                }
+            }
+
+            // Add event listeners to export buttons to show loading states
+            document.querySelectorAll('form[action*="export"]').forEach(form => {
+                form.addEventListener('submit', function() {
+                    const btn = this.querySelector('button');
+                    if (btn) {
+                        const originalText = btn.textContent;
+                        btn.textContent = 'Exporting...';
+                        btn.disabled = true;
+                        
+                        // Reset button after 5 seconds in case something goes wrong
+                        setTimeout(() => {
+                            btn.textContent = originalText;
+                            btn.disabled = false;
+                        }, 5000);
+                    }
+                });
+            });
+
+            // Add event listener to import form to show loading state
+            const importForm = document.querySelector('form[action*="import"]');
+            if (importForm) {
+                importForm.addEventListener('submit', function() {
+                    if (!this.querySelector('input[type="file"]').files.length) {
+                        alert('Please select a file to upload');
+                        return false;
+                    }
+                    
+                    const btn = this.querySelector('button');
+                    if (btn) {
+                        btn.textContent = 'Processing...';
+                        btn.disabled = true;
+                    }
+                    
+                    return true;
+                });
+            }
+        });
+
+        // Function to refresh data periodically
+        function refreshData() {
+            const activeTab = document.querySelector('.tab-content.active');
+            if (activeTab) {
+                if (activeTab.id === 'retraining-tab') {
+                    loadRetrainingHistory();
+                } else if (activeTab.id === 'model-performance-tab') {
+                    loadModelPerformance();
+                }
+            }
+        }
+
+        // Set up auto-refresh every 30 seconds
+        setInterval(refreshData, 30000);
+    </script>
+</body>
+</html>
