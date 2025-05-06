@@ -6,151 +6,428 @@
     <title>Wellbeing Assistant Chat</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+    <style>
+          
+        {% if settings.theme_mode == 'dark' %}
+        /* Dark mode styles */
+        body {
+            background-color: #121212 !important;
+            color: #e0e0e0 !important;
+        }
+        
+        .bg-white {
+            background-color: #1e1e1e !important;
+        }
+        
+        .text-gray-700, .text-gray-800, .text-gray-900 {
+            color: #e0e0e0 !important;
+        }
+        
+        .text-gray-500, .text-gray-600 {
+            color: #a0a0a0 !important;
+        }
+        
+        .bg-gray-50, .bg-gray-100, .bg-gray-200 {
+            background-color: #2a2a2a !important;
+        }
+        
+        .border-gray-200, .border-gray-300 {
+            border-color: #333 !important;
+        }
+
+        .hover\:bg-gray-100:hover {
+            background-color: #333333 !important;
+        }
+
+        .hover\:bg-gray-200:hover {
+            background-color: #444444 !important;
+        }
+
+        .hover\:bg-green-200:hover {
+            background-color: #0d503c !important;
+        }
+
+        .hover\:bg-blue-200:hover {
+            background-color: #0d365e !important;
+        }
+
+        .bg-green-100 {
+            background-color: #064e3b !important;
+        }
+
+        .bg-blue-100 {
+            background-color: #0c4a6e !important;
+        }
+        {% endif %}
+        
+        {% if settings.contrast == 'high' %}
+        /* High contrast styles */
+        body {
+            background-color: #ffffff !important;
+            color: #000000 !important;
+        }
+        
+        .text-gray-500, .text-gray-600, .text-gray-700, .text-gray-800, .text-gray-900 {
+            color: #000000 !important;
+        }
+        
+        .bg-gray-800 {
+            background-color: #000000 !important;
+        }
+        
+        .text-gray-200 {
+            color: #ffffff !important;
+        }
+        
+        input, select, button {
+            border: 2px solid #000000 !important;
+        }
+
+        .bg-green-100, .bg-blue-100, .bg-gray-100 {
+            background-color: #ffffff !important;
+            border: 2px solid #000000 !important;
+        }
+
+        .text-green-500, .text-blue-500, .text-purple-500 {
+            color: #000000 !important;
+        }
+        {% endif %}
+        
+        {% if settings.text_size == 'lg' %}
+        /* Large text */
+        body {
+            font-size: 1.125rem !important;
+        }
+        
+        .text-sm {
+            font-size: 0.9375rem !important;
+        }
+        
+        .text-lg, .text-xl, .text-2xl, .text-3xl {
+            font-size: 1.3125rem !important;
+        }
+        {% elif settings.text_size == 'xl' %}
+        /* Extra large text */
+        body {
+            font-size: 1.25rem !important;
+        }
+        
+        .text-sm {
+            font-size: 1.0625rem !important;
+        }
+        
+        .text-lg, .text-xl {
+            font-size: 1.5rem !important;
+        }
+
+        .text-2xl, .text-3xl {
+            font-size: 1.75rem !important;
+        }
+        {% endif %}
+    
+        .star-rating span {
+            cursor: pointer;
+        }
+        .star-rating span.selected {
+            color: gold;
+        }
+        .user-avatar {
+            background-color: #6B7280;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+        .assistant-avatar {
+            background-color: #3B82F6;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+    </style>
 </head>
 <body class="bg-gray-200 text-gray-900">
-    <div class="min-h-screen">
+    <div class="min-h-screen flex">
         <!-- Sidebar -->
-        <aside class="fixed top-0 left-0 h-screen w-64 bg-gray-800 text-white p-4">
-            <div class="mb-8">
-                <h1 class="text-2xl font-bold">Wellbeing Assistant</h1>
-            </div>
+        <aside class="w-64 h-screen bg-gray-800 text-gray-200 p-4 fixed">
+            <h1 class="text-2xl font-bold mb-6">Wellbeing Assistant</h1>
             <nav>
-                <ul class="space-y-2">
-                    <li>
-                        <a href="dashboard.html" class="flex items-center p-2 hover:bg-gray-700 rounded-lg">
-                            <i class="fas fa-chart-line w-6"></i>
-                            <span>Dashboard</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="chatbot.html" class="flex items-center p-2 bg-gray-700 rounded-lg">
-                            <i class="fas fa-comments w-6"></i>
-                            <span>Chat</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#" class="flex items-center p-2 hover:bg-gray-700 rounded-lg">
-                            <i class="fas fa-user w-6"></i>
-                            <span>Profile</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="resources.html" class="flex items-center p-2 hover:bg-gray-700 rounded-lg">
-                            <i class="fas fa-book w-6"></i>
-                            <span>Resources</span>
-                        </a>
-                    </li>
-                    
-                    <li>
-                        <a href="#" class="flex items-center p-2 hover:bg-gray-700 rounded-lg">
-                            <i class="fas fa-cog w-6"></i>
-                            <span>Settings</span>
-                        </a>
-                    </li>
+                <ul class="space-y-4">
+                <li><a href="{{ url_for('dashboard.index') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-chart-line"></i> Dashboard</a></li>
+                <li><a href="{{ url_for('tracking.index') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-chart-bar"></i> Wellness Tracker</a></li>
+                <li><a href="{{ url_for('chatbot.chatbot_page') }}" class="block p-2 bg-gray-700 rounded"> <i class="fas fa-comments"></i> Chat</a></li>
+                <li><a href="{{ url_for('dashboard.profile') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-user"></i> Profile</a></li>
+                <li><a href="{{ url_for('dashboard.resources') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-book"></i> Resources</a></li>
+                <li><a href="{{ url_for('dashboard.settings') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-cog"></i> Settings</a></li>
+                <li><a href="{{ url_for('auth.logout') }}" class="block p-2 hover:bg-gray-700 rounded mt-8"> <i class="fas fa-sign-out-alt"></i> Logout</a></li>
                 </ul>
             </nav>
         </aside>
 
         <!-- Main Chat Content -->
-        <main class="ml-64 h-screen flex flex-col">
+        <main class="ml-64 h-screen flex flex-col w-full">
             <!-- Chat Header -->
-            <div class="bg-gray-700 text-white border-b p-4">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center space-x-4">
-                        <img src="/api/placeholder/40/40" alt="Assistant Avatar" class="w-10 h-10 rounded-full"/>
-                        <div>
-                            <h2 class="font-semibold">Wellbeing Assistant</h2>
-                            <p class="text-sm text-gray-300">Here to support you 24/7</p>
-                        </div>
-                    </div>
-                    <div class="flex items-center space-x-4">
-                        <button class="p-2 hover:bg-gray-600 rounded-full" title="Start Voice Chat">
-                            <i class="fas fa-microphone text-gray-300"></i>
-                        </button>
-                        <button class="p-2 hover:bg-gray-600 rounded-full" title="Chat Settings">
-                            <i class="fas fa-ellipsis-v text-gray-300"></i>
-                        </button>
-                    </div>
+            <div class="bg-gray-700 text-white p-4 flex items-center space-x-4">
+                <div class="assistant-avatar">
+                    <i class="fas fa-robot"></i>
+                </div>
+                <div>
+                    <h2 class="font-semibold">Wellbeing Assistant</h2>
+                    <p class="text-sm text-gray-300">Here to support you 24/7</p>
                 </div>
             </div>
 
             <!-- Chat Messages Area -->
-            <div class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-300">
-                <!-- Welcome Message -->
+            <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-300">
                 <div class="flex items-start space-x-4">
-                    <img src="/api/placeholder/32/32" alt="Assistant Avatar" class="w-8 h-8 rounded-full"/>
+                    <div class="assistant-avatar">
+                        <i class="fas fa-robot"></i>
+                    </div>
                     <div class="flex-1">
                         <div class="bg-gray-100 p-4 rounded-lg shadow-sm max-w-2xl">
-                            <p class="mb-2">Hi Sarah, welcome back! How can I help you today?</p>
+                            <p class="mb-2">Hi, I'm your Wellbeing Assistant. How can I help you today?</p>
                             <div class="mt-4 flex flex-wrap gap-2">
-                                <button class="bg-gray-600 text-white px-4 py-2 rounded-full text-sm hover:bg-gray-700">
-                                    I'm feeling stressed
-                                </button>
-                                <button class="bg-gray-600 text-white px-4 py-2 rounded-full text-sm hover:bg-gray-700">
-                                    Help with sleep
-                                </button>
-                                <button class="bg-gray-600 text-white px-4 py-2 rounded-full text-sm hover:bg-gray-700">
-                                    Need motivation
-                                </button>
+                                <button class="chat-button bg-gray-600 text-white px-4 py-2 rounded-full text-sm hover:bg-gray-700">I'm feeling stressed</button>
+                                <button class="chat-button bg-gray-600 text-white px-4 py-2 rounded-full text-sm hover:bg-gray-700">Help with sleep</button>
+                                <button class="chat-button bg-gray-600 text-white px-4 py-2 rounded-full text-sm hover:bg-gray-700">Need motivation</button>
                             </div>
                         </div>
                     </div>
                 </div>
-
-                <!-- Sample Conversation -->
+                
+                <!-- Previous chat messages will be loaded here if any -->
+                {% for message in messages %}
                 <div class="flex items-start space-x-4">
-                    <img src="/api/placeholder/32/32" alt="User Avatar" class="w-8 h-8 rounded-full order-2"/>
+                    {% if message.user_id %}
+                    <!-- User message -->
+                    <div class="user-avatar order-2">
+                        <i class="fas fa-user"></i>
+                    </div>
                     <div class="flex-1 order-1">
                         <div class="bg-gray-700 text-white p-4 rounded-lg shadow-sm max-w-2xl ml-auto">
-                            <p>I'm feeling really stressed about my upcoming exams.</p>
+                            <p>{{ message.message }}</p>
                         </div>
                     </div>
-                </div>
-
-                <div class="flex items-start space-x-4">
-                    <img src="/api/placeholder/32/32" alt="Assistant Avatar" class="w-8 h-8 rounded-full"/>
+                    {% else %}
+                    <!-- Assistant message -->
+                    <div class="assistant-avatar">
+                        <i class="fas fa-robot"></i>
+                    </div>
                     <div class="flex-1">
                         <div class="bg-gray-100 p-4 rounded-lg shadow-sm max-w-2xl">
-                            <p class="mb-2">I understand how overwhelming exam stress can feel. Let's break this down together and create a plan to help you manage it.</p>
-                            <div class="mt-4 p-4 bg-gray-200 rounded-lg">
-                                <h4 class="font-medium mb-2">Quick Stress Relief Exercise</h4>
-                                <p class="text-sm text-gray-700">Would you like to try a 2-minute breathing exercise to help calm your mind?</p>
-                                <div class="mt-3">
-                                    <button class="bg-gray-700 text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-800">
-                                        Start Exercise
-                                    </button>
+                            <p>{{ message.response }}</p>
+                        </div>
+                        <div class="feedback-container mt-2" id="feedback-{{ message._id }}">
+                            <p class="text-sm text-gray-500">Was this response helpful?</p>
+                            <div class="feedback-buttons">
+                                <button data-id="{{ message._id }}" data-helpful="true" class="feedback-btn text-sm px-2 py-1 bg-green-100 rounded">👍 Yes</button>
+                                <button data-id="{{ message._id }}" data-helpful="false" class="feedback-btn text-sm px-2 py-1 bg-red-100 rounded">👎 No</button>
+                            </div>
+                            <div class="rating-container mt-2" id="rating-{{ message._id }}" style="display:none;">
+                                <p class="text-sm text-gray-500">How would you rate this response?</p>
+                                <div class="star-rating" data-id="{{ message._id }}">
+                                    <span data-rating="1">⭐</span>
+                                    <span data-rating="2">⭐</span>
+                                    <span data-rating="3">⭐</span>
+                                    <span data-rating="4">⭐</span>
+                                    <span data-rating="5">⭐</span>
                                 </div>
+                                <textarea id="feedback-text-{{ message._id }}" class="w-full p-2 mt-2 border rounded" placeholder="Any additional feedback? (optional)"></textarea>
+                                <button data-id="{{ message._id }}" class="submit-feedback mt-2 px-4 py-1 bg-blue-500 text-white rounded">Submit</button>
                             </div>
                         </div>
                     </div>
+                    {% endif %}
                 </div>
+                {% endfor %}
             </div>
 
             <!-- Chat Input Area -->
             <div class="bg-gray-700 border-t p-4">
-                <div class="max-w-4xl mx-auto">
-                    <div class="flex items-center space-x-4">
-                        <button class="p-2 hover:bg-gray-600 rounded-full" title="Attach File">
-                            <i class="fas fa-paperclip text-gray-300"></i>
-                        </button>
-                        <div class="flex-1">
-                            <div class="relative">
-                                <input type="text" 
-                                       placeholder="Type your message..." 
-                                       class="w-full p-3 border rounded-lg focus:outline-none focus:border-gray-500 bg-gray-100 text-gray-900"
-                                />
-                                <button class="absolute right-3 top-3 text-gray-500 hover:text-gray-700">
-                                    <i class="fas fa-smile"></i>
-                                </button>
-                            </div>
-                        </div>
-                        <button class="bg-gray-700 text-white p-3 rounded-lg hover:bg-gray-800">
-                            <i class="fas fa-paper-plane"></i>
-                        </button>
-                    </div>
+                <div class="max-w-4xl mx-auto flex items-center space-x-4">
+                    <input type="text" id="message-input" placeholder="Type your message..." class="flex-1 p-3 border rounded-lg focus:outline-none bg-gray-100"/>
+                    <button id="send-button" class="bg-gray-800 text-white p-3 rounded-lg hover:bg-gray-900">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
                 </div>
             </div>
         </main>
     </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const chatMessages = document.getElementById('chat-messages');
+        const messageInput = document.getElementById('message-input');
+        const sendButton = document.getElementById('send-button');
+        const chatButtons = document.querySelectorAll('.chat-button');
+        
+        // Feedback state object
+        const feedbackState = {};
+        
+        // Event delegation for feedback interactions
+        document.addEventListener('click', function(event) {
+            // Handle feedback buttons (Yes/No)
+            if (event.target.classList.contains('feedback-btn')) {
+                const chatId = event.target.dataset.id;
+                const isHelpful = event.target.dataset.helpful === 'true';
+                
+                document.getElementById('rating-' + chatId).style.display = 'block';
+                feedbackState[chatId] = {
+                    helpful: isHelpful,
+                    rating: 0,
+                    feedback: ''
+                };
+            }
+            
+            // Handle star ratings
+            if (event.target.parentElement && event.target.parentElement.classList.contains('star-rating')) {
+                const chatId = event.target.parentElement.dataset.id;
+                const rating = parseInt(event.target.dataset.rating);
+                
+                // Update feedback state
+                if (feedbackState[chatId]) {
+                    feedbackState[chatId].rating = rating;
+                }
+                
+                // Highlight selected stars
+                const stars = document.querySelectorAll(`#rating-${chatId} .star-rating span`);
+                stars.forEach((star, index) => {
+                    star.classList.toggle('selected', index < rating);
+                });
+            }
+            
+            // Handle submit feedback button
+            if (event.target.classList.contains('submit-feedback')) {
+                const chatId = event.target.dataset.id;
+                submitFeedback(chatId);
+            }
+        });
+        
+        function submitFeedback(chatId) {
+            if (!feedbackState[chatId]) return;
+            
+            // Get feedback text
+            feedbackState[chatId].feedback = document.getElementById('feedback-text-' + chatId).value;
+            
+            fetch('/api/feedback', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    chat_id: chatId,
+                    helpful: feedbackState[chatId].helpful,
+                    rating: feedbackState[chatId].rating,
+                    feedback: feedbackState[chatId].feedback
+                }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('feedback-' + chatId).innerHTML = 
+                    '<p class="text-green-500">Thank you for your feedback!</p>';
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('feedback-' + chatId).innerHTML = 
+                    '<p class="text-red-500">Error submitting feedback. Please try again.</p>';
+            });
+        }
+        
+        function addMessage(message, isUser = false, chatId = null) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'flex items-start space-x-4';
+            
+            let messageHTML = '';
+            if (isUser) {
+                messageHTML = `
+                    <div class="user-avatar order-2">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="flex-1 order-1">
+                        <div class="bg-gray-700 text-white p-4 rounded-lg shadow-sm max-w-2xl ml-auto">
+                            <p>${message}</p>
+                        </div>
+                    </div>
+                `;
+            } else {
+                messageHTML = `
+                    <div class="assistant-avatar">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <div class="flex-1">
+                        <div class="bg-gray-100 p-4 rounded-lg shadow-sm max-w-2xl">
+                            <p>${message}</p>
+                        </div>
+                `;
+                
+                // Add feedback UI if this is a bot message and we have a chatId
+                if (chatId) {
+                    messageHTML += `
+                        <div class="feedback-container mt-2" id="feedback-${chatId}">
+                            <p class="text-sm text-gray-500">Was this response helpful?</p>
+                            <div class="feedback-buttons">
+                                <button data-id="${chatId}" data-helpful="true" class="feedback-btn text-sm px-2 py-1 bg-green-100 rounded">👍 Yes</button>
+                                <button data-id="${chatId}" data-helpful="false" class="feedback-btn text-sm px-2 py-1 bg-red-100 rounded">👎 No</button>
+                            </div>
+                            <div class="rating-container mt-2" id="rating-${chatId}" style="display:none;">
+                                <p class="text-sm text-gray-500">How would you rate this response?</p>
+                                <div class="star-rating" data-id="${chatId}">
+                                    <span data-rating="1">⭐</span>
+                                    <span data-rating="2">⭐</span>
+                                    <span data-rating="3">⭐</span>
+                                    <span data-rating="4">⭐</span>
+                                    <span data-rating="5">⭐</span>
+                                </div>
+                                <textarea id="feedback-text-${chatId}" class="w-full p-2 mt-2 border rounded" placeholder="Any additional feedback? (optional)"></textarea>
+                                <button data-id="${chatId}" class="submit-feedback mt-2 px-4 py-1 bg-blue-500 text-white rounded">Submit</button>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                messageHTML += `</div>`;
+            }
+            
+            messageDiv.innerHTML = messageHTML;
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+    
+        async function sendMessage(message) {
+            if (!message) return;
+            addMessage(message, true);
+            messageInput.value = '';
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({message: message})
+                });
+                const data = await response.json();
+                addMessage(data.response || "No response received", false, data.chat_id);
+            } catch (error) {
+                console.error('Error:', error);
+                addMessage('Error sending message. Please try again.', false);
+            }
+        }
+    
+        // Event listeners
+        sendButton.addEventListener('click', () => sendMessage(messageInput.value.trim()));
+        messageInput.addEventListener('keypress', (e) => { 
+            if (e.key === 'Enter') sendMessage(messageInput.value.trim()); 
+        });
+        chatButtons.forEach(button => 
+            button.addEventListener('click', () => sendMessage(button.textContent.trim()))
+        );
+    });
+    </script>
 </body>
 </html>
