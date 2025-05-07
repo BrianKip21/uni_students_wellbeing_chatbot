@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Settings - Wellbeing Chatbot Admin</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            font-weight: bold;
+            display: block;
+        }
+        input[type="number"],
+        input[type="checkbox"] {
+            margin-top: 5px;
+        }
+        .submit-btn {
+            background-color: #4a6fa5;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .submit-btn:hover {
+            background-color: #3b5f8f;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <h2>Admin Panel</h2>
+            <ul>
+                <li><a href="{{ url_for('admin.dashboard') }}">Dashboard</a></li>
+                <li><a href="{{ url_for('admin.user_management') }}">User Management</a></li>
+                <li><a href="{{ url_for('admin.chat_logs') }}">Chat Logs</a></li>
+                <li><a href="{{ url_for('admin.feedback_dashboard') }}">Feedback Analysis</a></li>
+                <li><a href="{{ url_for('admin.resources') }}">Resource Management</a></li>
+                <li><a href="{{ url_for('admin.settings') }}" class="active">System Settings</a></li>
+                <li><a href="{{ url_for('auth.logout') }}">Logout</a></li>
+            </ul>
+        </aside>
+
+        <div class="main-content">
+            <h1>System Settings</h1>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="flash {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <form method="POST" action="{{ url_for('admin.settings') }}">
+                <div class="form-group">
+                    <label for="max_sessions_per_student">Max Sessions Per Student:</label>
+                    <input type="number" name="max_sessions_per_student" value="{{ settings.max_sessions_per_student }}">
+                </div>
+
+                <div class="form-group">
+                    <label for="default_session_duration">Default Session Duration (minutes):</label>
+                    <input type="number" name="default_session_duration" value="{{ settings.default_session_duration }}">
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" name="auto_assignment_enabled" {% if settings.auto_assignment_enabled %}checked{% endif %}>
+                        Enable Auto Assignment
+                    </label>
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" name="allow_self_cancellation" {% if settings.allow_self_cancellation %}checked{% endif %}>
+                        Allow Self-Cancellation
+                    </label>
+                </div>
+
+                <div class="form-group">
+                    <label for="minimum_cancellation_hours">Minimum Cancellation Hours:</label>
+                    <input type="number" name="minimum_cancellation_hours" value="{{ settings.minimum_cancellation_hours }}">
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" name="default_resources_visible" {% if settings.default_resources_visible %}checked{% endif %}>
+                        Show Default Resources
+                    </label>
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" name="email_notifications" {% if settings.notification_settings.email_notifications %}checked{% endif %}>
+                        Email Notifications
+                    </label>
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" name="admin_notifications" {% if settings.notification_settings.admin_notifications %}checked{% endif %}>
+                        Admin Notifications
+                    </label>
+                </div>
+
+                <button type="submit" class="submit-btn">Save Settings</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

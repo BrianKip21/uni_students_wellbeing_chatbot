@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Therapist Management - Wellbeing Chatbot Admin</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .badge-active {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+        
+        .badge-inactive {
+            background-color: #fee2e2;
+            color: #b91c1c;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .action-buttons button, 
+        .action-buttons a {
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            border: none;
+            text-decoration: none;
+            text-align: center;
+        }
+        
+        .btn-edit {
+            background-color: #dbeafe;
+            color: #1e40af;
+        }
+        
+        .btn-reset {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+        
+        .btn-deactivate {
+            background-color: #fee2e2;
+            color: #b91c1c;
+        }
+        
+        .btn-activate {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+        
+        .modal-content {
+            background-color: #fff;
+            margin: 10% auto;
+            padding: 20px;
+            border-radius: 5px;
+            width: 400px;
+            max-width: 90%;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .modal-header h3 {
+            margin: 0;
+        }
+        
+        .close {
+            cursor: pointer;
+            font-size: 20px;
+            font-weight: bold;
+        }
+        
+        .modal-body {
+            margin-bottom: 20px;
+        }
+        
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <h2>Admin Panel</h2>
+            <ul>
+                <li><a href="{{ url_for('admin.dashboard') }}">Dashboard</a></li>
+                <li><a href="{{ url_for('admin.user_management') }}">User Management</a></li>
+                <li><a href="{{ url_for('admin.therapist_management') }}" class="active">Therapist Management</a></li>
+                <li><a href="{{ url_for('admin.chat_logs') }}">Chat Logs</a></li>
+                <li><a href="{{ url_for('admin.feedback_dashboard') }}">Feedback Analysis</a></li>
+                <li><a href="{{ url_for('admin.resources') }}">Resource Management</a></li>
+                <li><a href="{{ url_for('admin.settings') }}">Settings</a></li>
+                <li><a href="{{ url_for('auth.logout') }}">Logout</a></li>
+            </ul>
+        </aside>
+        
+        <div class="main-content">
+            <div class="header-section">
+                <h1>Therapist Management</h1>
+                <a href="{{ url_for('admin.create_therapist') }}" class="btn primary-btn">Add New Therapist</a>
+            </div>
+            
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert {{ category }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            <div class="table-container">
+                <table id="therapists-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Specialization</th>
+                            <th>Students</th>
+                            <th>Status</th>
+                            <th>Last Login</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if therapists and therapists|length > 0 %}
+                            {% for therapist in therapists %}
+                            <tr>
+                                <td>Dr. {{ therapist.first_name }} {{ therapist.last_name }}</td>
+                                <td>{{ therapist.email }}</td>
+                                <td>{{ therapist.specialization }}</td>
+                                <td>{{ therapist.student_count|default(0) }}</td>
+                                <td>
+                                    <span class="badge {% if therapist.status == 'Active' %}badge-active{% else %}badge-inactive{% endif %}">
+                                        {{ therapist.status }}
+                                    </span>
+                                </td>
+                                <td>{{ therapist.last_login|default('Never')|format_datetime }}</td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <a href="{{ url_for('admin.edit_therapist', therapist_id=therapist._id) }}" class="btn-edit">Edit</a>
+                                        <button onclick="showResetPasswordModal('{{ therapist._id }}')" class="btn-reset">Reset Password</button>
+                                        
+                                        {% if therapist.status == 'Active' %}
+                                            <button onclick="showStatusModal('{{ therapist._id }}', 'deactivate')" class="btn-deactivate">Deactivate</button>
+                                        {% else %}
+                                            <button onclick="showStatusModal('{{ therapist._id }}', 'activate')" class="btn-activate">Activate</button>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="7" class="empty-table-message">No therapists found</td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Reset Password Confirmation Modal -->
+    <div id="resetPasswordModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Reset Therapist Password</h3>
+                <span class="close" onclick="closeModal('resetPasswordModal')">&times;</span>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to reset this therapist's password? A new temporary password will be generated and sent to their email.</p>
+            </div>
+            <div class="modal-footer">
+                <button onclick="closeModal('resetPasswordModal')" class="btn secondary-btn">Cancel</button>
+                <form id="resetPasswordForm" method="post" action="">
+                    <button type="submit" class="btn primary-btn">Reset Password</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Status Change Confirmation Modal -->
+    <div id="statusModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="statusModalTitle">Change Therapist Status</h3>
+                <span class="close" onclick="closeModal('statusModal')">&times;</span>
+            </div>
+            <div class="modal-body">
+                <p id="statusModalMessage"></p>
+            </div>
+            <div class="modal-footer">
+                <button onclick="closeModal('statusModal')" class="btn secondary-btn">Cancel</button>
+                <form id="statusForm" method="post" action="">
+                    <button type="submit" class="btn primary-btn" id="statusSubmitBtn">Confirm</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showResetPasswordModal(therapistId) {
+            document.getElementById('resetPasswordForm').action = "{{ url_for('admin.reset_therapist_password', therapist_id='PLACEHOLDER') }}".replace('PLACEHOLDER', therapistId);
+            document.getElementById('resetPasswordModal').style.display = 'block';
+        }
+        
+        function showStatusModal(therapistId, action) {
+            const modal = document.getElementById('statusModal');
+            const title = document.getElementById('statusModalTitle');
+            const message = document.getElementById('statusModalMessage');
+            const submitBtn = document.getElementById('statusSubmitBtn');
+            const form = document.getElementById('statusForm');
+            
+            if (action === 'deactivate') {
+                title.textContent = 'Deactivate Therapist';
+                message.textContent = 'Are you sure you want to deactivate this therapist? They will no longer be able to log in or access the system.';
+                submitBtn.textContent = 'Deactivate';
+                submitBtn.className = 'btn btn-deactivate';
+            } else {
+                title.textContent = 'Activate Therapist';
+                message.textContent = 'Are you sure you want to activate this therapist? They will be able to log in and access the system.';
+                submitBtn.textContent = 'Activate';
+                submitBtn.className = 'btn btn-activate';
+            }
+            
+            form.action = "{{ url_for('admin.toggle_therapist_status', therapist_id='PLACEHOLDER') }}".replace('PLACEHOLDER', therapistId);
+            modal.style.display = 'block';
+        }
+        
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+        
+        // Close modals when clicking outside of them
+        window.onclick = function(event) {
+            if (event.target.className === 'modal') {
+                event.target.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,6 +1,7 @@
 import os
 import logging
 from flask import Flask
+from datetime import datetime
 from flask_cors import CORS
 from flask_pymongo import PyMongo
 from werkzeug.middleware.proxy_fix import ProxyFix
@@ -45,6 +46,13 @@ def create_app(test_config=None):
     mongo.init_app(app)
     CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
     
+    # Register Jinja filter
+    def format_datetime(value):
+        if isinstance(value, datetime):
+            return value.strftime('%Y-%m-%d %H:%M:%S')
+        return value
+
+    app.jinja_env.filters['format_datetime'] = format_datetime
     # Fix for proxy headers
     app.wsgi_app = ProxyFix(app.wsgi_app)
     

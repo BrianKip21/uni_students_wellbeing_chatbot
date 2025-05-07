@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Therapist - Wellbeing Chatbot Admin</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .form-control:focus {
+            border-color: #4a6fa5;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(74, 111, 165, 0.2);
+        }
+        
+        .required:after {
+            content: " *";
+            color: #e53e3e;
+        }
+        
+        .help-text {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 30px;
+        }
+        
+        .form-card {
+            background: white;
+            border-radius: 5px;
+            padding: 25px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .back-link {
+            display: inline-block;
+            margin-bottom: 15px;
+            color: #4a6fa5;
+            text-decoration: none;
+        }
+        
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <h2>Admin Panel</h2>
+            <ul>
+                <li><a href="{{ url_for('admin.dashboard') }}">Dashboard</a></li>
+                <li><a href="{{ url_for('admin.user_management') }}">User Management</a></li>
+                <li><a href="{{ url_for('admin.therapist_management') }}" class="active">Therapist Management</a></li>
+                <li><a href="{{ url_for('admin.chat_logs') }}">Chat Logs</a></li>
+                <li><a href="{{ url_for('admin.feedback_dashboard') }}">Feedback Analysis</a></li>
+                <li><a href="{{ url_for('admin.resources') }}">Resource Management</a></li>
+                <li><a href="{{ url_for('admin.settings') }}">Settings</a></li>
+                <li><a href="{{ url_for('auth.logout') }}">Logout</a></li>
+            </ul>
+        </aside>
+        
+        <div class="main-content">
+            <h1>Add New Therapist</h1>
+            
+            <a href="{{ url_for('admin.therapist_management') }}" class="back-link">
+                &larr; Back to Therapist Management
+            </a>
+            
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert {{ category }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            <div class="form-card">
+                <form method="post" action="{{ url_for('admin.create_therapist') }}">
+                    <div class="form-group">
+                        <label for="first_name" class="required">First Name</label>
+                        <input type="text" id="first_name" name="first_name" class="form-control" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="last_name" class="required">Last Name</label>
+                        <input type="text" id="last_name" name="last_name" class="form-control" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="email" class="required">Email Address</label>
+                        <input type="email" id="email" name="email" class="form-control" required>
+                        <p class="help-text">This will be used as the therapist's username for login</p>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="phone">Phone Number</label>
+                        <input type="tel" id="phone" name="phone" class="form-control">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="specialization">Specialization</label>
+                        <input type="text" id="specialization" name="specialization" class="form-control" placeholder="e.g. Cognitive Behavioral Therapy">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="office_hours">Office Hours</label>
+                        <input type="text" id="office_hours" name="office_hours" class="form-control" placeholder="e.g. Mon-Fri, 9AM-5PM">
+                    </div>
+                    
+                    <p class="help-text">
+                        <strong>Note:</strong> A random temporary password will be generated and sent to the provided email address. 
+                        The therapist will be prompted to change this password upon first login.
+                    </p>
+                    
+                    <div class="form-actions">
+                        <a href="{{ url_for('admin.therapist_management') }}" class="btn secondary-btn">Cancel</a>
+                        <button type="submit" class="btn primary-btn">Create Therapist</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

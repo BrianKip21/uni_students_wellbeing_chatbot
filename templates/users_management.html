@@ -1,0 +1,157 @@
+<!-- templates/users_management.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Management - Wellbeing Chatbot Admin</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <aside class="sidebar" role="navigation" aria-label="Main Navigation">
+            <h2>Admin Panel</h2>
+            <ul>
+                <li><a href="{{ url_for('admin.dashboard') }}">Dashboard</a></li>
+                <li class="active"><a href="{{ url_for('admin.user_management') }}" aria-current="page">User Management</a></li>
+                <li><a href="{{ url_for('admin.chat_logs') }}">Chat Logs</a></li>
+                <li><a href="{{ url_for('admin.feedback_dashboard') }}">Feedback Analysis</a></li>
+                <li><a href="{{ url_for('admin.resources') }}">Resource Management</a></li>
+                <li><a href="#">Analytics</a></li>
+                <li><a href="{{ url_for('dashboard.settings') }}">Settings</a></li>
+                <li><a href="{{ url_for('auth.logout') }}">Logout</a></li>
+            </ul>
+        </aside>
+        
+        <div class="main-content">
+            <h1 class="content-header">User Management</h1>
+            
+            <div class="search-add-container">
+                <input type="text" id="search-box" class="search-box" placeholder="Search users..." aria-label="Search users">
+                <button id="add-user-button" class="add-button">Add New User</button>
+            </div>
+            
+            <div id="error-message" class="error-message" role="alert" style="display: none;"></div>
+            <div id="success-message" class="success-message" role="alert" style="display: none;"></div>
+            
+            <table class="user-table" aria-label="User Management Table">
+                <thead>
+                    <tr>
+                        <th scope="col">Student ID</th>
+                        <th scope="col">Name</th>
+                        <th scope="col">Email</th>
+                        <th scope="col">Last Login</th>
+                        <th scope="col">Status</th>
+                        <th scope="col">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="user-table-body">
+                    {% if users and users|length > 0 %}
+                        {% for user in users %}
+                        <tr data-user-id="{{ user._id }}">
+                            <td>{{ user.student_id }}</td>
+                            <td>
+                                {% if user.full_name %}
+                                    {{ user.full_name }}
+                                {% elif user.first_name and user.last_name %}
+                                    {{ user.first_name }} {{ user.last_name }}
+                                {% else %}
+                                    {{ user.email }}
+                                {% endif %}
+                            </td>
+                            <td>{{ user.email }}</td>
+                            <td>{{ user.last_login or 'Never' }}</td>
+                            <td class="status-{{ 'active' if user.status == 'Active' else 'inactive' }}">
+                                {{ user.status or 'Inactive' }}
+                            </td>
+                            <td>
+                                <button class="action-button edit-button" 
+                                        data-user-id="{{ user._id }}"
+                                        aria-label="Edit user">
+                                    Edit
+                                </button>
+                                <button class="action-button {{ 'disable-button' if user.status == 'Active' else 'enable-button' }}" 
+                                        data-user-id="{{ user._id }}"
+                                        data-current-status="{{ user.status or 'Inactive' }}"
+                                        aria-label="{{ 'Disable' if user.status == 'Active' else 'Enable' }} user">
+                                    {{ 'Disable' if user.status == 'Active' else 'Enable' }}
+                                </button>
+                                <button class="action-button delete-button" 
+                                        data-user-id="{{ user._id }}"
+                                        aria-label="Delete user">
+                                    Delete
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="6" class="empty-table-message">No users found</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Add/Edit User Modal -->
+        <div id="user-modal" class="modal" role="dialog" aria-labelledby="modal-title" aria-hidden="true">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 id="modal-title">Add New User</h2>
+                    <button type="button" class="close" aria-label="Close">&times;</button>
+                </div>
+                <form id="user-form">
+                    <input type="hidden" id="user-id">
+                    <div class="form-group">
+                        <label for="student-id">Student ID:</label>
+                        <input type="text" id="student-id" required aria-required="true">
+                        <div class="error-feedback" id="student-id-error"></div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="name">Name:</label>
+                        <input type="text" id="name" required aria-required="true">
+                        <div class="error-feedback" id="name-error"></div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="email">Email:</label>
+                        <input type="email" id="email" required aria-required="true">
+                        <div class="error-feedback" id="email-error"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password">Password:</label>
+                        <input type="password" id="password" required aria-required="true">
+                        <div class="error-feedback" id="password-error"></div>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="cancel-button">Cancel</button>
+                        <button type="submit" id="submit-user-btn">Add User</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Confirmation Modal -->
+        <div id="confirm-modal" class="modal" role="dialog" aria-labelledby="confirm-title" aria-hidden="true">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 id="confirm-title">Confirm Action</h2>
+                    <button type="button" class="close" aria-label="Close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p id="confirm-message"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="cancel-action" class="cancel-button">Cancel</button>
+                    <button type="button" id="confirm-action" class="danger-button">Confirm</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='user_management.js') }}"></script>
+</body>
+</html>

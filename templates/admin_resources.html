@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resource Management - Admin</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <h2>Admin Panel</h2>
+            <ul>
+                <li><a href="{{ url_for('admin.dashboard') }}">Dashboard</a></li>
+                <li><a href="{{ url_for('admin.user_management') }}">User Management</a></li>
+                <li><a href="{{ url_for('admin.chat_logs') }}">Chat Logs</a></li>
+                <li><a href="{{ url_for('admin.feedback_dashboard') }}">Feedback Analysis</a></li>
+                <li><a href="{{ url_for('admin.resources') }}" class="active">Resource Management</a></li>
+                <li><a href="{{ url_for('auth.logout') }}">Logout</a></li>
+            </ul>
+        </aside>
+
+        <div class="main-content">
+            <h1>Resource Management</h1>
+
+            <h2>Add New Resource</h2>
+            <form action="{{ url_for('admin.resources') }}" method="POST" enctype="multipart/form-data">
+                <label>Title:<input type="text" name="title" required></label>
+                <label>Description:<textarea name="description" required></textarea></label>
+                <label>Type:
+                    <select name="type" required>
+                        <option value="article">Article</option>
+                        <option value="video">Video</option>
+                        <option value="pdf">PDF</option>
+                    </select>
+                </label>
+                <label>Content:<textarea name="content"></textarea></label>
+                <label>Upload Video:<input type="file" name="video_file" accept="video/*"></label>
+                <button type="submit">Add Resource</button>
+            </form>
+
+            <h2>Existing Resources</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Type</th>
+                        <th>Description</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for resource in resources %}
+                    <tr>
+                        <td>{{ resource.title }}</td>
+                        <td>{{ resource.type }}</td>
+                        <td>{{ resource.description }}</td>
+                        <td>
+                            <form action="{{ url_for('admin.delete_resource_route', resource_id=resource._id) }}" method="POST" onsubmit="return confirmDelete(event, this)">
+                                <input type="hidden" name="_method" value="DELETE">
+                                <button type="submit">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="4">No resources available.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+    function confirmDelete(event, form) {
+        event.preventDefault();
+        if (confirm("Are you sure you want to delete this resource?")) {
+            fetch(form.action, {
+                method: 'DELETE'
+            }).then(response => response.json())
+              .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Failed to delete resource');
+                }
+            }).catch(err => alert('Error occurred'));
+        }
+    }
+    </script>
+</body>
+</html>
