@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 from bson.objectid import ObjectId
 import secrets
 import string
+from werkzeug.security import generate_password_hash
 import pandas as pd
 from flask import render_template, redirect, url_for, request, jsonify, flash, make_response, session
 from wellbeing.blueprints.admin import admin_bp

@@ -9,7 +9,7 @@ from wellbeing.utils.decorators import therapist_required
 from wellbeing import mongo, logger
 from wellbeing.models.therapist import find_therapist_by_id, update_therapist_settings
 
-@therapist_bp.route('/dashboard')
+@therapist_bp.route('/dashboard', methods=['GET', 'POST'])
 @therapist_required
 def index():
     """Therapist dashboard with overview."""

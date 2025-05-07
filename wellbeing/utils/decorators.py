@@ -28,6 +28,30 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+def therapist_required(f):
+    """
+    Decorator to ensure the user is logged in as a therapist
+    If not, redirects to login page
+    """
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'logged_in' not in session or not session.get('logged_in'):
+            flash('Please log in to access this page', 'warning')
+            return redirect(url_for('auth.login'))
+        
+        if session.get('role') != 'therapist':
+            flash('Access denied. This page is only for therapists.', 'error')
+            
+            if session.get('role') == 'admin':
+                return redirect(url_for('admin.dashboard'))
+            elif session.get('role') == 'student':
+                return redirect(url_for('dashboard.index'))
+            else:
+                return redirect(url_for('auth.login'))
+                
+        return f(*args, **kwargs)
+    return decorated_function
+
 def csrf_protected(f):
     """
     Decorator to enforce CSRF token validation on POST requests.

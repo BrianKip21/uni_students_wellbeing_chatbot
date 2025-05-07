@@ -67,8 +67,10 @@ def create_app(test_config=None):
     from wellbeing.blueprints.tracking import tracking_bp
     from wellbeing.blueprints.chatbot import chatbot_bp
     from wellbeing.blueprints.api import api_bp
+    from wellbeing.blueprints.therapist import therapist_bp
     
     app.register_blueprint(auth_bp)
+    app.register_blueprint(therapist_bp, url_prefix='/therapist')
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(admin_bp)
     app.register_blueprint(tracking_bp)
