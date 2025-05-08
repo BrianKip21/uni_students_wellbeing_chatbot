@@ -1,6 +1,6 @@
 import os
 import logging
-from flask import Flask
+from flask import Flask, render_template
 from datetime import datetime
 from flask_cors import CORS
 from flask_pymongo import PyMongo
@@ -72,7 +72,7 @@ def create_app(test_config=None):
     app.register_blueprint(auth_bp)
     app.register_blueprint(therapist_bp, url_prefix='/therapist')
     app.register_blueprint(dashboard_bp)
-    app.register_blueprint(admin_bp)
+    app.register_blueprint(admin_bp, url_prefix='/admin')
     app.register_blueprint(tracking_bp)
     app.register_blueprint(chatbot_bp)
     app.register_blueprint(api_bp, url_prefix='/api')
@@ -80,11 +80,12 @@ def create_app(test_config=None):
     # Set up error handlers
     @app.errorhandler(404)
     def page_not_found(e):
-        return app.render_template('404.html'), 404
-        
+        return render_template('404.html'), 404
+
     @app.errorhandler(500)
     def internal_server_error(e):
-        return app.render_template('500.html'), 500
+        return render_template('500.html'), 500
+
     
     # Initialize models and database indexes
     with app.app_context():

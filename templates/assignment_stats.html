@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assignment Statistics - Wellbeing Chatbot Admin</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        .assignment-card {
+            margin-bottom: 15px;
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            background-color: white;
+        }
+        
+        .assignment-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+        
+        .assignment-header h3 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 600;
+        }
+        
+        .assignment-header .therapist-name {
+            font-weight: 600;
+            color: #4a6fa5;
+        }
+        
+        .assignment-header .student-name {
+            font-weight: 600;
+        }
+        
+        .assignment-details {
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .assignment-info {
+            flex: 1;
+        }
+        
+        .assignment-info p {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 3px 6px;
+            font-size: 12px;
+            font-weight: 600;
+            border-radius: 4px;
+        }
+        
+        .badge-blue {
+            background-color: #dbeafe;
+            color: #1e40af;
+        }
+        
+        .badge-green {
+            background-color: #dcfce7;
+            color: #15803d;
+        }
+        
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background-color: white;
+            border-radius: 5px;
+            padding: 15px;
+            text-align: center;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .stat-card h3 {
+            font-size: 24px;
+            margin: 5px 0;
+        }
+        
+        .stat-card p {
+            font-size: 14px;
+            color: #6b7280;
+            margin: 0;
+        }
+        
+        .therapist-stats-container {
+            margin-top: 20px;
+        }
+        
+        .therapist-stat-card {
+            background-color: white;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .therapist-stat-card .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .therapist-stat-card .stat-header h3 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 600;
+            color: #4a6fa5;
+        }
+        
+        .therapist-stat-card .stat-details {
+            display: flex;
+            gap: 20px;
+        }
+        
+        .therapist-stat-card .stat-details p {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+        
+        .recent-assignment {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        .recent-assignment:last-child {
+            border-bottom: none;
+        }
+        
+        .progress-bar-container {
+            width: 100%;
+            height: 8px;
+            background-color: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 5px;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background-color: #4a6fa5;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <h2>Admin Panel</h2>
+            <ul>
+                <li><a href="{{ url_for('admin.dashboard') }}">Dashboard</a></li>
+                <li><a href="{{ url_for('admin.user_management') }}">User Management</a></li>
+                <li><a href="{{ url_for('admin.therapist_management') }}">Therapist Management</a></li>
+                <li><a href="{{ url_for('admin.therapist_assignments') }}">Therapist Assignments</a></li>
+                <li><a href="{{ url_for('admin.assignment_stats') }}" class="active">Assignment Stats</a></li>
+                <li><a href="{{ url_for('admin.chat_logs') }}">Chat Logs</a></li>
+                <li><a href="{{ url_for('admin.feedback_dashboard') }}">Feedback Analysis</a></li>
+                <li><a href="{{ url_for('admin.resources') }}">Resource Management</a></li>
+                <li><a href="{{ url_for('admin.settings') }}">Settings</a></li>
+                <li><a href="{{ url_for('auth.logout') }}">Logout</a></li>
+            </ul>
+        </aside>
+        
+        <div class="main-content">
+            <div class="header-section">
+                <h1>Assignment Statistics</h1>
+                <div>
+                    <a href="{{ url_for('admin.therapist_assignments') }}" class="btn secondary-btn">Back to Assignments</a>
+                </div>
+            </div>
+            
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert {{ category }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            <!-- Overview Stats -->
+            <div class="card">
+                <h2>Overview</h2>
+                <div class="stats-container">
+                    <div class="stat-card">
+                        <p>Total Active Assignments</p>
+                        <h3>{{ total_assignments }}</h3>
+                    </div>
+                    <div class="stat-card">
+                        <p>Unassigned Students</p>
+                        <h3>{{ unassigned_count }}</h3>
+                    </div>
+                    <div class="stat-card">
+                        <p>Total Therapists</p>
+                        <h3>{{ therapist_stats|length }}</h3>
+                    </div>
+                    <div class="stat-card">
+                        <p>Avg Students Per Therapist</p>
+                        <h3>
+                            {% if therapist_stats|length > 0 %}
+                                {{ "%.1f"|format(total_assignments / therapist_stats|length) }}
+                            {% else %}
+                                0
+                            {% endif %}
+                        </h3>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Therapist Workload -->
+            <div class="card">
+                <h2>Therapist Workload</h2>
+                
+                {% if therapist_stats %}
+                    <div class="therapist-stats-container">
+                        {% for stat in therapist_stats %}
+                            <div class="therapist-stat-card">
+                                <div class="stat-header">
+                                    <h3>Dr. {{ stat.therapist_name }}</h3>
+                                    <span class="badge badge-blue">{{ stat.student_count }} students</span>
+                                </div>
+                                <div class="stat-details">
+                                    <div>
+                                        <p><strong>Specialization:</strong> {{ stat.specialization }}</p>
+                                        <p><strong>Total Sessions:</strong> {{ stat.session_count }}</p>
+                                        <p><strong>Avg Sessions Per Student:</strong> 
+                                            {% if stat.student_count > 0 %}
+                                                {{ "%.1f"|format(stat.session_count / stat.student_count) }}
+                                            {% else %}
+                                                0
+                                            {% endif %}
+                                        </p>
+                                    </div>
+                                    <div style="flex-grow: 1;">
+                                        <p><strong>Student Load:</strong></p>
+                                        <div class="progress-bar-container">
+                                            {% set max_students = 10 %}  <!-- Assuming 10 students is max capacity -->
+                                            {% set percent = (stat.student_count / max_students) * 100 %}
+                                            <div class="progress-bar" style="width: {{ percent if percent <= 100 else 100 }}%;"></div>
+                                        </div>
+                                        <p style="text-align: right; font-size: 12px;">{{ stat.student_count }}/{{ max_students }} max</p>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="empty-state">
+                        <p>No therapist statistics available.</p>
+                    </div>
+                {% endif %}
+            </div>
+            
+            <!-- Recent Assignments -->
+            <div class="card">
+                <h2>Recent Assignments</h2>
+                
+                {% if recent_assignments %}
+                    <div>
+                        {% for assignment in recent_assignments %}
+                            <div class="recent-assignment">
+                                <div>
+                                    <strong class="student-name">{{ assignment.student_name }}</strong>
+                                    <span class="text-muted">→</span>
+                                    <strong class="therapist-name">Dr. {{ assignment.therapist_name }}</strong>
+                                </div>
+                                <div>
+                                    <span class="text-muted">{{ assignment.created_at.strftime('%Y-%m-%d') }}</span>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="empty-state">
+                        <p>No recent assignments found.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</body>
+</html>

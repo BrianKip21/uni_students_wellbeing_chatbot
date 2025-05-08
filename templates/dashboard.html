@@ -6,121 +6,300 @@
     <title>Wellbeing Assistant Dashboard</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css"> 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+
+    <style>
+        {% if settings.theme_mode == 'dark' %}
+        /* Dark mode styles */
+        body {
+            background-color: #121212 !important;
+            color: #e0e0e0 !important;
+        }
+        
+        .bg-white {
+            background-color: #1e1e1e !important;
+        }
+        
+        .text-gray-700, .text-gray-800, .text-gray-900 {
+            color: #e0e0e0 !important;
+        }
+        
+        .text-gray-500, .text-gray-600 {
+            color: #a0a0a0 !important;
+        }
+        
+        .bg-gray-50, .bg-gray-100, .bg-gray-200 {
+            background-color: #2a2a2a !important;
+        }
+        
+        .border-gray-200, .border-gray-300 {
+            border-color: #333 !important;
+        }
+
+        .hover\:bg-gray-100:hover {
+            background-color: #333333 !important;
+        }
+
+        .hover\:bg-gray-200:hover {
+            background-color: #444444 !important;
+        }
+
+        .hover\:bg-green-200:hover {
+            background-color: #0d503c !important;
+        }
+
+        .hover\:bg-blue-200:hover {
+            background-color: #0d365e !important;
+        }
+
+        .bg-green-100 {
+            background-color: #064e3b !important;
+        }
+
+        .bg-blue-100 {
+            background-color: #0c4a6e !important;
+        }
+        {% endif %}
+        
+        {% if settings.contrast == 'high' %}
+        /* High contrast styles */
+        body {
+            background-color: #ffffff !important;
+            color: #000000 !important;
+        }
+        
+        .text-gray-500, .text-gray-600, .text-gray-700, .text-gray-800, .text-gray-900 {
+            color: #000000 !important;
+        }
+        
+        .bg-gray-800 {
+            background-color: #000000 !important;
+        }
+        
+        .text-gray-200 {
+            color: #ffffff !important;
+        }
+        
+        input, select, button {
+            border: 2px solid #000000 !important;
+        }
+
+        .bg-green-100, .bg-blue-100, .bg-gray-100 {
+            background-color: #ffffff !important;
+            border: 2px solid #000000 !important;
+        }
+
+        .text-green-500, .text-blue-500, .text-purple-500 {
+            color: #000000 !important;
+        }
+        {% endif %}
+        
+        {% if settings.text_size == 'lg' %}
+        /* Large text */
+        body {
+            font-size: 1.125rem !important;
+        }
+        
+        .text-sm {
+            font-size: 0.9375rem !important;
+        }
+        
+        .text-lg, .text-xl, .text-2xl, .text-3xl {
+            font-size: 1.3125rem !important;
+        }
+        {% elif settings.text_size == 'xl' %}
+        /* Extra large text */
+        body {
+            font-size: 1.25rem !important;
+        }
+        
+        .text-sm {
+            font-size: 1.0625rem !important;
+        }
+        
+        .text-lg, .text-xl {
+            font-size: 1.5rem !important;
+        }
+
+        .text-2xl, .text-3xl {
+            font-size: 1.75rem !important;
+        }
+        {% endif %}
+    </style>
 </head>
 
 <body class="bg-gray-200 flex text-gray-900">
-    <script>
-window.addEventListener('load', function() {
-    // Update user email
-    document.getElementById('userEmail').textContent = "{{ user.email }}";
-
-    // Update recent chats
-    const chatsList = document.getElementById('recentChats');
-    {% for chat in recent_chats %}
-    chatsList.innerHTML += `
-        <div class="chat-item">
-            <p>{{ chat.message }}</p>
-            <small>{{ chat.timestamp.strftime('%Y-%m-%d %H:%M') }}</small>
-        </div>
-    `;
-    {% endfor %}
-
-    // Update resources
-    const resourcesList = document.getElementById('resources');
-    {% for resource in resources %}
-    resourcesList.innerHTML += `
-        <div class="resource-item">
-            <h3>{{ resource.title }}</h3>
-            <p>{{ resource.description }}</p>
-        </div>
-    `;
-    {% endfor %}
-});
-</script>
-
-
-    <!-- Sidebar -->
+    <!-- Sidebar Navigation -->
     <aside class="w-64 h-screen bg-gray-800 text-gray-200 p-4 fixed">
         <h1 class="text-2xl font-bold mb-6">Wellbeing Assistant</h1>
         <nav>
             <ul class="space-y-4">
-                <li><a href="dashboard.html" class="block p-2 bg-gray-700 rounded"> <i class="fas fa-chart-line"></i> Dashboard</a></li>
-                <li><a href="chatbot.html" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-comments"></i> Chat</a></li>
-                <li><a href="#" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-user"></i> Profile</a></li>
-                <li><a href="resources.html" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-book"></i> Resources</a></li>
-                <li><a href="#" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-cog"></i> Settings</a></li>
+                <li><a href="{{ url_for('dashboard.index') }}" class="block p-2 bg-gray-700 rounded"> <i class="fas fa-chart-line"></i> Dashboard</a></li>
+                <li><a href="{{ url_for('tracking.index') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-chart-bar"></i> Wellness Tracker</a></li>
+                <li><a href="{{ url_for('chatbot.chatbot_page') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-comments"></i> Chat</a></li>
+                <li><a href="{{ url_for('dashboard.therapist_appointments') }}" class="block p-2 bg-hover:gray-700 rounded"> <i class="fas fa-calendar-alt"></i> Therapist</a></li>
+                <li><a href="{{ url_for('dashboard.profile') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-user"></i> Profile</a></li>
+                <li><a href="{{ url_for('dashboard.resources') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-book"></i> Resources</a></li>
+                <li><a href="{{ url_for('dashboard.settings') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-cog"></i> Settings</a></li>
+                <li><a href="{{ url_for('auth.logout') }}" class="block p-2 hover:bg-gray-700 rounded mt-8"> <i class="fas fa-sign-out-alt"></i> Logout</a></li>
             </ul>
         </nav>
     </aside>
 
     <!-- Main Content -->
     <main class="ml-64 p-8 w-full">
-        <h2 class="text-3xl font-bold text-gray-800">Welcome back, Brian!</h2>
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <div class="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 mb-6" role="alert">
+                    {% for message in messages %}
+                        <p>{{ message }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+    
+        <h2 class="text-3xl font-bold text-gray-800">Welcome back, {{ user.first_name }}!</h2>
         <p class="text-gray-700 mb-6">How are you feeling today?</p>
-
-        <!-- Mood Tracker & Quick Actions -->
+        
+        <!-- Widget Grid -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-            <div class="bg-gray-300 p-6 rounded shadow">
+            <!-- Mood Tracker -->
+            {% if not settings.widgets or 'mood_tracker' in settings.widgets %}
+            <div class="bg-white p-6 rounded shadow dashboard-card">
                 <h3 class="text-xl font-semibold mb-4">Mood Tracker</h3>
-                <div class="flex space-x-4">
-                    <button>Happy</button>
-                    <button>Neutral</button>
-                    <button>Sad</button>
-                    
-                </div>
+                <form action="{{ url_for('tracking.track_mood_route') }}" method="post" class="flex space-x-4">
+                    <!-- CSRF is handled via your request verification middleware -->
+                    <button type="submit" name="mood" value="happy" class="p-2 bg-green-100 hover:bg-green-200 rounded mood-button">
+                        <i class="far fa-smile text-2xl text-green-500"></i>
+                        <span class="block">Happy</span>
+                    </button>
+                    <button type="submit" name="mood" value="neutral" class="p-2 bg-gray-100 hover:bg-gray-200 rounded mood-button">
+                        <i class="far fa-meh text-2xl text-gray-500"></i>
+                        <span class="block">Neutral</span>
+                    </button>
+                    <button type="submit" name="mood" value="sad" class="p-2 bg-blue-100 hover:bg-blue-200 rounded mood-button">
+                        <i class="far fa-frown text-2xl text-blue-500"></i>
+                        <span class="block">Sad</span>
+                    </button>
+                </form>
             </div>
-
-            <div class="bg-gray-300 p-6 rounded shadow">
+            {% endif %}
+            
+            <!-- Quick Actions -->
+            {% if not settings.widgets or 'quick_actions' in settings.widgets %}
+            <div class="bg-white p-6 rounded shadow dashboard-card">
                 <h3 class="text-xl font-semibold mb-4">Quick Actions</h3>
-                <button class="block w-full text-left p-2 hover:bg-gray-400"><i class="fas fa-phone-alt"></i> Contact Counselor</button>
-                <button class="block w-full text-left p-2 hover:bg-gray-400"><i class="fas fa-calendar-alt"></i> Schedule Appointment</button>
-                <button class="block w-full text-left p-2 hover:bg-gray-400"><i class="fas fa-meditation"></i> Start Meditation</button>
+                <a href="{{ url_for('chatbot.chatbot_page') }}" class="block w-full text-left p-2 hover:bg-gray-100 rounded mb-2 action-link">
+                    <i class="fas fa-comments text-blue-500"></i> Chat with Assistant
+                </a>
+                <a href="#" class="block w-full text-left p-2 hover:bg-gray-100 rounded mb-2 action-link">
+                    <i class="fas fa-calendar-alt text-green-500"></i> Schedule Appointment
+                </a>
+                <a href="#" onclick="startMeditation(); return false;" class="block w-full text-left p-2 hover:bg-gray-100 rounded action-link">
+                    <i class="fas fa-meditation text-purple-500"></i> Start Meditation
+                </a>
             </div>
+            {% endif %}
 
-            <div class="bg-gray-300 p-6 rounded shadow">
+            <!-- Recommended Resources -->
+            {% if not settings.widgets or 'resources' in settings.widgets %}
+            <div class="bg-white p-6 rounded shadow dashboard-card">
                 <h3 class="text-xl font-semibold mb-4">Recommended Resources</h3>
-                <div class="flex items-center space-x-4">
-                    <img src="/api/placeholder/50/50" alt="Stress Guide" class="w-12 h-12 rounded">
-                    <div><h4 class="font-medium">Stress Management Guide</h4><p class="text-sm text-gray-700">10 min read</p></div>
-                </div>
-                <div class="flex items-center space-x-4 mt-4">
-                    <img src="/api/placeholder/50/50" alt="Sleep Better" class="w-12 h-12 rounded">
-                    <div><h4 class="font-medium">Sleep Better Workshop</h4><p class="text-sm text-gray-700">30 min video</p></div>
-                </div>
+                {% if resources and resources|length > 0 %}
+                    {% for resource in resources %}
+                        <div class="flex items-center space-x-4 {% if not loop.last %}mb-4{% endif %}">
+                            {% if resource.get('file_path') %}
+                                <img src="{{ resource.file_path }}" alt="{{ resource.title }}" class="w-12 h-12 rounded">
+                            {% else %}
+                                <img src="/static/img/placeholder.jpg" alt="{{ resource.title }}" class="w-12 h-12 rounded">
+                            {% endif %}
+                            <div>
+                                <h4 class="font-medium">{{ resource.title }}</h4>
+                                <p class="text-sm text-gray-700">
+                                    {% if resource.type == 'article' %}
+                                        Reading
+                                    {% elif resource.type == 'video' %}
+                                        Video
+                                    {% else %}
+                                        Resource
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <!-- Fallback content when no resources from the database -->
+                    <div class="flex items-center space-x-4 mb-4">
+                        <img src="/static/img/placeholder.jpg" alt="Stress Guide" class="w-12 h-12 rounded">
+                        <div>
+                            <h4 class="font-medium">Stress Management Guide</h4>
+                            <p class="text-sm text-gray-700">10 min read</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <img src="/static/img/placeholder.jpg" alt="Sleep Better" class="w-12 h-12 rounded">
+                        <div>
+                            <h4 class="font-medium">Sleep Better Workshop</h4>
+                            <p class="text-sm text-gray-700">30 min video</p>
+                        </div>
+                    </div>
+                {% endif %}
             </div>
+            {% endif %}
         </div>
 
         <!-- Recent Conversations -->
-        <div class="bg-gray-300 p-6 rounded shadow mb-6">
+        {% if not settings.widgets or 'conversations' in settings.widgets %}
+        <div class="bg-white p-6 rounded shadow mb-6 dashboard-card">
             <h3 class="text-xl font-semibold mb-4">Recent Conversations</h3>
-            <div class="border-b pb-4 mb-4">
-                <h4 class="font-medium">Exam Stress Management</h4>
-                <p class="text-sm text-gray-700">We discussed techniques for managing exam anxiety...</p>
-            </div>
-            <div>
-                <h4 class="font-medium">Sleep Schedule Improvement</h4>
-                <p class="text-sm text-gray-700">Developed a bedtime routine and discussed ways to improve sleep quality...</p>
-            </div>
+            {% if recent_chats and recent_chats|length > 0 %}
+                {% for chat in recent_chats %}
+                    <div class="{% if not loop.last %}border-b pb-4 mb-4{% endif %}">
+                        <h4 class="font-medium">
+                            {% if chat.conversation_context and chat.conversation_context.topic %}
+                                {{ chat.conversation_context.topic|title }} Conversation
+                            {% else %}
+                                Chat from {{ chat.timestamp.strftime('%B %d') }}
+                            {% endif %}
+                        </h4>
+                        <p class="text-sm text-gray-700 truncate">{{ chat.message }}</p>
+                        <p class="text-xs text-gray-500 mt-1">{{ chat.timestamp.strftime('%B %d, %Y at %I:%M %p') }}</p>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p class="text-gray-700">No recent conversations found. Start chatting to see your history here.</p>
+            {% endif %}
         </div>
+        {% endif %}
 
         <!-- Weekly Progress -->
-        <div class="bg-gray-300 p-6 rounded shadow">
+        {% if not settings.widgets or 'progress' in settings.widgets %}
+        <div class="bg-white p-6 rounded shadow dashboard-card">
             <h3 class="text-xl font-semibold mb-4">Weekly Progress</h3>
+            
+            <!-- Default to 0 if not available -->
+            {% set meditation_progress = user.progress.meditation|default(0) %}
+            {% set exercise_progress = user.progress.exercise|default(0) %}
+            
             <div class="flex items-center justify-between mb-4">
                 <span class="text-gray-700">Meditation Goals</span>
-                <div class="w-48 h-2 bg-gray-400 rounded-full">
-                    <div class="w-3/4 h-full bg-gray-700 rounded-full"></div>
+                <div class="w-48 h-2 bg-gray-200 rounded-full">
+                    <div class="h-full bg-blue-500 rounded-full" style="width: {{ meditation_progress }}%"></div>
                 </div>
-                <span class="text-gray-700">75%</span>
+                <span class="text-gray-700">{{ meditation_progress }}%</span>
             </div>
             <div class="flex items-center justify-between">
                 <span class="text-gray-700">Exercise Goals</span>
-                <div class="w-48 h-2 bg-gray-400 rounded-full">
-                    <div class="w-1/2 h-full bg-gray-700 rounded-full"></div>
+                <div class="w-48 h-2 bg-gray-200 rounded-full">
+                    <div class="h-full bg-green-500 rounded-full" style="width: {{ exercise_progress }}%"></div>
                 </div>
-                <span class="text-gray-700">50%</span>
+                <span class="text-gray-700">{{ exercise_progress }}%</span>
             </div>
         </div>
+        {% endif %}
     </main>
+
+    <!-- Optional JavaScript -->
+    <script src="{{ url_for('static', filename='dashboard.js') }}"></script>
 </body>
 </html>

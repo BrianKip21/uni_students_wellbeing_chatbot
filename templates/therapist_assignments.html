@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Therapist-Student Assignments - Wellbeing Chatbot Admin</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        .assignment-card {
+            margin-bottom: 15px;
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            background-color: white;
+        }
+        
+        .assignment-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+        
+        .assignment-header h3 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 600;
+        }
+        
+        .assignment-header .therapist-name {
+            font-weight: 600;
+            color: #4a6fa5;
+        }
+        
+        .assignment-header .student-name {
+            font-weight: 600;
+        }
+        
+        .assignment-details {
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .assignment-info {
+            flex: 1;
+        }
+        
+        .assignment-info p {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+        
+        .assignment-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 3px 6px;
+            font-size: 12px;
+            font-weight: 600;
+            border-radius: 4px;
+        }
+        
+        .badge-blue {
+            background-color: #dbeafe;
+            color: #1e40af;
+        }
+        
+        .badge-green {
+            background-color: #dcfce7;
+            color: #15803d;
+        }
+        
+        .form-group-flex {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .form-group-flex .form-control {
+            flex: 1;
+        }
+        
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background-color: white;
+            border-radius: 5px;
+            padding: 15px;
+            text-align: center;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .stat-card h3 {
+            font-size: 24px;
+            margin: 5px 0;
+        }
+        
+        .stat-card p {
+            font-size: 14px;
+            color: #6b7280;
+            margin: 0;
+        }
+        
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 100;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+        
+        .modal-content {
+            background-color: white;
+            margin: 10% auto;
+            padding: 20px;
+            width: 400px;
+            max-width: 90%;
+            border-radius: 5px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .modal-header h2 {
+            margin: 0;
+            font-size: 18px;
+        }
+        
+        .close {
+            font-size: 22px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .modal-body {
+            margin-bottom: 20px;
+        }
+        
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <h2>Admin Panel</h2>
+            <ul>
+                <li><a href="{{ url_for('admin.dashboard') }}">Dashboard</a></li>
+                <li><a href="{{ url_for('admin.user_management') }}">User Management</a></li>
+                <li><a href="{{ url_for('admin.therapist_management') }}">Therapist Management</a></li>
+                <li><a href="{{ url_for('admin.therapist_assignments') }}" class="active">Therapist Assignments</a></li>
+                <li><a href="{{ url_for('admin.chat_logs') }}">Chat Logs</a></li>
+                <li><a href="{{ url_for('admin.feedback_dashboard') }}">Feedback Analysis</a></li>
+                <li><a href="{{ url_for('admin.resources') }}">Resource Management</a></li>
+                <li><a href="{{ url_for('admin.settings') }}">Settings</a></li>
+                <li><a href="{{ url_for('auth.logout') }}">Logout</a></li>
+            </ul>
+        </aside>
+        
+        <div class="main-content">
+            <div class="header-section">
+                <h1>Therapist-Student Assignments</h1>
+                <div>
+                    <a href="{{ url_for('admin.assignment_stats') }}" class="btn secondary-btn">View Stats</a>
+                    <button class="btn primary-btn" onclick="showCreateModal()">Create Assignment</button>
+                </div>
+            </div>
+            
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert {{ category }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            <div class="card">
+                <h2>Active Assignments ({{ assignments|length }})</h2>
+                
+                {% if assignments %}
+                    {% for assignment in assignments %}
+                        <div class="assignment-card">
+                            <div class="assignment-header">
+                                <h3>
+                                    <span class="student-name">{{ assignment.student_name }}</span>
+                                    <span class="text-muted">→</span>
+                                    <span class="therapist-name">Dr. {{ assignment.therapist_name }}</span>
+                                </h3>
+                                <span class="badge badge-blue">{{ assignment.session_count }} sessions</span>
+                            </div>
+                            
+                            <div class="assignment-details">
+                                <div class="assignment-info">
+                                    <p><strong>Student Email:</strong> {{ assignment.student_email }}</p>
+                                    <p><strong>Therapist Specialization:</strong> {{ assignment.therapist_specialization }}</p>
+                                    <p><strong>Assigned:</strong> {{ assignment.created_at.strftime('%Y-%m-%d') }}</p>
+                                    {% if assignment.next_session %}
+                                        <p><strong>Next Session:</strong> {{ assignment.next_session.strftime('%Y-%m-%d %H:%M') }}</p>
+                                    {% else %}
+                                        <p><strong>Next Session:</strong> Not scheduled</p>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="assignment-actions">
+                                    <button class="btn secondary-btn" onclick="showChangeModal('{{ assignment._id }}', '{{ assignment.student_name }}', '{{ assignment.therapist_name }}', '{{ assignment.therapist_id }}')">
+                                        Change Therapist
+                                    </button>
+                                    <button class="btn danger-btn" onclick="showDeleteModal('{{ assignment._id }}', '{{ assignment.student_name }}', '{{ assignment.therapist_name }}')">
+                                        Remove
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state">
+                        <p>No active therapist-student assignments found.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Create Assignment Modal -->
+    <div id="createModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Create New Assignment</h2>
+                <span class="close" onclick="closeModal('createModal')">&times;</span>
+            </div>
+            
+            <div class="modal-body">
+                <form id="createForm" action="{{ url_for('admin.create_assignment') }}" method="post">
+                    <div class="form-group">
+                        <label for="student_id">Student</label>
+                        <select id="student_id" name="student_id" class="form-control" required>
+                            <option value="" disabled selected>Select Student</option>
+                            {% for student in unassigned_students %}
+                                <option value="{{ student._id }}">{{ student.first_name }} {{ student.last_name }} ({{ student.email }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="therapist_id">Therapist</label>
+                        <select id="therapist_id" name="therapist_id" class="form-control" required>
+                            <option value="" disabled selected>Select Therapist</option>
+                            {% for therapist in therapists %}
+                                <option value="{{ therapist._id }}">Dr. {{ therapist.first_name }} {{ therapist.last_name }} ({{ therapist.specialization }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </form>
+            </div>
+            
+            <div class="modal-footer">
+                <button class="btn secondary-btn" onclick="closeModal('createModal')">Cancel</button>
+                <button class="btn primary-btn" onclick="document.getElementById('createForm').submit()">Create Assignment</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Change Therapist Modal -->
+    <div id="changeModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Change Therapist</h2>
+                <span class="close" onclick="closeModal('changeModal')">&times;</span>
+            </div>
+            
+            <div class="modal-body">
+                <p id="changeMessage">Select a new therapist for <span id="changeStudentName"></span>:</p>
+                
+                <form id="changeForm" action="" method="post">
+                    <div class="form-group">
+                        <label for="new_therapist_id">New Therapist</label>
+                        <select id="new_therapist_id" name="new_therapist_id" class="form-control" required>
+                            <option value="" disabled selected>Select New Therapist</option>
+                            {% for therapist in therapists %}
+                                <option value="{{ therapist._id }}">Dr. {{ therapist.first_name }} {{ therapist.last_name }} ({{ therapist.specialization }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </form>
+            </div>
+            
+            <div class="modal-footer">
+                <button class="btn secondary-btn" onclick="closeModal('changeModal')">Cancel</button>
+                <button class="btn primary-btn" onclick="document.getElementById('changeForm').submit()">Change Therapist</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Delete Assignment Modal -->
+    <div id="deleteModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Remove Assignment</h2>
+                <span class="close" onclick="closeModal('deleteModal')">&times;</span>
+            </div>
+            
+            <div class="modal-body">
+                <p id="deleteMessage">Are you sure you want to remove this assignment?</p>
+                
+                <form id="deleteForm" action="" method="post">
+                    <!-- No additional fields needed -->
+                </form>
+            </div>
+            
+            <div class="modal-footer">
+                <button class="btn secondary-btn" onclick="closeModal('deleteModal')">Cancel</button>
+                <button class="btn danger-btn" onclick="document.getElementById('deleteForm').submit()">Remove Assignment</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Modal handling functions
+        function showCreateModal() {
+            document.getElementById('createModal').style.display = 'block';
+        }
+        
+        function showChangeModal(assignmentId, studentName, therapistName, currentTherapistId) {
+            document.getElementById('changeStudentName').textContent = studentName;
+            document.getElementById('changeMessage').innerHTML = 
+                `Select a new therapist for <strong>${studentName}</strong> (currently assigned to Dr. ${therapistName}):`;
+            
+            document.getElementById('changeForm').action = "{{ url_for('admin.change_therapist', assignment_id='PLACEHOLDER') }}".replace('PLACEHOLDER', assignmentId);
+            
+            // Disable current therapist in the dropdown
+            const therapistSelect = document.getElementById('new_therapist_id');
+            for (let i = 0; i < therapistSelect.options.length; i++) {
+                if (therapistSelect.options[i].value === currentTherapistId) {
+                    therapistSelect.options[i].disabled = true;
+                } else {
+                    therapistSelect.options[i].disabled = false;
+                }
+            }
+            
+            document.getElementById('changeModal').style.display = 'block';
+        }
+        
+        function showDeleteModal(assignmentId, studentName, therapistName) {
+            document.getElementById('deleteMessage').innerHTML = 
+                `Are you sure you want to remove the assignment between <strong>${studentName}</strong> and <strong>Dr. ${therapistName}</strong>?<br><br>
+                This will make the student unassigned and available for a new therapist assignment.`;
+            
+            document.getElementById('deleteForm').action = "{{ url_for('admin.delete_assignment', assignment_id='PLACEHOLDER') }}".replace('PLACEHOLDER', assignmentId);
+            
+            document.getElementById('deleteModal').style.display = 'block';
+        }
+        
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+        
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            if (event.target.className === 'modal') {
+                event.target.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>

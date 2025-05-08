@@ -21,7 +21,7 @@ class Config:
 
     SMTP_SERVER = 'smtp.gmail.com'  # Replace with your SMTP server
     SMTP_PORT = 587  # Common ports: 587 for TLS, 465 for SSL
-    SMTP_USERNAME = 'CHATBOT'  # Your SMTP username
+    SMTP_USERNAME = 'toobrian2003@gmail.com'  # Your SMTP username
     SMTP_PASSWORD = 'zbnb hcnm karj ioyn'  # Your SMTP password
     SENDER_EMAIL = 'toobrian2003@gmail.com'  # The "from" address for emails
     SITE_URL = 'https://127.0.0.1:5001'  # Your application's URL

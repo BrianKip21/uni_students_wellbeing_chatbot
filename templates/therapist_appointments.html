@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Therapist Appointments | Wellbeing Assistant</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css"> 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+
+    <style>
+        {% if settings.theme_mode == 'dark' %}
+        /* Dark mode styles */
+        body {
+            background-color: #121212 !important;
+            color: #e0e0e0 !important;
+        }
+        
+        .bg-white {
+            background-color: #1e1e1e !important;
+        }
+        
+        .text-gray-700, .text-gray-800, .text-gray-900 {
+            color: #e0e0e0 !important;
+        }
+        
+        .text-gray-500, .text-gray-600 {
+            color: #a0a0a0 !important;
+        }
+        
+        .bg-gray-50, .bg-gray-100, .bg-gray-200 {
+            background-color: #2a2a2a !important;
+        }
+        
+        .border-gray-200, .border-gray-300 {
+            border-color: #333 !important;
+        }
+
+        .hover\:bg-gray-100:hover {
+            background-color: #333333 !important;
+        }
+        {% endif %}
+        
+        {% if settings.text_size == 'lg' %}
+        /* Large text */
+        body {
+            font-size: 1.125rem !important;
+        }
+        {% elif settings.text_size == 'xl' %}
+        /* Extra large text */
+        body {
+            font-size: 1.25rem !important;
+        }
+        {% endif %}
+        
+        /* Calendar styles */
+        .calendar-day {
+            min-height: 6rem;
+        }
+        
+        .calendar-date.selected {
+            background-color: #93c5fd;
+            color: #1e40af;
+        }
+        
+        .calendar-date.today {
+            border: 2px solid #3b82f6;
+            font-weight: bold;
+        }
+        
+        .calendar-date.booked {
+            background-color: #e5e7eb;
+        }
+        
+        /* Status badges */
+        .status-badge {
+            @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+        }
+        
+        .status-scheduled {
+            @apply bg-green-100 text-green-800;
+        }
+        
+        .status-pending {
+            @apply bg-yellow-100 text-yellow-800;
+        }
+        
+        .status-cancelled {
+            @apply bg-red-100 text-red-800;
+        }
+        
+        .status-completed {
+            @apply bg-blue-100 text-blue-800;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-200 flex text-gray-900">
+    <!-- Sidebar Navigation -->
+    <aside class="w-64 h-screen bg-gray-800 text-gray-200 p-4 fixed">
+        <h1 class="text-2xl font-bold mb-6">Wellbeing Assistant</h1>
+        <nav>
+            <ul class="space-y-4">
+                <li><a href="{{ url_for('dashboard.index') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-chart-line"></i> Dashboard</a></li>
+                <li><a href="{{ url_for('tracking.index') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-chart-bar"></i> Wellness Tracker</a></li>
+                <li><a href="{{ url_for('chatbot.chatbot_page') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-comments"></i> Chat</a></li>
+                <li><a href="{{ url_for('dashboard.therapist_appointments') }}" class="block p-2 bg-gray-700 rounded"> <i class="fas fa-calendar-alt"></i> Therapist</a></li>
+                <li><a href="{{ url_for('dashboard.profile') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-user"></i> Profile</a></li>
+                <li><a href="{{ url_for('dashboard.resources') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-book"></i> Resources</a></li>
+                <li><a href="{{ url_for('dashboard.settings') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-cog"></i> Settings</a></li>
+                <li><a href="{{ url_for('auth.logout') }}" class="block p-2 hover:bg-gray-700 rounded mt-8"> <i class="fas fa-sign-out-alt"></i> Logout</a></li>
+            </ul>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="ml-64 p-8 w-full">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    {% set bg_color = "bg-blue-100 border-blue-500" %}
+                    {% set text_color = "text-blue-700" %}
+                    
+                    {% if category == 'error' %}
+                        {% set bg_color = "bg-red-100 border-red-500" %}
+                        {% set text_color = "text-red-700" %}
+                    {% elif category == 'success' %}
+                        {% set bg_color = "bg-green-100 border-green-500" %}
+                        {% set text_color = "text-green-700" %}
+                    {% elif category == 'warning' %}
+                        {% set bg_color = "bg-yellow-100 border-yellow-500" %}
+                        {% set text_color = "text-yellow-700" %}
+                    {% endif %}
+                    
+                    <div class="{{ bg_color }} border-l-4 {{ text_color }} p-4 mb-6" role="alert">
+                        <p>{{ message }}</p>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        <!-- Breadcrumb Navigation -->
+        <div class="flex text-sm text-gray-500 mb-6">
+            <a href="{{ url_for('dashboard.index') }}" class="hover:text-gray-700">Dashboard</a>
+            <span class="mx-2">/</span>
+            <span class="text-gray-700">Therapist Appointments</span>
+        </div>
+    
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-3xl font-bold text-gray-800">Therapy Sessions</h2>
+            
+            <div class="flex">
+                <a href="{{ url_for('dashboard.therapist_chat') }}" class="mr-2 inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    <i class="fas fa-comments mr-2"></i> Chat with Therapist
+                </a>
+                
+                <a href="#schedule-section" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    <i class="fas fa-plus mr-2"></i> Schedule Session
+                </a>
+            </div>
+        </div>
+        
+        <!-- Therapist Info -->
+        <div class="bg-white p-6 rounded shadow mb-6">
+            <div class="flex items-start">
+                <div class="bg-blue-100 p-4 rounded-full text-blue-500 mr-5">
+                    <i class="fas fa-user-md text-2xl"></i>
+                </div>
+                
+                <div class="flex-1">
+                    <h3 class="text-xl font-medium">Your Therapist: Dr. {{ therapist.first_name }} {{ therapist.last_name }}</h3>
+                    <p class="text-gray-500 mb-2">{{ therapist.specialization }}</p>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                        <div>
+                            <h4 class="text-sm font-medium text-gray-500">Office Hours</h4>
+                            <p>{{ therapist.office_hours.get('description', 'Monday-Friday, 9 AM - 5 PM') }}</p>
+                        </div>
+                        
+                        <div>
+                            <h4 class="text-sm font-medium text-gray-500">Contact</h4>
+                            <p>For urgent matters outside of appointments, please contact the counseling center.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Appointment Tabs -->
+        <div class="bg-white rounded shadow mb-6 overflow-hidden">
+            <div class="border-b border-gray-200">
+                <nav class="-mb-px flex" aria-label="Tabs">
+                    <a href="#upcoming" class="tab-link active w-1/3 py-4 px-1 text-center border-b-2 border-blue-500 font-medium text-sm text-blue-600" data-tab="upcoming">
+                        Upcoming Sessions
+                    </a>
+                    <a href="#pending" class="tab-link w-1/3 py-4 px-1 text-center border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300" data-tab="pending">
+                        Pending Requests
+                    </a>
+                    <a href="#past" class="tab-link w-1/3 py-4 px-1 text-center border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300" data-tab="past">
+                        Past Sessions
+                    </a>
+                </nav>
+            </div>
+            
+            <!-- Upcoming Appointments Tab -->
+            <div id="upcoming-tab" class="tab-content p-6 block">
+                {% if upcoming_appointments %}
+                    <div class="space-y-4">
+                        {% for appt in upcoming_appointments %}
+                            <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50">
+                                <div class="flex items-start">
+                                    <div class="bg-blue-100 rounded-lg p-3 text-blue-600 mr-4">
+                                        <i class="fas fa-calendar-alt text-xl"></i>
+                                    </div>
+                                    
+                                    <div class="flex-1">
+                                        <div class="flex justify-between items-start">
+                                            <div>
+                                                <h4 class="text-lg font-medium">{{ appt.date.strftime('%A, %B %d, %Y') }}</h4>
+                                                <p class="text-gray-500">{{ appt.time }} {% if appt.session_type == 'online' %}(Online Session){% else %}(In-Person){% endif %}</p>
+                                            </div>
+                                            
+                                            <span class="status-badge status-scheduled">Scheduled</span>
+                                        </div>
+                                        
+                                        {% if appt.reason %}
+                                            <div class="mt-2 text-gray-600 text-sm">
+                                                <p><strong>Topic:</strong> {{ appt.reason }}</p>
+                                            </div>
+                                        {% endif %}
+                                        
+                                        <div class="mt-4 flex flex-wrap gap-2">
+                                            {% if appt.session_type == 'online' %}
+                                                <a href="#" class="join-session-btn inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                                                    <i class="fas fa-video mr-1"></i> Join Session
+                                                </a>
+                                            {% endif %}
+                                            
+                                            <button type="button" class="reschedule-btn inline-flex items-center px-3 py-1 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" data-appointment-id="{{ appt._id }}">
+                                                <i class="fas fa-clock mr-1"></i> Request Reschedule
+                                            </button>
+                                            
+                                            <button type="button" class="cancel-btn inline-flex items-center px-3 py-1 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" data-appointment-id="{{ appt._id }}">
+                                                <i class="fas fa-times mr-1"></i> Request Cancellation
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-10">
+                        <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-blue-100">
+                            <i class="fas fa-calendar text-blue-600"></i>
+                        </div>
+                        <h3 class="mt-3 text-lg font-medium text-gray-900">No Upcoming Sessions</h3>
+                        <p class="mt-2 text-gray-500">
+                            You don't have any upcoming therapy sessions scheduled. 
+                            Scroll down to schedule your first session.
+                        </p>
+                        <div class="mt-6">
+                            <a href="#schedule-section" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                Schedule a Session
+                            </a>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+            
+            <!-- Pending Requests Tab -->
+            <div id="pending-tab" class="tab-content p-6 hidden">
+                {% if pending_appointments %}
+                    <div class="space-y-4">
+                        {% for appt in pending_appointments %}
+                            <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50">
+                                <div class="flex items-start">
+                                    <div class="bg-yellow-100 rounded-lg p-3 text-yellow-600 mr-4">
+                                        <i class="fas fa-hourglass-half text-xl"></i>
+                                    </div>
+                                    
+                                    <div class="flex-1">
+                                        <div class="flex justify-between items-start">
+                                            <div>
+                                                <h4 class="text-lg font-medium">{{ appt.date.strftime('%A, %B %d, %Y') }}</h4>
+                                                <p class="text-gray-500">{{ appt.time }} {% if appt.session_type == 'online' %}(Online Session){% else %}(In-Person){% endif %}</p>
+                                            </div>
+                                            
+                                            <span class="status-badge status-pending">Pending Approval</span>
+                                        </div>
+                                        
+                                        {% if appt.reason %}
+                                            <div class="mt-2 text-gray-600 text-sm">
+                                                <p><strong>Topic:</strong> {{ appt.reason }}</p>
+                                            </div>
+                                        {% endif %}
+                                        
+                                        <div class="mt-3 bg-yellow-50 p-3 rounded-md">
+                                            <p class="text-yellow-800 text-sm">
+                                                <i class="fas fa-info-circle mr-1"></i> This appointment request is waiting for therapist approval.
+                                                You'll be notified when it's approved.
+                                            </p>
+                                        </div>
+                                        
+                                        <div class="mt-4 flex">
+                                            <button type="button" class="cancel-request-btn inline-flex items-center px-3 py-1 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" data-appointment-id="{{ appt._id }}">
+                                                <i class="fas fa-times mr-1"></i> Cancel Request
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-10">
+                        <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-yellow-100">
+                            <i class="fas fa-hourglass text-yellow-600"></i>
+                        </div>
+                        <h3 class="mt-3 text-lg font-medium text-gray-900">No Pending Requests</h3>
+                        <p class="mt-2 text-gray-500">
+                            You don't have any pending session requests at the moment.
+                        </p>
+                    </div>
+                {% endif %}
+            </div>
+            
+            <!-- Past Appointments Tab -->
+            <div id="past-tab" class="tab-content p-6 hidden">
+                {% if past_appointments %}
+                    <div class="space-y-4">
+                        {% for appt in past_appointments %}
+                            <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50">
+                                <div class="flex items-start">
+                                    {% if appt.status == 'completed' %}
+                                        <div class="bg-green-100 rounded-lg p-3 text-green-600 mr-4">
+                                            <i class="fas fa-check-circle text-xl"></i>
+                                        </div>
+                                    {% else %}
+                                        <div class="bg-red-100 rounded-lg p-3 text-red-600 mr-4">
+                                            <i class="fas fa-times-circle text-xl"></i>
+                                        </div>
+                                    {% endif %}
+                                    
+                                    <div class="flex-1">
+                                        <div class="flex justify-between items-start">
+                                            <div>
+                                                <h4 class="text-lg font-medium">{{ appt.date.strftime('%A, %B %d, %Y') }}</h4>
+                                                <p class="text-gray-500">{{ appt.time }} {% if appt.session_type == 'online' %}(Online Session){% else %}(In-Person){% endif %}</p>
+                                            </div>
+                                            
+                                            {% if appt.status == 'completed' %}
+                                                <span class="status-badge status-completed">Completed</span>
+                                            {% else %}
+                                                <span class="status-badge status-cancelled">Cancelled</span>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        {% if appt.status == 'completed' and session_notes and session_notes[appt._id|string] %}
+                                            <div class="mt-3 bg-blue-50 p-3 rounded-md">
+                                                <p class="text-blue-800 text-sm">
+                                                    <i class="fas fa-file-alt mr-1"></i> Session notes are available for this appointment.
+                                                </p>
+                                            </div>
+                                            
+                                            <div class="mt-4 flex">
+                                                <a href="{{ url_for('dashboard.view_session_notes', appointment_id=appt._id) }}" class="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                                    <i class="fas fa-file-alt mr-1"></i> View Session Notes
+                                                </a>
+                                            </div>
+                                        {% elif appt.status == 'completed' %}
+                                            <div class="mt-3 bg-gray-50 p-3 rounded-md">
+                                                <p class="text-gray-600 text-sm">
+                                                    <i class="fas fa-info-circle mr-1"></i> Session notes are being prepared by your therapist.
+                                                </p>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-10">
+                        <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-gray-100">
+                            <i class="fas fa-history text-gray-600"></i>
+                        </div>
+                        <h3 class="mt-3 text-lg font-medium text-gray-900">No Past Sessions</h3>
+                        <p class="mt-2 text-gray-500">
+                            You haven't had any therapy sessions yet.
+                        </p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Schedule New Appointment Section -->
+        <div id="schedule-section" class="bg-white p-6 rounded shadow">
+            <h3 class="text-xl font-medium mb-4 pb-2 border-b border-gray-200">Schedule a New Session</h3>
+            
+            <form action="{{ url_for('dashboard.schedule_appointment') }}" method="post">
+                <!-- Step 1: Select Date & Time -->
+                <div class="mb-6">
+                    <h4 class="text-lg font-medium mb-3">Step 1: Select Date & Time</h4>
+                    
+                    <!-- Calendar View / Available Dates -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Available Dates</label>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            {% for day in available_slots %}
+                                {% if day.slots|length > 0 %}
+                                    <div class="border border-gray-200 rounded-lg overflow-hidden">
+                                        <div class="bg-gray-50 px-4 py-2 border-b border-gray-200">
+                                            <h5 class="font-medium">{{ day.day }}</h5>
+                                        </div>
+                                        <div class="p-3">
+                                            <label class="block text-sm font-medium text-gray-700 mb-2">Available Times</label>
+                                            <div class="grid grid-cols-2 gap-2">
+                                                {% for time in day.slots %}
+                                                    <div class="time-slot flex">
+                                                        <input type="radio" id="slot-{{ day.date_str }}-{{ time }}" name="date_time" value="{{ day.date_str }}|{{ time }}" class="hidden time-radio">
+                                                        <label for="slot-{{ day.date_str }}-{{ time }}" class="w-full py-1 px-2 border border-gray-300 rounded text-center text-sm cursor-pointer hover:bg-blue-50 hover:border-blue-300 time-label">
+                                                            {{ time }}
+                                                        </label>
+                                                    </div>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                        
+                        <input type="hidden" name="date" id="selected-date">
+                        <input type="hidden" name="time" id="selected-time">
+                    </div>
+                </div>
+                
+                <!-- Step 2: Session Details -->
+                <div class="mb-6">
+                    <h4 class="text-lg font-medium mb-3">Step 2: Session Details</h4>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="session_type" class="block text-sm font-medium text-gray-700 mb-1">Session Type</label>
+                            <select id="session_type" name="session_type" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                <option value="online">Online (Video Chat)</option>
+                                <option value="in_person">In-Person</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label for="reason" class="block text-sm font-medium text-gray-700 mb-1">Reason/Topic (Optional)</label>
+                            <input type="text" id="reason" name="reason" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="What would you like to discuss?">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Submit Button -->
+                <div class="flex justify-end border-t border-gray-200 pt-4">
+                    <button type="submit" id="schedule-btn" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                        Request Appointment
+                    </button>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <!-- Reschedule Modal -->
+    <div id="reschedule-modal" class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center hidden z-50">
+        <div class="bg-white rounded-lg max-w-md w-full mx-4">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-medium">Request Reschedule</h3>
+            </div>
+            
+            <form action="" method="post" id="reschedule-form">
+                <div class="px-6 py-4">
+                    <div class="mb-4">
+                        <p class="text-gray-700 mb-4">Please select a new date and time for your appointment. Your therapist will need to approve this change.</p>
+                        
+                        <div class="mb-4">
+                            <label for="reschedule-date" class="block text-sm font-medium text-gray-700 mb-1">New Date</label>
+                            <select id="reschedule-date" name="date" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                <option value="">Select a date</option>
+                                {% for day in available_slots %}
+                                    {% if day.slots|length > 0 %}
+                                        <option value="{{ day.date_str }}">{{ day.day }}</option>
+                                    {% endif %}
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="reschedule-time" class="block text-sm font-medium text-gray-700 mb-1">New Time</label>
+                            <select id="reschedule-time" name="time" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" disabled>
+                                <option value="">Select a time</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label for="reschedule-reason" class="block text-sm font-medium text-gray-700 mb-1">Reason for Rescheduling</label>
+                            <textarea id="reschedule-reason" name="reason" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="Please explain why you need to reschedule..."></textarea>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-gray-50 px-6 py-3 flex justify-end">
+                    <button type="button" class="mr-2 inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" id="reschedule-cancel">
+                        Cancel
+                    </button>
+                    <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        Submit Request
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Cancel Appointment Modal -->
+    <div id="cancel-modal" class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center hidden z-50">
+        <div class="bg-white rounded-lg max-w-md w-full mx-4">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-medium">Request Cancellation</h3>
+            </div>
+            
+            <form action="" method="post" id="cancel-form">
+                <div class="px-6 py-4">
+                    <div class="mb-4">
+                        <p class="text-gray-700 mb-4">Please provide a reason for cancelling this appointment. Your therapist will need to approve this cancellation.</p>
+                        
+                        <div>
+                            <label for="cancel-reason" class="block text-sm font-medium text-gray-700 mb-1">Reason for Cancellation</label>
+                            <textarea id="cancel-reason" name="reason" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="Please explain why you need to cancel..."></textarea>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-gray-50 px-6 py-3 flex justify-end">
+                    <button type="button" class="mr-2 inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" id="cancel-cancel">
+                        Back
+                    </button>
+                    <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                        Request Cancellation
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Tab switching
+            const tabLinks = document.querySelectorAll('.tab-link');
+            const tabContents = document.querySelectorAll('.tab-content');
+            
+            tabLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // Remove active class from all tabs
+                    tabLinks.forEach(l => l.classList.remove('active', 'border-blue-500', 'text-blue-600'));
+                    tabLinks.forEach(l => l.classList.add('border-transparent', 'text-gray-500'));
+                    
+                    // Add active class to this tab
+                    this.classList.add('active', 'border-blue-500', 'text-blue-600');
+                    this.classList.remove('border-transparent', 'text-gray-500');
+                    
+                    // Hide all tab content
+                    tabContents.forEach(c => c.classList.add('hidden'));
+                    tabContents.forEach(c => c.classList.remove('block'));
+                    
+                    // Show this tab's content
+                    const tabId = this.getAttribute('data-tab');
+                    document.getElementById(tabId + '-tab').classList.remove('hidden');
+                    document.getElementById(tabId + '-tab').classList.add('block');
+                });
+            });
+            
+            // Time slot selection
+            const timeRadios = document.querySelectorAll('.time-radio');
+            const timeLabels = document.querySelectorAll('.time-label');
+            const selectedDateInput = document.getElementById('selected-date');
+            const selectedTimeInput = document.getElementById('selected-time');
+            const scheduleBtn = document.getElementById('schedule-btn');
+            
+            timeRadios.forEach(radio => {
+                radio.addEventListener('change', function() {
+                    // Remove selected class from all time slots
+                    timeLabels.forEach(label => {
+                        label.classList.remove('bg-blue-100', 'border-blue-300', 'text-blue-800');
+                    });
+                    
+                    // Add selected class to this time slot
+                    const label = document.querySelector(`label[for="${this.id}"]`);
+                    label.classList.add('bg-blue-100', 'border-blue-300', 'text-blue-800');
+                    
+                    // Update hidden inputs with selected date and time
+                    const [date, time] = this.value.split('|');
+                    selectedDateInput.value = date;
+                    selectedTimeInput.value = time;
+                    
+                    // Enable submit button
+                    scheduleBtn.disabled = false;
+                });
+            });
+            
+            // Reschedule functionality
+            const rescheduleButtons = document.querySelectorAll('.reschedule-btn');
+            const rescheduleModal = document.getElementById('reschedule-modal');
+            const rescheduleForm = document.getElementById('reschedule-form');
+            const rescheduleCancel = document.getElementById('reschedule-cancel');
+            const rescheduleDateSelect = document.getElementById('reschedule-date');
+            const rescheduleTimeSelect = document.getElementById('reschedule-time');
+            
+            rescheduleButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const appointmentId = this.getAttribute('data-appointment-id');
+                    rescheduleForm.action = "/dashboard/request-reschedule/" + appointmentId;
+                    rescheduleModal.classList.remove('hidden');
+                });
+            });
+            
+            rescheduleCancel.addEventListener('click', function() {
+                rescheduleModal.classList.add('hidden');
+            });
+            
+            // Update time slots when date changes for reschedule
+            rescheduleDateSelect.addEventListener('change', function() {
+                const selectedDate = this.value;
+                rescheduleTimeSelect.innerHTML = '<option value="">Select a time</option>';
+                rescheduleTimeSelect.disabled = true;
+                
+                if (!selectedDate) return;
+                
+                // Find the available slots for this date
+                {% for day in available_slots %}
+                if ("{{ day.date_str }}" === selectedDate) {
+                    {% for time in day.slots %}
+                    const option = document.createElement('option');
+                    option.value = "{{ time }}";
+                    option.textContent = "{{ time }}";
+                    rescheduleTimeSelect.appendChild(option);
+                    {% endfor %}
+                    rescheduleTimeSelect.disabled = false;
+                }
+                {% endfor %}
+            });
+            
+            // Cancel appointment functionality
+            const cancelButtons = document.querySelectorAll('.cancel-btn');
+            const cancelModal = document.getElementById('cancel-modal');
+            const cancelForm = document.getElementById('cancel-form');
+            const cancelCancel = document.getElementById('cancel-cancel');
+            
+            cancelButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const appointmentId = this.getAttribute('data-appointment-id');
+                    cancelForm.action = "/dashboard/request-cancellation/" + appointmentId;
+                    cancelModal.classList.remove('hidden');
+                });
+            });
+            
+            cancelCancel.addEventListener('click', function() {
+                cancelModal.classList.add('hidden');
+            });
+            
+            // Cancel request functionality
+            const cancelRequestButtons = document.querySelectorAll('.cancel-request-btn');
+            
+            cancelRequestButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    if (confirm('Are you sure you want to cancel this appointment request?')) {
+                        const appointmentId = this.getAttribute('data-appointment-id');
+                        window.location.href = `/dashboard/cancel-request/${appointmentId}`;
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

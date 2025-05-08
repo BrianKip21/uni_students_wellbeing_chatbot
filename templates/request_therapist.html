@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Request Therapist | Wellbeing Assistant</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css"> 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+
+    <style>
+        {% if settings.theme_mode == 'dark' %}
+        /* Dark mode styles */
+        body {
+            background-color: #121212 !important;
+            color: #e0e0e0 !important;
+        }
+        
+        .bg-white {
+            background-color: #1e1e1e !important;
+        }
+        
+        .text-gray-700, .text-gray-800, .text-gray-900 {
+            color: #e0e0e0 !important;
+        }
+        
+        .text-gray-500, .text-gray-600 {
+            color: #a0a0a0 !important;
+        }
+        
+        .bg-gray-50, .bg-gray-100, .bg-gray-200 {
+            background-color: #2a2a2a !important;
+        }
+        
+        .border-gray-200, .border-gray-300 {
+            border-color: #333 !important;
+        }
+
+        .hover\:bg-gray-100:hover {
+            background-color: #333333 !important;
+        }
+
+        .hover\:bg-gray-200:hover {
+            background-color: #444444 !important;
+        }
+
+        .hover\:bg-green-200:hover {
+            background-color: #0d503c !important;
+        }
+
+        .hover\:bg-blue-200:hover {
+            background-color: #0d365e !important;
+        }
+
+        .bg-green-100 {
+            background-color: #064e3b !important;
+        }
+
+        .bg-blue-100 {
+            background-color: #0c4a6e !important;
+        }
+        {% endif %}
+        
+        {% if settings.contrast == 'high' %}
+        /* High contrast styles */
+        body {
+            background-color: #ffffff !important;
+            color: #000000 !important;
+        }
+        
+        .text-gray-500, .text-gray-600, .text-gray-700, .text-gray-800, .text-gray-900 {
+            color: #000000 !important;
+        }
+        
+        .bg-gray-800 {
+            background-color: #000000 !important;
+        }
+        
+        .text-gray-200 {
+            color: #ffffff !important;
+        }
+        
+        input, select, button {
+            border: 2px solid #000000 !important;
+        }
+
+        .bg-green-100, .bg-blue-100, .bg-gray-100 {
+            background-color: #ffffff !important;
+            border: 2px solid #000000 !important;
+        }
+
+        .text-green-500, .text-blue-500, .text-purple-500 {
+            color: #000000 !important;
+        }
+        {% endif %}
+        
+        {% if settings.text_size == 'lg' %}
+        /* Large text */
+        body {
+            font-size: 1.125rem !important;
+        }
+        
+        .text-sm {
+            font-size: 0.9375rem !important;
+        }
+        
+        .text-lg, .text-xl, .text-2xl, .text-3xl {
+            font-size: 1.3125rem !important;
+        }
+        {% elif settings.text_size == 'xl' %}
+        /* Extra large text */
+        body {
+            font-size: 1.25rem !important;
+        }
+        
+        .text-sm {
+            font-size: 1.0625rem !important;
+        }
+        
+        .text-lg, .text-xl {
+            font-size: 1.5rem !important;
+        }
+
+        .text-2xl, .text-3xl {
+            font-size: 1.75rem !important;
+        }
+        {% endif %}
+    </style>
+</head>
+
+<body class="bg-gray-200 flex text-gray-900">
+    <!-- Sidebar Navigation -->
+    <aside class="w-64 h-screen bg-gray-800 text-gray-200 p-4 fixed">
+        <h1 class="text-2xl font-bold mb-6">Wellbeing Assistant</h1>
+        <nav>
+            <ul class="space-y-4">
+                <li><a href="{{ url_for('dashboard.index') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-chart-line"></i> Dashboard</a></li>
+                <li><a href="{{ url_for('tracking.index') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-chart-bar"></i> Wellness Tracker</a></li>
+                <li><a href="{{ url_for('chatbot.chatbot_page') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-comments"></i> Chat</a></li>
+                <li><a href="{{ url_for('dashboard.therapist_appointments') }}" class="block p-2 bg-gray-700 rounded"> <i class="fas fa-calendar-alt"></i> Therapist</a></li>
+                <li><a href="{{ url_for('dashboard.profile') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-user"></i> Profile</a></li>
+                <li><a href="{{ url_for('dashboard.resources') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-book"></i> Resources</a></li>
+                <li><a href="{{ url_for('dashboard.settings') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-cog"></i> Settings</a></li>
+                <li><a href="{{ url_for('auth.logout') }}" class="block p-2 hover:bg-gray-700 rounded mt-8"> <i class="fas fa-sign-out-alt"></i> Logout</a></li>
+            </ul>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="ml-64 p-8 w-full">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    {% set bg_color = "bg-blue-100 border-blue-500" %}
+                    {% set text_color = "text-blue-700" %}
+                    
+                    {% if category == 'error' %}
+                        {% set bg_color = "bg-red-100 border-red-500" %}
+                        {% set text_color = "text-red-700" %}
+                    {% elif category == 'success' %}
+                        {% set bg_color = "bg-green-100 border-green-500" %}
+                        {% set text_color = "text-green-700" %}
+                    {% elif category == 'warning' %}
+                        {% set bg_color = "bg-yellow-100 border-yellow-500" %}
+                        {% set text_color = "text-yellow-700" %}
+                    {% endif %}
+                    
+                    <div class="{{ bg_color }} border-l-4 {{ text_color }} p-4 mb-6" role="alert">
+                        <p>{{ message }}</p>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        <!-- Breadcrumb Navigation -->
+        <div class="flex text-sm text-gray-500 mb-6">
+            <a href="{{ url_for('dashboard.index') }}" class="hover:text-gray-700">Dashboard</a>
+            <span class="mx-2">/</span>
+            <span class="text-gray-700">Request Therapist</span>
+        </div>
+    
+        <h2 class="text-3xl font-bold text-gray-800">Request Therapist Support</h2>
+        <p class="text-gray-700 mb-6">Tell us about your concerns and we'll match you with an appropriate therapist</p>
+        
+        <!-- Therapist Request Form -->
+        <div class="bg-white p-6 rounded shadow mb-6">
+            <form action="{{ url_for('dashboard.submit_therapist_request') }}" method="post" id="therapist-request-form">
+                <!-- Step 1: Describe Your Concerns -->
+                <div class="mb-8">
+                    <h3 class="text-lg font-medium mb-4 pb-2 border-b border-gray-200">Step 1: Describe Your Concerns</h3>
+                    
+                    <div class="mb-6">
+                        <label for="issue_description" class="block text-sm font-medium text-gray-700 mb-1">Please describe what you're experiencing or why you're seeking therapy</label>
+                        <textarea id="issue_description" name="issue_description" rows="5" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="Share your thoughts, feelings, or challenges you've been facing..." required></textarea>
+                        <p class="text-sm text-gray-500 mt-1">Your description helps us match you with the most suitable therapist.</p>
+                    </div>
+
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">What are you seeking help with? (Select all that apply)</label>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-2">
+                            <div class="flex items-center">
+                                <input type="checkbox" id="concern-stress" name="concerns[]" value="stress" class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                                <label for="concern-stress" class="ml-2 text-gray-700">Stress Management</label>
+                            </div>
+                            <div class="flex items-center">
+                                <input type="checkbox" id="concern-anxiety" name="concerns[]" value="anxiety" class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                                <label for="concern-anxiety" class="ml-2 text-gray-700">Anxiety</label>
+                            </div>
+                            <div class="flex items-center">
+                                <input type="checkbox" id="concern-depression" name="concerns[]" value="depression" class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                                <label for="concern-depression" class="ml-2 text-gray-700">Depression</label>
+                            </div>
+                            <div class="flex items-center">
+                                <input type="checkbox" id="concern-relationships" name="concerns[]" value="relationships" class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                                <label for="concern-relationships" class="ml-2 text-gray-700">Relationships</label>
+                            </div>
+                            <div class="flex items-center">
+                                <input type="checkbox" id="concern-academic" name="concerns[]" value="academic" class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                                <label for="concern-academic" class="ml-2 text-gray-700">Academic Pressure</label>
+                            </div>
+                            <div class="flex items-center">
+                                <input type="checkbox" id="concern-selfesteem" name="concerns[]" value="selfesteem" class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                                <label for="concern-selfesteem" class="ml-2 text-gray-700">Self-Esteem</label>
+                            </div>
+                            <div class="flex items-center">
+                                <input type="checkbox" id="concern-grief" name="concerns[]" value="grief" class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                                <label for="concern-grief" class="ml-2 text-gray-700">Grief/Loss</label>
+                            </div>
+                            <div class="flex items-center">
+                                <input type="checkbox" id="concern-adjustment" name="concerns[]" value="adjustment" class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                                <label for="concern-adjustment" class="ml-2 text-gray-700">Adjustment Issues</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Step 2: Session Preferences -->
+                <div class="mb-8">
+                    <h3 class="text-lg font-medium mb-4 pb-2 border-b border-gray-200">Step 2: Session Preferences</h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="preferred_session_type" class="block text-sm font-medium text-gray-700 mb-1">Preferred Session Type</label>
+                            <select id="preferred_session_type" name="preferred_session_type" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                <option value="online">Online (Video Chat)</option>
+                                <option value="in_person">In-Person</option>
+                                <option value="both">No Preference</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label for="urgency_level" class="block text-sm font-medium text-gray-700 mb-1">Urgency Level</label>
+                            <select id="urgency_level" name="urgency_level" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                <option value="normal">Normal - Within 1-2 weeks</option>
+                                <option value="soon">Soon - Within this week</option>
+                                <option value="urgent">Urgent - As soon as possible</option>
+                            </select>
+                            <p class="text-sm text-gray-500 mt-1">
+                                If this is an emergency, please call the crisis line at <strong>(555) 123-4567</strong>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Form Submission -->
+                <div class="flex justify-between items-center pt-4 border-t border-gray-200">
+                    <p class="text-sm text-gray-500">
+                        <i class="fas fa-lock mr-1"></i> Your information will be kept confidential and only shared with your assigned therapist.
+                    </p>
+                    
+                    <button type="submit" class="py-2 px-4 bg-blue-500 hover:bg-blue-600 text-white rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
+                        Submit Request
+                    </button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Information Card -->
+        <div class="bg-blue-50 p-6 rounded shadow">
+            <h3 class="text-lg font-medium text-blue-900 mb-2">What to Expect Next</h3>
+            <ul class="text-blue-800 space-y-2">
+                <li class="flex items-start">
+                    <div class="flex-shrink-0 mt-0.5">
+                        <i class="fas fa-check-circle text-blue-600"></i>
+                    </div>
+                    <p class="ml-2">Your therapist request will be processed within 24-48 hours.</p>
+                </li>
+                <li class="flex items-start">
+                    <div class="flex-shrink-0 mt-0.5">
+                        <i class="fas fa-check-circle text-blue-600"></i>
+                    </div>
+                    <p class="ml-2">You'll be matched with a therapist based on your concerns and needs.</p>
+                </li>
+                <li class="flex items-start">
+                    <div class="flex-shrink-0 mt-0.5">
+                        <i class="fas fa-check-circle text-blue-600"></i>
+                    </div>
+                    <p class="ml-2">Once assigned, you'll be able to schedule your first appointment and begin chatting with your therapist.</p>
+                </li>
+                <li class="flex items-start">
+                    <div class="flex-shrink-0 mt-0.5">
+                        <i class="fas fa-check-circle text-blue-600"></i>
+                    </div>
+                    <p class="ml-2">All sessions are confidential and follow our university's privacy policies.</p>
+                </li>
+                <li class="flex items-start">
+                    <div class="flex-shrink-0 mt-0.5">
+                        <i class="fas fa-exclamation-circle text-red-600"></i>
+                    </div>
+                    <p class="ml-2">If you have an urgent concern, please contact the university's emergency mental health services at <strong>(555) 123-4567</strong>.</p>
+                </li>
+            </ul>
+        </div>
+    </main>
+</body>
+</html>

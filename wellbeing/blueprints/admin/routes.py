@@ -15,7 +15,7 @@ from wellbeing.utils.file_handlers import handle_video_upload
 from wellbeing.models.user import find_user_by_id, get_all_users
 from wellbeing.models.resource import create_resource, update_resource, delete_resource
 from wellbeing.services.feedback_service import export_training_data, analyze_feedback_data
-
+from wellbeing.utils.email import send_therapist_credentials, send_password_reset
 
 # Helper function to generate a random password
 def generate_random_password(length=12):
@@ -692,8 +692,15 @@ def create_therapist():
             result = mongo.db.therapists.insert_one(new_therapist)
             
             if result.inserted_id:
-                # Display password to admin (safer than sending email in development)
-                flash(f'Therapist account created successfully. Temporary password: {temp_password}', 'success')
+                # Try to send email with credentials
+                email_sent = send_therapist_credentials(email, first_name, last_name, temp_password)
+                
+                if email_sent:
+                    flash(f'Therapist account created and login credentials sent to {email}', 'success')
+                else:
+                    # Fallback to displaying password if email fails
+                    flash(f'Therapist account created, but email failed to send. Temporary password: {temp_password}', 'warning')
+                
                 return redirect(url_for('admin.therapist_management'))
             else:
                 flash('Failed to create therapist account', 'error')
@@ -705,7 +712,7 @@ def create_therapist():
         logger.error(f"Create therapist error: {e}")
         flash('An error occurred while creating the therapist account', 'error')
         return redirect(url_for('admin.therapist_management'))
-
+    
 @admin_bp.route('/therapists/<therapist_id>/reset-password', methods=['POST'])
 @admin_required
 def reset_therapist_password(therapist_id):
@@ -729,8 +736,19 @@ def reset_therapist_password(therapist_id):
         )
         
         if result.modified_count:
-            # Display password to admin (safer than sending email in development)
-            flash(f'Password reset successfully. New password: {new_password}', 'success')
+            # Try to send email with new password
+            email_sent = send_password_reset(
+                therapist['email'], 
+                therapist['first_name'], 
+                therapist['last_name'], 
+                new_password
+            )
+            
+            if email_sent:
+                flash(f'Password reset successfully and sent to {therapist["email"]}', 'success')
+            else:
+                # Fallback to displaying password if email fails
+                flash(f'Password reset successfully, but email failed to send. New password: {new_password}', 'warning')
         else:
             flash('Failed to reset therapist password', 'error')
             
@@ -1028,6 +1046,314 @@ def therapist_requests():
     
     return render_template('admin/therapist_requests.html', requests=pending_requests)
 
+@admin_bp.route('/assignments')
+@admin_required
+def therapist_assignments():
+    """View and manage therapist-student assignments"""
+    try:
+        # Get all active assignments
+        assignments = list(mongo.db.appointments.aggregate([
+            {'$match': {'status': 'active'}},
+            {'$lookup': {
+                'from': 'therapists',
+                'localField': 'therapist_id',
+                'foreignField': '_id',
+                'as': 'therapist_info'
+            }},
+            {'$lookup': {
+                'from': 'users',
+                'localField': 'student_id',
+                'foreignField': '_id',
+                'as': 'student_info'
+            }},
+            {'$unwind': '$therapist_info'},
+            {'$unwind': '$student_info'},
+            {'$project': {
+                '_id': 1,
+                'therapist_id': 1,
+                'student_id': 1,
+                'created_at': 1,
+                'session_count': {'$ifNull': ['$session_count', 0]},
+                'next_session': 1,
+                'therapist_name': {'$concat': ['$therapist_info.first_name', ' ', '$therapist_info.last_name']},
+                'student_name': {'$concat': ['$student_info.first_name', ' ', '$student_info.last_name']},
+                'student_email': '$student_info.email',
+                'therapist_specialization': '$therapist_info.specialization'
+            }},
+            {'$sort': {'created_at': -1}}
+        ]))
+        
+        # Get all therapists for assignment form
+        therapists = list(mongo.db.therapists.find(
+            {'status': 'Active'},
+            {'first_name': 1, 'last_name': 1, 'specialization': 1}
+        ).sort('last_name', 1))
+        
+        # Get unassigned students for assignment form
+        # Identify students who already have assignments
+        assigned_student_ids = [assignment['student_id'] for assignment in assignments]
+        
+        # Find unassigned students
+        unassigned_students = list(mongo.db.users.find(
+            {'_id': {'$nin': assigned_student_ids}},
+            {'first_name': 1, 'last_name': 1, 'email': 1}
+        ).sort('last_name', 1))
+        
+        # Fixed template path - use the correct path where template is actually located
+        return render_template(
+            'therapist_assignments.html',  # Changed from 'admin/therapist_assignments.html'
+            assignments=assignments,
+            therapists=therapists,
+            unassigned_students=unassigned_students
+        )
+        
+    except Exception as e:
+        logger.error(f"Therapist assignments error: {e}")
+        flash('An error occurred while loading assignment data', 'error')
+        return redirect(url_for('admin.dashboard'))
+
+@admin_bp.route('/assignments/create', methods=['POST'])
+@admin_required
+def create_assignment():
+    """Create a new therapist-student assignment"""
+    try:
+        # Get form data
+        student_id = request.form.get('student_id')
+        therapist_id = request.form.get('therapist_id')
+        
+        # Validate input
+        if not student_id or not therapist_id:
+            flash('Student and therapist are required', 'error')
+            return redirect(url_for('admin.therapist_assignments'))
+        
+        # Check if student exists
+        student = mongo.db.users.find_one({'_id': ObjectId(student_id)})
+        if not student:
+            flash('Selected student not found', 'error')
+            return redirect(url_for('admin.therapist_assignments'))
+        
+        # Check if therapist exists
+        therapist = mongo.db.therapists.find_one({'_id': ObjectId(therapist_id)})
+        if not therapist:
+            flash('Selected therapist not found', 'error')
+            return redirect(url_for('admin.therapist_assignments'))
+        
+        # Check if student already has an assignment
+        existing = mongo.db.appointments.find_one({
+            'student_id': ObjectId(student_id),
+            'status': 'active'
+        })
+        
+        if existing:
+            flash('This student is already assigned to a therapist', 'error')
+            return redirect(url_for('admin.therapist_assignments'))
+        
+        # Create assignment
+        new_assignment = {
+            'student_id': ObjectId(student_id),
+            'therapist_id': ObjectId(therapist_id),
+            'status': 'active',
+            'created_at': datetime.now(),
+            'next_session': None,
+            'session_count': 0
+        }
+        
+        result = mongo.db.appointments.insert_one(new_assignment)
+        
+        if result.inserted_id:
+            student_name = f"{student['first_name']} {student['last_name']}"
+            therapist_name = f"{therapist['first_name']} {therapist['last_name']}"
+            flash(f'Successfully assigned {student_name} to Dr. {therapist_name}', 'success')
+        else:
+            flash('Failed to create assignment', 'error')
+            
+        return redirect(url_for('admin.therapist_assignments'))
+        
+    except Exception as e:
+        logger.error(f"Create assignment error: {e}")
+        flash('An error occurred while creating the assignment', 'error')
+        return redirect(url_for('admin.therapist_assignments'))
+
+@admin_bp.route('/assignments/<assignment_id>/delete', methods=['POST'])
+@admin_required
+def delete_assignment(assignment_id):
+    """Remove a therapist-student assignment"""
+    try:
+        # Check if assignment exists
+        assignment = mongo.db.appointments.find_one({
+            '_id': ObjectId(assignment_id),
+            'status': 'active'
+        })
+        
+        if not assignment:
+            flash('Assignment not found', 'error')
+            return redirect(url_for('admin.therapist_assignments'))
+        
+        # Get student and therapist names for the feedback message
+        student = mongo.db.users.find_one({'_id': assignment['student_id']})
+        therapist = mongo.db.therapists.find_one({'_id': assignment['therapist_id']})
+        
+        student_name = f"{student['first_name']} {student['last_name']}" if student else "Student"
+        therapist_name = f"{therapist['first_name']} {therapist['last_name']}" if therapist else "Therapist"
+        
+        # Delete assignment (actually mark it as inactive to preserve history)
+        result = mongo.db.appointments.update_one(
+            {'_id': ObjectId(assignment_id)},
+            {'$set': {'status': 'inactive', 'updated_at': datetime.now()}}
+        )
+        
+        if result.modified_count:
+            flash(f'Successfully removed assignment between {student_name} and Dr. {therapist_name}', 'success')
+        else:
+            flash('Failed to remove assignment', 'error')
+            
+        return redirect(url_for('admin.therapist_assignments'))
+        
+    except Exception as e:
+        logger.error(f"Delete assignment error: {e}")
+        flash('An error occurred while removing the assignment', 'error')
+        return redirect(url_for('admin.therapist_assignments'))
+
+@admin_bp.route('/assignments/<assignment_id>/change', methods=['POST'])
+@admin_required
+def change_therapist(assignment_id):
+    """Change the therapist for a student"""
+    try:
+        # Get form data
+        new_therapist_id = request.form.get('new_therapist_id')
+        
+        # Validate input
+        if not new_therapist_id:
+            flash('New therapist is required', 'error')
+            return redirect(url_for('admin.therapist_assignments'))
+        
+        # Check if assignment exists
+        assignment = mongo.db.appointments.find_one({
+            '_id': ObjectId(assignment_id),
+            'status': 'active'
+        })
+        
+        if not assignment:
+            flash('Assignment not found', 'error')
+            return redirect(url_for('admin.therapist_assignments'))
+        
+        # Check if the new therapist is different from the current one
+        if assignment['therapist_id'] == ObjectId(new_therapist_id):
+            flash('The student is already assigned to this therapist', 'info')
+            return redirect(url_for('admin.therapist_assignments'))
+        
+        # Check if new therapist exists
+        new_therapist = mongo.db.therapists.find_one({'_id': ObjectId(new_therapist_id)})
+        if not new_therapist:
+            flash('Selected therapist not found', 'error')
+            return redirect(url_for('admin.therapist_assignments'))
+        
+        # Get student and therapist information for the feedback message
+        student = mongo.db.users.find_one({'_id': assignment['student_id']})
+        old_therapist = mongo.db.therapists.find_one({'_id': assignment['therapist_id']})
+        
+        student_name = f"{student['first_name']} {student['last_name']}" if student else "Student"
+        old_therapist_name = f"{old_therapist['first_name']} {old_therapist['last_name']}" if old_therapist else "previous therapist"
+        new_therapist_name = f"{new_therapist['first_name']} {new_therapist['last_name']}"
+        
+        # Update assignment
+        result = mongo.db.appointments.update_one(
+            {'_id': ObjectId(assignment_id)},
+            {'$set': {
+                'therapist_id': ObjectId(new_therapist_id),
+                'updated_at': datetime.now()
+            }}
+        )
+        
+        if result.modified_count:
+            flash(f'Successfully changed therapist for {student_name} from Dr. {old_therapist_name} to Dr. {new_therapist_name}', 'success')
+        else:
+            flash('Failed to change therapist assignment', 'error')
+            
+        return redirect(url_for('admin.therapist_assignments'))
+        
+    except Exception as e:
+        logger.error(f"Change therapist error: {e}")
+        flash('An error occurred while changing the therapist assignment', 'error')
+        return redirect(url_for('admin.therapist_assignments'))
+
+@admin_bp.route('/assignments/stats')
+@admin_required
+def assignment_stats():
+    """View statistics about therapist-student assignments"""
+    try:
+        # Count total active assignments
+        total_assignments = mongo.db.appointments.count_documents({'status': 'active'})
+        
+        # Get therapist assignment counts
+        therapist_stats = list(mongo.db.appointments.aggregate([
+            {'$match': {'status': 'active'}},
+            {'$group': {
+                '_id': '$therapist_id',
+                'student_count': {'$sum': 1},
+                'session_count': {'$sum': {'$ifNull': ['$session_count', 0]}}
+            }},
+            {'$lookup': {
+                'from': 'therapists',
+                'localField': '_id',
+                'foreignField': '_id',
+                'as': 'therapist_info'
+            }},
+            {'$unwind': '$therapist_info'},
+            {'$project': {
+                'therapist_id': '$_id',
+                'therapist_name': {'$concat': ['$therapist_info.first_name', ' ', '$therapist_info.last_name']},
+                'specialization': '$therapist_info.specialization',
+                'student_count': 1,
+                'session_count': 1
+            }},
+            {'$sort': {'student_count': -1}}
+        ]))
+        
+        # Count unassigned students
+        assigned_student_ids = list(mongo.db.appointments.distinct('student_id', {'status': 'active'}))
+        unassigned_count = mongo.db.users.count_documents({'_id': {'$nin': assigned_student_ids}})
+        
+        # Get recent assignments
+        recent_assignments = list(mongo.db.appointments.aggregate([
+            {'$match': {'status': 'active'}},
+            {'$lookup': {
+                'from': 'therapists',
+                'localField': 'therapist_id',
+                'foreignField': '_id',
+                'as': 'therapist_info'
+            }},
+            {'$lookup': {
+                'from': 'users',
+                'localField': 'student_id',
+                'foreignField': '_id',
+                'as': 'student_info'
+            }},
+            {'$unwind': '$therapist_info'},
+            {'$unwind': '$student_info'},
+            {'$project': {
+                'therapist_name': {'$concat': ['$therapist_info.first_name', ' ', '$therapist_info.last_name']},
+                'student_name': {'$concat': ['$student_info.first_name', ' ', '$student_info.last_name']},
+                'created_at': 1
+            }},
+            {'$sort': {'created_at': -1}},
+            {'$limit': 5}
+        ]))
+        
+        # Fixed template path
+        return render_template(
+            'assignment_stats.html',  # Changed from 'admin/assignment_stats.html'
+            total_assignments=total_assignments,
+            therapist_stats=therapist_stats,
+            unassigned_count=unassigned_count,
+            recent_assignments=recent_assignments
+        )
+        
+    except Exception as e:
+        logger.error(f"Assignment stats error: {e}")
+        flash('An error occurred while loading assignment statistics', 'error')
+        return redirect(url_for('admin.therapist_assignments'))
+    
 @admin_bp.route('/assign-therapist/<request_id>', methods=['GET', 'POST'])
 @admin_required
 def assign_therapist(request_id):
@@ -1111,12 +1437,17 @@ def assign_therapist(request_id):
             logger.error(f"Assign therapist error: {e}")
             flash('An error occurred while assigning the therapist', 'error')
             return redirect(url_for('admin.assign_therapist', request_id=request_id))
-    
+     
     # Get available therapists (with capacity)
-    available_therapists = list(mongo.db.therapists.find(
-        {'status': 'Active', 'current_students': {'$lt': '$max_students'}}
-    ).sort('current_students', 1))
-    
+    therapists = list(mongo.db.therapists.find({'status': 'Active'}))
+    available_therapists = [
+        t for t in therapists 
+        if isinstance(t.get('current_students'), int) and 
+        isinstance(t.get('max_students'), int) and 
+        t['current_students'] < t['max_students']
+    ]
+    available_therapists.sort(key=lambda x: x['current_students'])
+
     return render_template('admin/assign_therapist.html', 
                          request=request_data, 
                          student=student,
