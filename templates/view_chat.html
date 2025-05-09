@@ -258,13 +258,15 @@
         <aside class="sidebar">
             <h2>Admin Panel</h2>
             <ul>
-                <li><a href="{{ url_for('admin_dashboard') }}">Dashboard</a></li>
-                <li><a href="{{ url_for('user_management') }}">User Management</a></li>
-                <li class="active"><a href="{{ url_for('chat_logs') }}">Chat Logs</a></li>
-                <li><a href="{{ url_for('admin_resources') }}">Resource Management</a></li>
-                <li><a href="{{ url_for('analytics') }}">Analytics</a></li>
-                <li><a href="{{ url_for('admin_settings') }}">Settings</a></li>
-                <li><a href="{{ url_for('logout') }}">Logout</a></li>
+                <li><a href="{{ url_for('admin.dashboard') }}">Dashboard</a></li>
+                <li><a href="{{ url_for('admin.user_management') }}">User Management</a></li>
+                <li><a href="{{ url_for('admin.therapist_management') }}">Therapist Management</a></li>
+                <li><a href="{{ url_for('admin.therapist_requests') }}">Therapist Assignments</a></li>
+                <li><a href="{{ url_for('admin.chat_logs') }}">Chat Logs</a></li>
+                <li><a href="{{ url_for('admin.feedback_dashboard') }}">Feedback Analysis</a></li>
+                <li><a href="{{ url_for('admin.settings') }}" class="active">System Settings</a></li>
+                <li><a href="{{ url_for('admin.resources') }}">Resource Management</a></li>
+                <li><a href="{{ url_for('auth.logout') }}">Logout</a></li>
             </ul>
         </aside>
     

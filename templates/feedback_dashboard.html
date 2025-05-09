@@ -349,12 +349,12 @@
             <ul>
                 <li><a href="{{ url_for('admin.dashboard') }}">Dashboard</a></li>
                 <li><a href="{{ url_for('admin.user_management') }}">User Management</a></li>
+                <li><a href="{{ url_for('admin.therapist_management') }}">Therapist Management</a></li>
+                <li><a href="{{ url_for('admin.therapist_requests') }}">Therapist Assignments</a></li>
                 <li><a href="{{ url_for('admin.chat_logs') }}">Chat Logs</a></li>
-                <li class="active"><a href="{{ url_for('admin.feedback_analysis') }}">Feedback Analysis</a></li>
-                <li><a href="{{ url_for('admin.model_management') }}">Model Management</a></li>
+                <li><a href="{{ url_for('admin.feedback_dashboard') }}">Feedback Analysis</a></li>
+                <li><a href="{{ url_for('admin.settings') }}" class="active">System Settings</a></li>
                 <li><a href="{{ url_for('admin.resources') }}">Resource Management</a></li>
-                <li><a href="{{ url_for('admin.analytics') }}">Analytics</a></li>
-                <li><a href="{{ url_for('admin.settings') }}">Settings</a></li>
                 <li><a href="{{ url_for('auth.logout') }}">Logout</a></li>
             </ul>
         </aside>
