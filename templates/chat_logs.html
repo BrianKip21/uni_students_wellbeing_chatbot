@@ -3,32 +3,156 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Panel - Chat Logs</title>
+    <title>Chat Logs - Wellbeing Assistant Admin</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        /* Add specific styles for chat logs page */
+        /* Add this temporary CSS to ensure proper styling */
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #f3f4f6;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        .sidebar {
+            width: 250px;
+            background-color: #1f2937;
+            color: white;
+            padding: 20px 0;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            z-index: 100;
+        }
+        
+        .sidebar h2 {
+            padding: 0 20px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 20px;
+        }
+        
+        .sidebar ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .sidebar ul li {
+            margin-bottom: 5px;
+        }
+        
+        .sidebar ul li a {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+        
+        .sidebar ul li a:hover {
+            background-color: #374151;
+        }
+        
+        .sidebar ul li.active a {
+            background-color: #4a6fa5;
+            font-weight: 500;
+        }
+        
+        .sidebar ul li a i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+        
+        .main-content {
+            flex: 1;
+            margin-left: 250px;
+            padding: 30px;
+        }
+        
+        h1 {
+            margin-bottom: 25px;
+            color: #111827;
+            font-weight: 600;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+        }
+        
+        h1 i {
+            margin-right: 10px;
+            color: #4a6fa5;
+        }
+        
+        /* Search and Filter Styles */
         .search-filter-container {
             background-color: white;
             padding: 20px;
             border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            margin-bottom: 25px;
+        }
+        
+        .search-filter-container form {
             display: flex;
             flex-wrap: wrap;
             gap: 15px;
             align-items: center;
         }
         
-        .search-box, .date-picker, .dropdown {
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 14px;
-        }
-        
         .search-box {
             flex-grow: 1;
             min-width: 200px;
+            padding: 10px 15px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z'%3E%3C/path%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: 10px center;
+            background-size: 20px;
+            padding-left: 40px;
+        }
+        
+        .search-box:focus {
+            outline: none;
+            border-color: #4a6fa5;
+            box-shadow: 0 0 0 2px rgba(74, 111, 165, 0.2);
+        }
+        
+        .date-picker {
+            padding: 9px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        
+        .date-picker:focus {
+            outline: none;
+            border-color: #4a6fa5;
+            box-shadow: 0 0 0 2px rgba(74, 111, 165, 0.2);
+        }
+        
+        .dropdown {
+            padding: 9px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+            min-width: 150px;
+        }
+        
+        .dropdown:focus {
+            outline: none;
+            border-color: #4a6fa5;
+            box-shadow: 0 0 0 2px rgba(74, 111, 165, 0.2);
         }
         
         .filter-button {
@@ -36,55 +160,178 @@
             color: white;
             border: none;
             padding: 10px 20px;
-            border-radius: 4px;
+            border-radius: 6px;
             cursor: pointer;
+            font-size: 14px;
             font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            transition: all 0.2s;
         }
         
         .filter-button:hover {
-            background-color: #304973;
+            background-color: #3b5998;
         }
         
+        .filter-button i {
+            margin-right: 8px;
+        }
+        
+        /* Chat Logs Styles */
         .chat-logs-container {
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 20px;
+            margin-bottom: 25px;
         }
         
         .chat-log {
             background-color: white;
             border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
             overflow: hidden;
+            transition: all 0.2s;
+            border: 1px solid #e5e7eb;
+        }
+        
+        .chat-log:hover {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
         }
         
         .chat-header {
-            background-color: #f5f7fa;
-            padding: 15px;
+            background-color: #f9fafb;
+            padding: 15px 20px;
             display: flex;
             justify-content: space-between;
-            border-bottom: 1px solid #eee;
+            align-items: center;
+            border-bottom: 1px solid #e5e7eb;
         }
         
         .student-id {
             font-weight: 500;
-            color: #304973;
+            color: #4a6fa5;
+            display: flex;
+            align-items: center;
+        }
+        
+        .student-id i {
+            margin-right: 8px;
+            color: #6b7280;
         }
         
         .chat-timestamp {
-            color: #888;
+            color: #6b7280;
             font-size: 14px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .chat-timestamp i {
+            margin-right: 5px;
         }
         
         .chat-message {
-            padding: 15px;
-            color: #333;
+            padding: 15px 20px;
+            color: #4b5563;
+            font-size: 14px;
+            line-height: 1.6;
+            border-bottom: 1px solid #e5e7eb;
         }
         
+        .chat-response {
+            padding: 15px 20px;
+            background-color: #f9fafb;
+            color: #4b5563;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        .bot-tag {
+            display: inline-flex;
+            align-items: center;
+            background-color: #4a6fa5;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-right: 10px;
+            font-weight: 500;
+        }
+        
+        .bot-tag i {
+            margin-right: 4px;
+            font-size: 10px;
+        }
+        
+        .confidence-indicator {
+            display: inline-flex;
+            align-items: center;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            margin-right: 10px;
+        }
+        
+        .confidence-high {
+            background-color: #10b981;  /* Green */
+            color: white;
+        }
+        
+        .confidence-medium {
+            background-color: #f59e0b;  /* Yellow */
+            color: white;
+        }
+        
+        .confidence-low {
+            background-color: #ef4444;  /* Red */
+            color: white;
+        }
+        
+        .view-full-button {
+            display: block;
+            text-align: center;
+            padding: 10px;
+            background-color: #f3f4f6;
+            color: #4b5563;
+            text-decoration: none;
+            font-size: 14px;
+            border-top: 1px solid #e5e7eb;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+        
+        .view-full-button:hover {
+            background-color: #e5e7eb;
+        }
+        
+        .view-full-button i {
+            margin-right: 5px;
+        }
+        
+        .empty-message {
+            text-align: center;
+            padding: 40px 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            color: #6b7280;
+        }
+        
+        .empty-message i {
+            font-size: 48px;
+            color: #d1d5db;
+            margin-bottom: 15px;
+            display: block;
+        }
+        
+        /* Pagination Styles */
         .pagination {
             display: flex;
             justify-content: center;
-            margin-top: 20px;
+            align-items: center;
+            margin-top: 30px;
             gap: 10px;
         }
         
@@ -93,64 +340,32 @@
             background-color: #4a6fa5;
             color: white;
             border: none;
-            border-radius: 4px;
+            border-radius: 6px;
             cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+        }
+        
+        .pagination-button:hover {
+            background-color: #3b5998;
+        }
+        
+        .pagination-button i {
+            margin-right: 5px;
         }
         
         .pagination-button:disabled {
-            background-color: #ccc;
+            background-color: #d1d5db;
             cursor: not-allowed;
         }
         
-        .chat-response {
-            padding: 15px;
-            background-color: #f9f9f9;
-            border-top: 1px dashed #ddd;
-        }
-        
-        .view-full-button {
-            display: block;
-            text-align: center;
-            padding: 8px;
-            background-color: #eee;
-            color: #555;
-            text-decoration: none;
+        .pagination span {
+            color: #4b5563;
             font-size: 14px;
-            border-top: 1px solid #ddd;
-        }
-        
-        .view-full-button:hover {
-            background-color: #e0e0e0;
-        }
-        
-        .bot-tag {
-            background-color: #4a6fa5;
-            color: white;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-            margin-right: 10px;
-        }
-        
-        .confidence-indicator {
-            display: inline-block;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-            background-color: #4CAF50;
-            color: white;
-        }
-        
-        .confidence-high {
-            background-color: #4CAF50;  /* Green */
-        }
-        
-        .confidence-medium {
-            background-color: #FFC107;  /* Yellow */
-        }
-        
-        .confidence-low {
-            background-color: #F44336;  /* Red */
+            padding: 0 10px;
         }
     </style>
 </head>
@@ -159,20 +374,22 @@
         <aside class="sidebar">
             <h2>Admin Panel</h2>
             <ul>
-                <li><a href="{{ url_for('admin.dashboard') }}">Dashboard</a></li>
-                <li><a href="{{ url_for('admin.user_management') }}">User Management</a></li>
-                <li><a href="{{ url_for('admin.therapist_management') }}">Therapist Management</a></li>
-                <li><a href="{{ url_for('admin.therapist_requests') }}">Therapist Assignments</a></li>
-                <li><a href="{{ url_for('admin.chat_logs') }}">Chat Logs</a></li>
-                <li><a href="{{ url_for('admin.feedback_dashboard') }}">Feedback Analysis</a></li>
-                <li><a href="{{ url_for('admin.settings') }}" class="active">System Settings</a></li>
-                <li><a href="{{ url_for('admin.resources') }}">Resource Management</a></li>
-                <li><a href="{{ url_for('auth.logout') }}">Logout</a></li>
+                <li><a href="{{ url_for('admin.dashboard') }}"><i class="fas fa-chart-line"></i> Dashboard</a></li>
+                <li><a href="{{ url_for('admin.user_management') }}"><i class="fas fa-users"></i> User Management</a></li>
+                <li><a href="{{ url_for('admin.therapist_management') }}"><i class="fas fa-user-md"></i> Therapist Management</a></li>
+                <li><a href="{{ url_for('admin.therapist_requests') }}"><i class="fas fa-clipboard-check"></i> Therapist Requests</a></li>
+                <li><a href="{{ url_for('admin.therapist_assignments') }}"><i class="fas fa-clipboard-list"></i> Therapist Assignments</a></li>
+                <li><a href="{{ url_for('admin.assignment_stats') }}"><i class="fas fa-chart-bar"></i> Assignment Stats</a></li>
+                <li class="active"><a href="{{ url_for('admin.chat_logs') }}"><i class="fas fa-comments"></i> Chat Logs</a></li>
+                <li><a href="{{ url_for('admin.feedback_dashboard') }}"><i class="fas fa-star"></i> Feedback Analysis</a></li>
+                <li><a href="{{ url_for('admin.resources') }}"><i class="fas fa-book"></i> Resource Management</a></li>
+                <li><a href="{{ url_for('admin.settings') }}"><i class="fas fa-cog"></i> System Settings</a></li>
+                <li><a href="{{ url_for('auth.logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
             </ul>
         </aside>
     
         <div class="main-content">
-            <h1>Chat Logs</h1>
+            <h1><i class="fas fa-comments"></i> Chat Logs</h1>
             
             <div class="search-filter-container">
                 <form method="get" action="{{ url_for('admin.chat_logs') }}">
@@ -184,7 +401,9 @@
                             <option value="{{ topic }}" {% if request.args.get('topic') == topic %}selected{% endif %}>{{ topic|capitalize }}</option>
                         {% endfor %}
                     </select>
-                    <button type="submit" class="filter-button">Filter</button>
+                    <button type="submit" class="filter-button">
+                        <i class="fas fa-filter"></i> Filter
+                    </button>
                 </form>
             </div>
             
@@ -194,6 +413,7 @@
                         <div class="chat-log">
                             <div class="chat-header">
                                 <span class="student-id">
+                                    <i class="fas fa-user-graduate"></i>
                                     {% if chat.username %}
                                         {{ chat.username }}
                                     {% else %}
@@ -201,6 +421,7 @@
                                     {% endif %}
                                 </span>
                                 <span class="chat-timestamp">
+                                    <i class="fas fa-clock"></i>
                                     {{ chat.timestamp.strftime('%d %b %Y, %H:%M') if chat.timestamp else 'Unknown date' }}
                                 </span>
                             </div>
@@ -208,7 +429,9 @@
                                 {{ chat.message }}
                             </div>
                             <div class="chat-response">
-                                <span class="bot-tag">BOT</span>
+                                <span class="bot-tag">
+                                    <i class="fas fa-robot"></i> BOT
+                                </span>
                                 {% if chat.confidence %}
                                     {% set conf_class = 'confidence-high' if chat.confidence > 85 else ('confidence-medium' if chat.confidence > 50 else 'confidence-low') %}
                                     <span class="confidence-indicator {{ conf_class }}">
@@ -217,31 +440,43 @@
                                 {% endif %}
                                 {{ chat.response|truncate(150, True) }}
                             </div>
-                            <a href="{{ url_for('view_chat', chat_id=chat._id) }}" class="view-full-button">View Full Conversation</a>
+                            <a href="{{ url_for('admin.view_chat', chat_id=chat._id) }}" class="view-full-button">
+                                <i class="fas fa-external-link-alt"></i> View Full Conversation
+                            </a>
                         </div>
                     {% endfor %}
                 {% else %}
                     <div class="empty-message">
+                        <i class="fas fa-comments"></i>
                         <p>No chat logs found matching your criteria.</p>
+                        <p>Try adjusting your search filters to see more results.</p>
                     </div>
                 {% endif %}
             </div>
             
             {% if total_pages > 1 %}
                 <div class="pagination">
-                    <a href="{{ url_for('chat_logs', page=1, search=request.args.get('search', ''), date=request.args.get('date', ''), topic=request.args.get('topic', '')) }}" 
-                       class="pagination-button" {% if page == 1 %}disabled{% endif %}>First</a>
+                    <a href="{{ url_for('admin.chat_logs', page=1, search=request.args.get('search', ''), date=request.args.get('date', ''), topic=request.args.get('topic', '')) }}" 
+                       class="pagination-button" {% if page == 1 %}disabled{% endif %}>
+                       <i class="fas fa-angle-double-left"></i> First
+                    </a>
                     
-                    <a href="{{ url_for('chat_logs', page=page-1, search=request.args.get('search', ''), date=request.args.get('date', ''), topic=request.args.get('topic', '')) }}" 
-                       class="pagination-button" {% if page <= 1 %}disabled{% endif %}>Previous</a>
+                    <a href="{{ url_for('admin.chat_logs', page=page-1, search=request.args.get('search', ''), date=request.args.get('date', ''), topic=request.args.get('topic', '')) }}" 
+                       class="pagination-button" {% if page <= 1 %}disabled{% endif %}>
+                       <i class="fas fa-angle-left"></i> Previous
+                    </a>
                     
                     <span>Page {{ page }} of {{ total_pages }}</span>
                     
-                    <a href="{{ url_for('chat_logs', page=page+1, search=request.args.get('search', ''), date=request.args.get('date', ''), topic=request.args.get('topic', '')) }}" 
-                       class="pagination-button" {% if page >= total_pages %}disabled{% endif %}>Next</a>
+                    <a href="{{ url_for('admin.chat_logs', page=page+1, search=request.args.get('search', ''), date=request.args.get('date', ''), topic=request.args.get('topic', '')) }}" 
+                       class="pagination-button" {% if page >= total_pages %}disabled{% endif %}>
+                       Next <i class="fas fa-angle-right"></i>
+                    </a>
                     
-                    <a href="{{ url_for('chat_logs', page=total_pages, search=request.args.get('search', ''), date=request.args.get('date', ''), topic=request.args.get('topic', '')) }}" 
-                       class="pagination-button" {% if page == total_pages %}disabled{% endif %}>Last</a>
+                    <a href="{{ url_for('admin.chat_logs', page=total_pages, search=request.args.get('search', ''), date=request.args.get('date', ''), topic=request.args.get('topic', '')) }}" 
+                       class="pagination-button" {% if page == total_pages %}disabled{% endif %}>
+                       Last <i class="fas fa-angle-double-right"></i>
+                    </a>
                 </div>
             {% endif %}
         </div>

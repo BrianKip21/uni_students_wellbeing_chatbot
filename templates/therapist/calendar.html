@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendar | Wellbeing Assistant</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css"> 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+
+    <style>
+        {% if settings.theme_mode == 'dark' %}
+        /* Dark mode styles */
+        body {
+            background-color: #121212 !important;
+            color: #e0e0e0 !important;
+        }
+        
+        .bg-white {
+            background-color: #1e1e1e !important;
+        }
+        
+        .text-gray-700, .text-gray-800, .text-gray-900 {
+            color: #e0e0e0 !important;
+        }
+        
+        .text-gray-500, .text-gray-600 {
+            color: #a0a0a0 !important;
+        }
+        
+        .bg-gray-50, .bg-gray-100, .bg-gray-200 {
+            background-color: #2a2a2a !important;
+        }
+        
+        .border-gray-200, .border-gray-300 {
+            border-color: #333 !important;
+        }
+
+        .hover\:bg-gray-100:hover {
+            background-color: #333333 !important;
+        }
+
+        .hover\:bg-gray-200:hover {
+            background-color: #444444 !important;
+        }
+
+        .hover\:bg-green-200:hover {
+            background-color: #0d503c !important;
+        }
+
+        .hover\:bg-blue-200:hover {
+            background-color: #0d365e !important;
+        }
+
+        .bg-green-100 {
+            background-color: #064e3b !important;
+        }
+
+        .bg-blue-100 {
+            background-color: #0c4a6e !important;
+        }
+        {% endif %}
+        
+        {% if settings.contrast == 'high' %}
+        /* High contrast styles */
+        body {
+            background-color: #ffffff !important;
+            color: #000000 !important;
+        }
+        
+        .text-gray-500, .text-gray-600, .text-gray-700, .text-gray-800, .text-gray-900 {
+            color: #000000 !important;
+        }
+        
+        .bg-gray-800 {
+            background-color: #000000 !important;
+        }
+        
+        .text-gray-200 {
+            color: #ffffff !important;
+        }
+        
+        input, select, button {
+            border: 2px solid #000000 !important;
+        }
+
+        .bg-green-100, .bg-blue-100, .bg-gray-100 {
+            background-color: #ffffff !important;
+            border: 2px solid #000000 !important;
+        }
+
+        .text-green-500, .text-blue-500, .text-purple-500 {
+            color: #000000 !important;
+        }
+        {% endif %}
+        
+        {% if settings.text_size == 'lg' %}
+        /* Large text */
+        body {
+            font-size: 1.125rem !important;
+        }
+        
+        .text-sm {
+            font-size: 0.9375rem !important;
+        }
+        
+        .text-lg, .text-xl, .text-2xl, .text-3xl {
+            font-size: 1.3125rem !important;
+        }
+        {% elif settings.text_size == 'xl' %}
+        /* Extra large text */
+        body {
+            font-size: 1.25rem !important;
+        }
+        
+        .text-sm {
+            font-size: 1.0625rem !important;
+        }
+        
+        .text-lg, .text-xl {
+            font-size: 1.5rem !important;
+        }
+
+        .text-2xl, .text-3xl {
+            font-size: 1.75rem !important;
+        }
+        {% endif %}
+
+        /* Custom styles for calendar */
+        .status-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        
+        .status-scheduled {
+            background-color: #dcfce7;
+            color: #15803d;
+        }
+        
+        .status-pending {
+            background-color: #fef3c7;
+            color: #b45309;
+        }
+        
+        .status-completed {
+            background-color: #dbeafe;
+            color: #1e40af;
+        }
+        
+        .status-cancelled {
+            background-color: #fee2e2;
+            color: #b91c1c;
+        }
+
+        .calendar-day {
+            min-height: 120px;
+            transition: transform 0.2s;
+        }
+        
+        .calendar-day:hover {
+            background-color: #f3f4f6;
+            transform: translateY(-2px);
+        }
+        
+        .today {
+            background-color: #f0f9ff;
+            border: 2px solid #3b82f6;
+        }
+        
+        .appointment {
+            border-left: 4px solid;
+            padding-left: 0.5rem;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+        
+        .appointment-scheduled {
+            border-left-color: #15803d;
+        }
+        
+        .appointment-pending {
+            border-left-color: #b45309;
+        }
+        
+        .appointment-completed {
+            border-left-color: #1e40af;
+        }
+        
+        .appointment-cancelled {
+            border-left-color: #b91c1c;
+        }
+
+        {% if settings.theme_mode == 'dark' %}
+        .status-scheduled {
+            background-color: #064e3b;
+            color: #dcfce7;
+        }
+        
+        .status-pending {
+            background-color: #78350f;
+            color: #fef3c7;
+        }
+        
+        .status-completed {
+            background-color: #1e3a8a;
+            color: #dbeafe;
+        }
+        
+        .status-cancelled {
+            background-color: #7f1d1d;
+            color: #fee2e2;
+        }
+        
+        .calendar-day:hover {
+            background-color: #2a2a2a !important;
+        }
+        
+        .today {
+            background-color: #172554 !important;
+            border: 2px solid #3b82f6;
+        }
+        {% endif %}
+    </style>
+</head>
+
+<body class="bg-gray-200 flex text-gray-900">
+    <!-- Sidebar Navigation -->
+    <aside class="w-64 h-screen bg-gray-800 text-gray-200 p-4 fixed">
+        <h1 class="text-2xl font-bold mb-6">Therapist Portal</h1>
+        <nav>
+            <ul class="space-y-4">
+                <li><a href="{{ url_for('therapist.index') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-chart-line"></i> Dashboard</a></li>
+                <li><a href="{{ url_for('therapist.appointments') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-calendar-alt"></i> Appointments</a></li>
+                <li><a href="{{ url_for('therapist.students') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-user-graduate"></i> My Students</a></li>
+                <li><a href="{{ url_for('therapist.calendar') }}" class="block p-2 bg-gray-700 rounded"> <i class="fas fa-calendar"></i> Calendar</a></li>
+                <li><a href="{{ url_for('therapist.resources') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-book-medical"></i> Resources</a></li>
+                <li><a href="{{ url_for('therapist.profile') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-user"></i> Profile</a></li>
+                <li><a href="{{ url_for('therapist.student_requests') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-user-plus"></i> Student Requests</a></li>
+                <li><a href="{{ url_for('therapist.reports') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-chart-bar"></i> Reports</a></li>
+                <li><a href="{{ url_for('auth.logout') }}" class="block p-2 hover:bg-gray-700 rounded mt-8"> <i class="fas fa-sign-out-alt"></i> Logout</a></li>
+            </ul>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="ml-64 p-8 w-full">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="bg-{% if category == 'error' %}red{% else %}blue{% endif %}-100 border-l-4 border-{% if category == 'error' %}red{% else %}blue{% endif %}-500 text-{% if category == 'error' %}red{% else %}blue{% endif %}-700 p-4 mb-6" role="alert">
+                        <p>{{ message }}</p>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-3xl font-bold text-gray-800">Calendar</h2>
+            <button type="button" onclick="openScheduleModal()" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
+                <i class="fas fa-plus mr-2"></i> Schedule Appointment
+            </button>
+        </div>
+        
+        <!-- Calendar Controls -->
+        <div class="bg-white p-4 rounded shadow mb-6">
+            <div class="flex flex-wrap justify-between items-center">
+                <div class="flex space-x-2 mb-2 sm:mb-0">
+                    <a href="{{ url_for('therapist.calendar', date=start_date - timedelta(days=7 if view == 'week' else 30), view=view) }}" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-2 rounded">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                    <a href="{{ url_for('therapist.calendar', date=datetime.now().strftime('%Y-%m-%d'), view=view) }}" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded">
+                        Today
+                    </a>
+                    <a href="{{ url_for('therapist.calendar', date=start_date + timedelta(days=7 if view == 'week' else 30), view=view) }}" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-2 rounded">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                </div>
+                
+                <h3 class="text-xl font-semibold mx-4">
+                    {% if view == 'week' %}
+                        {{ start_date.strftime('%B %d') }} - {{ (start_date + timedelta(days=6)).strftime('%B %d, %Y') }}
+                    {% else %}
+                        {{ start_date.strftime('%B %Y') }}
+                    {% endif %}
+                </h3>
+                
+                <div class="flex space-x-2">
+                    <a href="{{ url_for('therapist.calendar', date=selected_date.strftime('%Y-%m-%d'), view='week') }}" class="bg-gray-200 {% if view == 'week' %}bg-blue-500 text-white{% else %}hover:bg-gray-300 text-gray-700{% endif %} px-3 py-2 rounded">
+                        Week
+                    </a>
+                    <a href="{{ url_for('therapist.calendar', date=selected_date.strftime('%Y-%m-%d'), view='month') }}" class="bg-gray-200 {% if view == 'month' %}bg-blue-500 text-white{% else %}hover:bg-gray-300 text-gray-700{% endif %} px-3 py-2 rounded">
+                        Month
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Week View -->
+        {% if view == 'week' %}
+        <div class="bg-white p-6 rounded shadow">
+            <div class="grid grid-cols-7 gap-4">
+                {% for day in calendar_data %}
+                    {% set is_today = day.date.date() == datetime.now().date() %}
+                    <div class="border rounded p-2 calendar-day {% if is_today %}today{% endif %}">
+                        <div class="font-medium mb-2">{{ day.date.strftime('%a') }}<br>{{ day.date.strftime('%b %d') }}</div>
+                        
+                        {% if day.appointments %}
+                            {% for appt in day.appointments %}
+                                <div class="appointment appointment-{{ appt.status }}">
+                                    <div class="font-medium">{{ appt.time }}</div>
+                                    <div>{{ appt.student_name }}</div>
+                                    <div class="flex justify-between mt-1">
+                                        <span class="status-badge status-{{ appt.status }}">{{ appt.status }}</span>
+                                        <a href="{{ url_for('therapist.student_details', student_id=appt.student_id) }}" class="text-blue-500 hover:text-blue-700">
+                                            <i class="fas fa-external-link-alt"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <p class="text-gray-500 text-sm">No appointments</p>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Month View -->
+        {% if view == 'month' %}
+        <div class="bg-white p-6 rounded shadow">
+            <!-- Days of the week header -->
+            <div class="grid grid-cols-7 gap-4 mb-4">
+                <div class="text-center font-medium">Sun</div>
+                <div class="text-center font-medium">Mon</div>
+                <div class="text-center font-medium">Tue</div>
+                <div class="text-center font-medium">Wed</div>
+                <div class="text-center font-medium">Thu</div>
+                <div class="text-center font-medium">Fri</div>
+                <div class="text-center font-medium">Sat</div>
+            </div>
+            
+            <!-- Calendar grid -->
+            <div class="grid grid-cols-7 gap-2">
+                {% set current_day = start_date - timedelta(days=start_date.weekday() + 1) %}
+                {% for i in range(42) %} <!-- 6 weeks x 7 days -->
+                    {% set current_day = current_day + timedelta(days=1) %}
+                    {% set is_today = current_day.date() == datetime.now().date() %}
+                    {% set is_current_month = current_day.month == selected_date.month %}
+                    
+                    {% set day_appointments = [] %}
+                    {% for day in calendar_data %}
+                        {% if day.date.date() == current_day.date() %}
+                            {% set day_appointments = day.appointments %}
+                        {% endif %}
+                    {% endfor %}
+                    
+                    <div class="border rounded p-2 calendar-day {% if is_today %}today{% endif %} {% if not is_current_month %}opacity-50{% endif %}">
+                        <div class="font-medium mb-2">{{ current_day.day }}</div>
+                        
+                        {% if day_appointments %}
+                            {% for appt in day_appointments[:2] %}
+                                <div class="appointment appointment-{{ appt.status }}">
+                                    <div class="font-medium">{{ appt.time }}</div>
+                                    <div>{{ appt.student_name }}</div>
+                                </div>
+                            {% endfor %}
+                            
+                            {% if day_appointments|length > 2 %}
+                                <div class="text-sm text-blue-500 mt-1">+ {{ day_appointments|length - 2 }} more</div>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </main>
+
+    <!-- Schedule Appointment Modal -->
+    <div id="scheduleModal" class="fixed inset-0 bg-gray-500 bg-opacity-75 hidden flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-6 max-w-lg w-full">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-semibold">Schedule New Appointment</h3>
+                <button type="button" onclick="closeScheduleModal()" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <form action="{{ url_for('therapist.schedule_appointment_from_calendar') }}" method="POST" id="scheduleForm">
+                <!-- Hidden fields for tracking state -->
+                <input type="hidden" name="view" value="{{ view }}">
+                <input type="hidden" name="calendar_date" value="{{ selected_date.strftime('%Y-%m-%d') }}">
+                
+                <div class="mb-4">
+                    <label for="student_id" class="block text-gray-700 mb-2">Student</label>
+                    <select id="student_id" name="student_id" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500" required>
+                        <option value="">Select a student</option>
+                        {% for assignment in student_assignments %}
+                            <option value="{{ assignment.student_id }}">{{ assignment.student_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label for="date" class="block text-gray-700 mb-2">Date</label>
+                        <input type="date" id="date" name="date" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500" required>
+                    </div>
+                    
+                    <div>
+                        <label for="time" class="block text-gray-700 mb-2">Time</label>
+                        <select id="time" name="time" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500" required>
+                            <option value="">Select time</option>
+                            {% for hour in range(8, 18) %}
+                                <option value="{{ '%02d'|format(hour) }}:00">{{ '%02d'|format(hour) }}:00</option>
+                                <option value="{{ '%02d'|format(hour) }}:30">{{ '%02d'|format(hour) }}:30</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <label for="session_type" class="block text-gray-700 mb-2">Session Type</label>
+                    <select id="session_type" name="session_type" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500" required>
+                        <option value="online">Online</option>
+                        <option value="in-person">In-Person</option>
+                        <option value="phone">Phone</option>
+                    </select>
+                </div>
+                
+                <div class="mb-4">
+                    <label for="notes" class="block text-gray-700 mb-2">Notes</label>
+                    <textarea id="notes" name="notes" rows="3" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500"></textarea>
+                </div>
+                
+                <div class="flex justify-end space-x-2">
+                    <button type="button" onclick="closeScheduleModal()" class="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300">Cancel</button>
+                    <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">Schedule</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- JavaScript for modals -->
+    <script>
+        function openScheduleModal() {
+            const modal = document.getElementById('scheduleModal');
+            modal.classList.remove('hidden');
+            
+            // Set default date to today
+            document.getElementById('date').valueAsDate = new Date();
+            
+            // Pre-populate date if clicked on a specific day
+            const urlParams = new URLSearchParams(window.location.search);
+            const selectedDate = urlParams.get('date');
+            if (selectedDate) {
+                document.getElementById('date').value = selectedDate;
+            }
+            
+            // Validate form on submit
+            document.getElementById('scheduleForm').onsubmit = function() {
+                const studentId = document.getElementById('student_id').value;
+                const date = document.getElementById('date').value;
+                const time = document.getElementById('time').value;
+                
+                if (!studentId || !date || !time) {
+                    alert('Please fill in all required fields');
+                    return false;
+                }
+                
+                return true;
+            };
+        }
+        
+        function closeScheduleModal() {
+            const modal = document.getElementById('scheduleModal');
+            modal.classList.add('hidden');
+        }
+    </script>
+</body>
+</html>

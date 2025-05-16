@@ -1830,64 +1830,6 @@ def settings():
     
     return render_template('admin/settings.html', settings=system_settings)
 
-@admin_bp.route('/add-admin', methods=['GET', 'POST'])
-@admin_required
-def add_admin():
-    """Add a new admin user."""
-    if request.method == 'POST':
-        try:
-            # Get form data
-            first_name = request.form.get('first_name', '').strip()
-            last_name = request.form.get('last_name', '').strip()
-            email = request.form.get('email', '').strip()
-            password = request.form.get('password', '')
-            
-            # Validate form data
-            if not first_name or not last_name or not email or not password:
-                flash('All fields are required', 'error')
-                return redirect(url_for('admin.add_admin'))
-            
-            # Check if email is already in use
-            existing_user = mongo.db.users.find_one({'email': email})
-            if existing_user:
-                flash('Email is already in use', 'error')
-                return redirect(url_for('admin.add_admin'))
-            
-            # Create admin user
-            from werkzeug.security import generate_password_hash
-            
-            new_admin = {
-                'first_name': first_name,
-                'last_name': last_name,
-                'email': email,
-                'role': 'admin',
-                'password': generate_password_hash(password),
-                'created_at': datetime.now(timezone.utc),
-                'last_login': None,
-                'login_count': 0,
-                'status': 'active',
-                'created_by': ObjectId(session['user'])
-            }
-            
-            mongo.db.users.insert_one(new_admin)
-            
-            # Log activity
-            mongo.db.admin_logs.insert_one({
-                'admin_id': ObjectId(session['user']),
-                'action': 'add_admin',
-                'details': f'Added admin user: {first_name} {last_name}',
-                'timestamp': datetime.now(timezone.utc)
-            })
-            
-            flash('Admin user added successfully', 'success')
-            return redirect(url_for('admin.user_management'))
-            
-        except Exception as e:
-            logger.error(f"Add admin error: {e}")
-            flash('An error occurred while adding the admin user', 'error')
-            return redirect(url_for('admin.add_admin'))
-    
-    return render_template('admin/add_admin.html')
 
 @admin_bp.route('/logs')
 @admin_required

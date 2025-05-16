@@ -213,6 +213,8 @@ def calendar():
             
             calendar_data.append(day_data)
             current_date += timedelta(days=1)
+
+    settings = mongo.db.settings.find_one() or {}
     
     return render_template('therapist/calendar.html',
                          therapist=therapist,
@@ -220,7 +222,11 @@ def calendar():
                          selected_date=selected_date,
                          view=view,
                          start_date=start_date,
-                         end_date=end_date)
+                         end_date=end_date,
+                         settings=settings,
+                         datetime=datetime,  # Pass datetime
+                         timedelta=timedelta) 
+                         
 
 @therapist_bp.route('/appointments')
 @therapist_required
@@ -282,6 +288,8 @@ def appointments():
                 'name': f"{student['first_name']} {student['last_name']}",
                 'email': student['email']
             }
+
+    settings = mongo.db.settings.find_one() or {}
     
     return render_template('therapist/appointments.html',
                          therapist=therapist,
@@ -290,7 +298,9 @@ def appointments():
                          reschedule_requests=reschedule_requests,
                          cancellation_requests=cancellation_requests,
                          students=students,
-                         filter_status=filter_status)
+                         filter_status=filter_status,
+                         settings=settings
+                        )
 
 @therapist_bp.route('/approve-appointment/<request_id>', methods=['POST'])
 @therapist_required
@@ -773,6 +783,8 @@ def student_details(student_id):
         
         stats['days_since_first_session'] = (datetime.now() - first_session['date']).days
         stats['days_since_last_session'] = (datetime.now() - last_session['date']).days
+
+    settings = mongo.db.settings.find_one() or {}
     
     return render_template('therapist/student_details.html',
                          therapist_id=therapist_id,
@@ -784,7 +796,8 @@ def student_details(student_id):
                          session_notes=session_notes,
                          shared_resources=shared_resources,
                          recent_messages=recent_messages,
-                         stats=stats)
+                         stats=stats,
+                         settings=settings)
 
 @therapist_bp.route('/add-session-notes/<appointment_id>', methods=['GET', 'POST'])
 @therapist_required
@@ -911,12 +924,15 @@ def add_session_notes(appointment_id):
     
     # Get available resources to share
     available_resources = list(mongo.db.resources.find({'status': 'active'}).sort('title', 1))
+
+    settings = mongo.db.settings.find_one() or {}
     
     return render_template('therapist/add_session_notes.html',
                          appointment=appointment,
                          student=student,
                          existing_notes=existing_notes,
-                         available_resources=available_resources)
+                         available_resources=available_resources,
+                         settings=settings)
 
 @therapist_bp.route('/chat/<student_id>')
 @therapist_required
@@ -975,6 +991,8 @@ def chat(student_id):
         'student_id': ObjectId(student_id),
         'therapist_id': therapist_id
     }).sort('shared_at', -1).limit(5))
+
+    settings = mongo.db.settings.find_one() or {}
     
     return render_template('therapist/chat.html',
                          therapist_id=therapist_id,
@@ -982,7 +1000,8 @@ def chat(student_id):
                          chat_history=chat_history,
                          upcoming_appointments=upcoming_appointments,
                          available_resources=available_resources,
-                         shared_resources=shared_resources)
+                         shared_resources=shared_resources,
+                         settings=settings)
 
 @therapist_bp.route('/send-message/<student_id>', methods=['POST'])
 @therapist_required
@@ -1279,6 +1298,118 @@ def schedule_appointment(student_id):
                          student=student,
                          available_slots=available_slots)
 
+@therapist_bp.route('/schedule-appointment-from-calendar', methods=['POST'])
+@therapist_required
+def schedule_appointment_from_calendar():
+    """Schedule an appointment from the calendar view."""
+    therapist_id = ObjectId(session['user'])
+    
+    # Get form data
+    student_id = request.form.get('student_id')
+    date_str = request.form.get('date')
+    time_str = request.form.get('time')
+    session_type = request.form.get('session_type', 'online')
+    notes = request.form.get('notes', '')
+    
+    # Validate required fields
+    if not student_id or not date_str or not time_str:
+        flash('Student, date, and time are required', 'error')
+        return redirect(url_for('therapist.calendar'))
+    
+    try:
+        # Convert student_id to ObjectId
+        student_id_obj = ObjectId(student_id)
+        
+        # Verify assignment
+        assignment = mongo.db.therapist_assignments.find_one({
+            'therapist_id': therapist_id,
+            'student_id': student_id_obj,
+            'status': 'active'
+        })
+        
+        if not assignment:
+            flash('Student not assigned to you', 'error')
+            return redirect(url_for('therapist.calendar'))
+        
+        # Get student data
+        student = mongo.db.users.find_one({'_id': student_id_obj})
+        
+        if not student:
+            flash('Student not found', 'error')
+            return redirect(url_for('therapist.calendar'))
+        
+        # Parse appointment date
+        try:
+            appointment_date = datetime.strptime(date_str, '%Y-%m-%d')
+        except ValueError:
+            flash('Invalid date format', 'error')
+            return redirect(url_for('therapist.calendar'))
+        
+        # Check if slot is available
+        existing = mongo.db.appointments.find_one({
+            'therapist_id': therapist_id,
+            'date': appointment_date,
+            'time': time_str,
+            'status': {'$in': ['scheduled', 'pending']}
+        })
+        
+        if existing:
+            flash('This time slot is already booked', 'error')
+            return redirect(url_for('therapist.calendar'))
+        
+        # Create appointment
+        new_appointment = {
+            'student_id': student_id_obj,
+            'therapist_id': therapist_id,
+            'date': appointment_date,
+            'time': time_str,
+            'session_type': session_type,
+            'notes': notes,
+            'status': 'scheduled',  # Directly scheduled, not pending
+            'created_at': datetime.now(timezone.utc),
+            'updated_at': datetime.now(timezone.utc),
+            'created_by': therapist_id
+        }
+        
+        result = mongo.db.appointments.insert_one(new_appointment)
+        
+        # Add notification for student
+        mongo.db.notifications.insert_one({
+            'user_id': student_id_obj,
+            'type': 'appointment_scheduled',
+            'message': f'Your therapist has scheduled an appointment for you on {appointment_date.strftime("%A, %B %d")} at {time_str}.',
+            'related_id': result.inserted_id,
+            'read': False,
+            'created_at': datetime.now(timezone.utc)
+        })
+        
+        # Add a message in chat about the scheduled appointment
+        mongo.db.therapist_chats.insert_one({
+            'student_id': student_id_obj,
+            'therapist_id': therapist_id,
+            'sender': 'therapist',
+            'message': f"I've scheduled an appointment for you on {appointment_date.strftime('%A, %B %d')} at {time_str}. " + 
+                      (f"Notes: {notes}" if notes else ""),
+            'appointment_id': result.inserted_id,
+            'read': False,
+            'timestamp': datetime.now(timezone.utc)
+        })
+        
+        flash('Appointment scheduled successfully', 'success')
+        
+    except Exception as e:
+        logger.error(f"Schedule appointment from calendar error: {e}")
+        flash('An error occurred while scheduling the appointment', 'error')
+    
+    # Return to the calendar view
+    view = request.form.get('view', 'week')
+    date = request.form.get('calendar_date', '')  # The current view date
+    
+    if date:
+        return redirect(url_for('therapist.calendar', date=date, view=view))
+    else:
+        return redirect(url_for('therapist.calendar', view=view))
+    
 @therapist_bp.route('/profile', methods=['GET', 'POST'])
 @therapist_required
 def profile():

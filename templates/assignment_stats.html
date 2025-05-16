@@ -468,12 +468,13 @@
                                     <div style="flex-grow: 1;">
                                         <p><i class="fas fa-users"></i> <strong>Student Load:</strong></p>
                                         <div class="progress-bar-container">
-                                            {% set percent = (stat.student_count / stat.max_students) * 100 %}
+                                            {% set max_students = 20 %}  <!-- Default max students value -->
+                                            {% set percent = (stat.student_count / max_students) * 100 %}
                                             <div class="progress-bar {% if percent >= 80 %}high{% elif percent >= 50 %}medium{% endif %}" 
                                                  style="width: {{ percent if percent <= 100 else 100 }}%;"></div>
                                         </div>
                                         <p style="text-align: right; font-size: 12px; margin-top: 5px;">
-                                            {{ stat.student_count }}/{{ stat.max_students }} students
+                                            {{ stat.student_count }}/{{ max_students }} students
                                         </p>
                                     </div>
                                 </div>
