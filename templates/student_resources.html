@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Resources - Wellbeing Assistant</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css"> 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+
+    <style>
+        {% if settings.theme_mode == 'dark' %}
+        /* Dark mode styles */
+        body {
+            background-color: #121212 !important;
+            color: #e0e0e0 !important;
+        }
+        
+        .bg-white, .bg-gray-300 {
+            background-color: #1e1e1e !important;
+        }
+        
+        .text-gray-700, .text-gray-800, .text-gray-900 {
+            color: #e0e0e0 !important;
+        }
+        
+        .text-gray-500, .text-gray-600 {
+            color: #a0a0a0 !important;
+        }
+        
+        .bg-gray-50, .bg-gray-100, .bg-gray-200 {
+            background-color: #2a2a2a !important;
+        }
+        
+        .border-gray-200, .border-gray-300 {
+            border-color: #333 !important;
+        }
+
+        .hover\:bg-gray-100:hover {
+            background-color: #333333 !important;
+        }
+        {% endif %}
+        
+        {% if settings.contrast == 'high' %}
+        /* High contrast styles */
+        body {
+            background-color: #ffffff !important;
+            color: #000000 !important;
+        }
+        
+        .text-gray-500, .text-gray-600, .text-gray-700, .text-gray-800, .text-gray-900 {
+            color: #000000 !important;
+        }
+        
+        .bg-gray-800, .bg-gray-700 {
+            background-color: #000000 !important;
+        }
+        
+        .text-gray-200, .text-white {
+            color: #ffffff !important;
+        }
+        
+        input, select, button {
+            border: 2px solid #000000 !important;
+        }
+
+        .bg-gray-50, .bg-gray-100, .bg-gray-200, .bg-gray-300 {
+            background-color: #ffffff !important;
+            border: 2px solid #000000 !important;
+        }
+
+        .resource-card {
+            border: 2px solid #000000 !important;
+        }
+        {% endif %}
+        
+        {% if settings.text_size == 'lg' %}
+        /* Large text */
+        body {
+            font-size: 1.125rem !important;
+        }
+        
+        .text-sm {
+            font-size: 0.9375rem !important;
+        }
+        
+        .text-lg, .text-xl, .text-2xl, .text-3xl {
+            font-size: 1.3125rem !important;
+        }
+        {% elif settings.text_size == 'xl' %}
+        /* Extra large text */
+        body {
+            font-size: 1.25rem !important;
+        }
+        
+        .text-sm {
+            font-size: 1.0625rem !important;
+        }
+        
+        .text-lg, .text-xl {
+            font-size: 1.5rem !important;
+        }
+
+        .text-2xl, .text-3xl {
+            font-size: 1.75rem !important;
+        }
+        {% endif %}
+
+        /* Resource card hover effect */
+        .resource-card {
+            transition: transform 0.2s ease-in-out;
+        }
+        .resource-card:hover {
+            transform: translateY(-5px);
+        }
+    </style>
+</head>
+
+<body class="bg-gray-200 flex text-gray-900">
+    <!-- Sidebar Navigation -->
+    <aside class="w-64 h-screen bg-gray-800 text-gray-200 p-4 fixed">
+        <h1 class="text-2xl font-bold mb-6">Wellbeing Assistant</h1>
+        <nav>
+            <ul class="space-y-4">
+                <li><a href="{{ url_for('dashboard.index') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-chart-line"></i> Dashboard</a></li>
+                <li><a href="{{ url_for('tracking.index') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-chart-bar"></i> Wellness Tracker</a></li>
+                <li><a href="{{ url_for('chatbot.chatbot_page') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-comments"></i> Chat</a></li>
+                <li><a href="{{ url_for('dashboard.therapist_appointments') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-calendar-alt"></i> Therapist</a></li>
+                <li><a href="{{ url_for('dashboard.profile') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-user"></i> Profile</a></li>
+                <li><a href="{{ url_for('dashboard.student_resources') }}" class="block p-2 bg-gray-700 rounded"> <i class="fas fa-book"></i> Resources</a></li>
+                <li><a href="{{ url_for('dashboard.settings') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-cog"></i> Settings</a></li>
+                <li><a href="{{ url_for('auth.logout') }}" class="block p-2 hover:bg-gray-700 rounded mt-8"> <i class="fas fa-sign-out-alt"></i> Logout</a></li>
+            </ul>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="ml-64 p-8 w-full">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="{% if category == 'error' %}bg-red-100 border-l-4 border-red-500 text-red-700{% elif category == 'success' %}bg-green-100 border-l-4 border-green-500 text-green-700{% else %}bg-blue-100 border-l-4 border-blue-500 text-blue-700{% endif %} p-4 mb-6" role="alert">
+                        <p>{{ message }}</p>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    
+        <div class="mb-6">
+            <h2 class="text-3xl font-bold text-gray-800">Student Resources</h2>
+            <p class="text-gray-700">Find the right support and guidance for your wellbeing.</p>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="relative mb-6">
+            <form action="{{ url_for('dashboard.student_resources') }}" method="get">
+                <input type="text" name="query" class="w-full p-3 pl-10 bg-white border border-gray-300 text-gray-900 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                    placeholder="Search for resources..." value="{{ search_query|default('') }}">
+                <button type="submit" class="absolute left-3 top-3 text-gray-600">
+                    <i class="fas fa-search"></i>
+                </button>
+            </form>
+        </div>
+
+        <!-- Resource Type Filters -->
+        {% if resource_types and resource_types|length > 0 %}
+        <div class="flex flex-wrap gap-2 mb-6">
+            <a href="{{ url_for('dashboard.student_resources') }}" class="px-4 py-2 bg-{% if not selected_type %}blue-500 text-white{% else %}gray-200 text-gray-700 hover:bg-gray-300{% endif %} rounded-full transition">
+                All
+            </a>
+            {% for type in resource_types %}
+                <a href="{{ url_for('dashboard.student_resources', type=type) }}" 
+                    class="px-4 py-2 bg-{% if selected_type == type %}blue-500 text-white{% else %}gray-200 text-gray-700 hover:bg-gray-300{% endif %} rounded-full transition">
+                    {{ type|title }}
+                </a>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Resources Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% if resources and resources|length > 0 %}
+                {% for resource in resources %}
+                    <div class="bg-gray-300 p-6 rounded shadow resource-card">
+                        <div class="text-2xl bg-gray-700 text-white p-3 rounded inline-block mb-4">
+                            {% if resource.resource_type == 'video' %}
+                                <i class="fas fa-video"></i>
+                            {% elif resource.resource_type == 'article' %}
+                                <i class="fas fa-newspaper"></i>
+                            {% elif resource.resource_type == 'link' %}
+                                <i class="fas fa-link"></i>
+                            {% else %}
+                                <i class="fas fa-book"></i>
+                            {% endif %}
+                        </div>
+                        <h3 class="text-xl font-semibold mb-2">{{ resource.title }}</h3>
+                        <p class="text-gray-700 mb-4">{{ resource.description }}</p>
+                        <a href="{{ url_for('dashboard.student_resource_detail', resource_id=resource._id) }}" class="text-blue-600 hover:underline">
+                            Learn More →
+                        </a>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="col-span-full bg-white p-8 rounded-lg shadow-md text-center">
+                    <i class="fas fa-exclamation-circle text-gray-400 text-4xl mb-4"></i>
+                    <h3 class="text-xl font-semibold mb-2">No resources found</h3>
+                    <p class="text-gray-600">
+                        {% if search_query %}
+                            No resources match your search "{{ search_query }}". Try different keywords.
+                        {% elif selected_type %}
+                            No resources available in this category at the moment.
+                        {% else %}
+                            No resources are available at this time. Please check back later.
+                        {% endif %}
+                    </p>
+                </div>
+            {% endif %}
+        </div>
+    </main>
+
+    <!-- Optional JavaScript -->
+    <script src="{{ url_for('static', filename='dashboard.js') }}"></script>
+</body>
+</html>

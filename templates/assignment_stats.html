@@ -3,59 +3,288 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Assignment Statistics - Wellbeing Chatbot Admin</title>
+    <title>Assignment Statistics - Wellbeing Assistant Admin</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        .assignment-card {
-            margin-bottom: 15px;
-            padding: 15px;
-            border-radius: 5px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-            background-color: white;
-        }
-        
-        .assignment-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 10px;
-        }
-        
-        .assignment-header h3 {
+        /* Add this temporary CSS to ensure proper styling */
+        body {
             margin: 0;
-            font-size: 16px;
-            font-weight: 600;
+            padding: 0;
+            background-color: #f3f4f6;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
         
-        .assignment-header .therapist-name {
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        .sidebar {
+            width: 250px;
+            background-color: #1f2937;
+            color: white;
+            padding: 20px 0;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            z-index: 100;
+        }
+        
+        .sidebar h2 {
+            padding: 0 20px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 20px;
+        }
+        
+        .sidebar ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .sidebar ul li {
+            margin-bottom: 5px;
+        }
+        
+        .sidebar ul li a {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+        
+        .sidebar ul li a:hover {
+            background-color: #374151;
+        }
+        
+        .sidebar ul li.active a {
+            background-color: #4a6fa5;
+            font-weight: 500;
+        }
+        
+        .sidebar ul li a i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+        
+        .main-content {
+            flex: 1;
+            margin-left: 250px;
+            padding: 30px;
+        }
+        
+        h1 {
+            margin-bottom: 20px;
+            color: #111827;
             font-weight: 600;
+            font-size: 24px;
+        }
+        
+        h2 {
+            margin: 0 0 20px;
+            color: #111827;
+            font-weight: 600;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+        }
+        
+        h2 i {
+            margin-right: 10px;
             color: #4a6fa5;
         }
         
-        .assignment-header .student-name {
-            font-weight: 600;
-        }
-        
-        .assignment-details {
-            display: flex;
-            justify-content: space-between;
-        }
-        
-        .assignment-info {
-            flex: 1;
-        }
-        
-        .assignment-info p {
-            margin: 5px 0;
+        p {
+            margin: 8px 0;
+            color: #4b5563;
             font-size: 14px;
         }
         
-        .badge {
-            display: inline-block;
-            padding: 3px 6px;
-            font-size: 12px;
+        strong {
+            color: #111827;
+            font-weight: 500;
+        }
+        
+        .text-muted {
+            color: #6b7280;
+        }
+        
+        .header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .secondary-btn {
+            background-color: #e5e7eb;
+            color: #4b5563;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        
+        .secondary-btn:hover {
+            background-color: #d1d5db;
+        }
+        
+        .secondary-btn i {
+            margin-right: 8px;
+        }
+        
+        .alert {
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            border-left: 4px solid;
+        }
+        
+        .error {
+            background-color: #fee2e2;
+            border-color: #ef4444;
+            color: #b91c1c;
+        }
+        
+        .success {
+            background-color: #d1fae5;
+            border-color: #10b981;
+            color: #047857;
+        }
+        
+        .warning {
+            background-color: #fef3c7;
+            border-color: #f59e0b;
+            color: #92400e;
+        }
+        
+        .card {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            margin-bottom: 25px;
+            transition: all 0.2s;
+        }
+        
+        .card:hover {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 30px 20px;
+            color: #6b7280;
+        }
+        
+        /* Stats Overview */
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e5e7eb;
+            transition: all 0.2s;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .stat-card p {
+            font-size: 14px;
+            color: #6b7280;
+            margin: 0 0 8px;
+            font-weight: 500;
+        }
+        
+        .stat-card h3 {
+            font-size: 28px;
+            color: #4a6fa5;
             font-weight: 600;
-            border-radius: 4px;
+            margin: 0;
+        }
+        
+        .stat-card i {
+            font-size: 24px;
+            color: #4a6fa5;
+            margin-bottom: 10px;
+        }
+        
+        /* Therapist Stats */
+        .therapist-stats-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .therapist-stat-card {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e5e7eb;
+            transition: all 0.2s;
+        }
+        
+        .therapist-stat-card:hover {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+        
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        .stat-header h3 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 600;
+            color: #4a6fa5;
+            display: flex;
+            align-items: center;
+        }
+        
+        .stat-header h3 i {
+            margin-right: 8px;
+        }
+        
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 8px;
+            border-radius: 9999px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .badge i {
+            margin-right: 4px;
         }
         
         .badge-blue {
@@ -64,77 +293,58 @@
         }
         
         .badge-green {
-            background-color: #dcfce7;
-            color: #15803d;
+            background-color: #d1fae5;
+            color: #065f46;
         }
         
-        .stats-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-        
-        .stat-card {
-            background-color: white;
-            border-radius: 5px;
-            padding: 15px;
-            text-align: center;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        }
-        
-        .stat-card h3 {
-            font-size: 24px;
-            margin: 5px 0;
-        }
-        
-        .stat-card p {
-            font-size: 14px;
-            color: #6b7280;
-            margin: 0;
-        }
-        
-        .therapist-stats-container {
-            margin-top: 20px;
-        }
-        
-        .therapist-stat-card {
-            background-color: white;
-            border-radius: 5px;
-            padding: 15px;
-            margin-bottom: 15px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        }
-        
-        .therapist-stat-card .stat-header {
+        .stat-details {
             display: flex;
-            justify-content: space-between;
+            gap: 30px;
+        }
+        
+        .stat-details p {
+            margin: 10px 0;
+            font-size: 14px;
+            display: flex;
             align-items: center;
-            margin-bottom: 10px;
         }
         
-        .therapist-stat-card .stat-header h3 {
-            margin: 0;
-            font-size: 16px;
-            font-weight: 600;
-            color: #4a6fa5;
+        .stat-details p i {
+            margin-right: 8px;
+            color: #6b7280;
+            width: 16px;
+            text-align: center;
         }
         
-        .therapist-stat-card .stat-details {
-            display: flex;
-            gap: 20px;
+        .progress-bar-container {
+            width: 100%;
+            height: 10px;
+            background-color: #e5e7eb;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 8px;
         }
         
-        .therapist-stat-card .stat-details p {
-            margin: 5px 0;
-            font-size: 14px;
+        .progress-bar {
+            height: 100%;
+            background-color: #4a6fa5;
+            border-radius: 5px;
         }
         
+        .progress-bar.high {
+            background-color: #ef4444;
+        }
+        
+        .progress-bar.medium {
+            background-color: #f59e0b;
+        }
+        
+        /* Recent Assignments */
         .recent-assignment {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 10px 0;
+            padding: 12px 0;
             border-bottom: 1px solid #e5e7eb;
         }
         
@@ -142,19 +352,18 @@
             border-bottom: none;
         }
         
-        .progress-bar-container {
-            width: 100%;
-            height: 8px;
-            background-color: #e5e7eb;
-            border-radius: 4px;
-            overflow: hidden;
-            margin-top: 5px;
+        .recent-assignment .student-name {
+            font-weight: 500;
         }
         
-        .progress-bar {
-            height: 100%;
-            background-color: #4a6fa5;
-            border-radius: 4px;
+        .recent-assignment .therapist-name {
+            font-weight: 500;
+            color: #4a6fa5;
+        }
+        
+        .recent-assignment i {
+            margin-right: 5px;
+            color: #6b7280;
         }
     </style>
 </head>
@@ -163,24 +372,27 @@
         <aside class="sidebar">
             <h2>Admin Panel</h2>
             <ul>
-                <li><a href="{{ url_for('admin.dashboard') }}">Dashboard</a></li>
-                <li><a href="{{ url_for('admin.user_management') }}">User Management</a></li>
-                <li><a href="{{ url_for('admin.therapist_management') }}">Therapist Management</a></li>
-                <li><a href="{{ url_for('admin.therapist_assignments') }}">Therapist Assignments</a></li>
-                <li><a href="{{ url_for('admin.assignment_stats') }}" class="active">Assignment Stats</a></li>
-                <li><a href="{{ url_for('admin.chat_logs') }}">Chat Logs</a></li>
-                <li><a href="{{ url_for('admin.feedback_dashboard') }}">Feedback Analysis</a></li>
-                <li><a href="{{ url_for('admin.resources') }}">Resource Management</a></li>
-                <li><a href="{{ url_for('admin.settings') }}">Settings</a></li>
-                <li><a href="{{ url_for('auth.logout') }}">Logout</a></li>
+                <li><a href="{{ url_for('admin.dashboard') }}"><i class="fas fa-chart-line"></i> Dashboard</a></li>
+                <li><a href="{{ url_for('admin.user_management') }}"><i class="fas fa-users"></i> User Management</a></li>
+                <li><a href="{{ url_for('admin.therapist_management') }}"><i class="fas fa-user-md"></i> Therapist Management</a></li>
+                <li><a href="{{ url_for('admin.therapist_requests') }}"><i class="fas fa-clipboard-check"></i> Therapist Requests</a></li>
+                <li><a href="{{ url_for('admin.therapist_assignments') }}"><i class="fas fa-clipboard-list"></i> Therapist Assignments</a></li>
+                <li class="active"><a href="{{ url_for('admin.assignment_stats') }}"><i class="fas fa-chart-bar"></i> Assignment Stats</a></li>
+                <li><a href="{{ url_for('admin.chat_logs') }}"><i class="fas fa-comments"></i> Chat Logs</a></li>
+                <li><a href="{{ url_for('admin.feedback_dashboard') }}"><i class="fas fa-star"></i> Feedback Analysis</a></li>
+                <li><a href="{{ url_for('admin.resources') }}"><i class="fas fa-book"></i> Resource Management</a></li>
+                <li><a href="{{ url_for('admin.settings') }}"><i class="fas fa-cog"></i> Settings</a></li>
+                <li><a href="{{ url_for('auth.logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
             </ul>
         </aside>
         
         <div class="main-content">
             <div class="header-section">
-                <h1>Assignment Statistics</h1>
+                <h1><i class="fas fa-chart-pie"></i> Assignment Statistics</h1>
                 <div>
-                    <a href="{{ url_for('admin.therapist_assignments') }}" class="btn secondary-btn">Back to Assignments</a>
+                    <a href="{{ url_for('admin.therapist_assignments') }}" class="secondary-btn">
+                        <i class="fas fa-arrow-left"></i> Back to Assignments
+                    </a>
                 </div>
             </div>
             
@@ -196,21 +408,25 @@
             
             <!-- Overview Stats -->
             <div class="card">
-                <h2>Overview</h2>
+                <h2><i class="fas fa-chart-line"></i> Overview</h2>
                 <div class="stats-container">
                     <div class="stat-card">
+                        <i class="fas fa-users"></i>
                         <p>Total Active Assignments</p>
                         <h3>{{ total_assignments }}</h3>
                     </div>
                     <div class="stat-card">
+                        <i class="fas fa-user-slash"></i>
                         <p>Unassigned Students</p>
                         <h3>{{ unassigned_count }}</h3>
                     </div>
                     <div class="stat-card">
+                        <i class="fas fa-user-md"></i>
                         <p>Total Therapists</p>
                         <h3>{{ therapist_stats|length }}</h3>
                     </div>
                     <div class="stat-card">
+                        <i class="fas fa-balance-scale"></i>
                         <p>Avg Students Per Therapist</p>
                         <h3>
                             {% if therapist_stats|length > 0 %}
@@ -225,21 +441,23 @@
             
             <!-- Therapist Workload -->
             <div class="card">
-                <h2>Therapist Workload</h2>
+                <h2><i class="fas fa-user-md"></i> Therapist Workload</h2>
                 
                 {% if therapist_stats %}
                     <div class="therapist-stats-container">
                         {% for stat in therapist_stats %}
                             <div class="therapist-stat-card">
                                 <div class="stat-header">
-                                    <h3>Dr. {{ stat.therapist_name }}</h3>
-                                    <span class="badge badge-blue">{{ stat.student_count }} students</span>
+                                    <h3><i class="fas fa-user-md"></i> Dr. {{ stat.therapist_name }}</h3>
+                                    <span class="badge badge-blue">
+                                        <i class="fas fa-users"></i> {{ stat.student_count }} students
+                                    </span>
                                 </div>
                                 <div class="stat-details">
                                     <div>
-                                        <p><strong>Specialization:</strong> {{ stat.specialization }}</p>
-                                        <p><strong>Total Sessions:</strong> {{ stat.session_count }}</p>
-                                        <p><strong>Avg Sessions Per Student:</strong> 
+                                        <p><i class="fas fa-stethoscope"></i> <strong>Specialization:</strong> {{ stat.specialization }}</p>
+                                        <p><i class="fas fa-calendar-check"></i> <strong>Total Sessions:</strong> {{ stat.session_count }}</p>
+                                        <p><i class="fas fa-chart-line"></i> <strong>Avg Sessions Per Student:</strong> 
                                             {% if stat.student_count > 0 %}
                                                 {{ "%.1f"|format(stat.session_count / stat.student_count) }}
                                             {% else %}
@@ -248,13 +466,15 @@
                                         </p>
                                     </div>
                                     <div style="flex-grow: 1;">
-                                        <p><strong>Student Load:</strong></p>
+                                        <p><i class="fas fa-users"></i> <strong>Student Load:</strong></p>
                                         <div class="progress-bar-container">
-                                            {% set max_students = 10 %}  <!-- Assuming 10 students is max capacity -->
-                                            {% set percent = (stat.student_count / max_students) * 100 %}
-                                            <div class="progress-bar" style="width: {{ percent if percent <= 100 else 100 }}%;"></div>
+                                            {% set percent = (stat.student_count / stat.max_students) * 100 %}
+                                            <div class="progress-bar {% if percent >= 80 %}high{% elif percent >= 50 %}medium{% endif %}" 
+                                                 style="width: {{ percent if percent <= 100 else 100 }}%;"></div>
                                         </div>
-                                        <p style="text-align: right; font-size: 12px;">{{ stat.student_count }}/{{ max_students }} max</p>
+                                        <p style="text-align: right; font-size: 12px; margin-top: 5px;">
+                                            {{ stat.student_count }}/{{ stat.max_students }} students
+                                        </p>
                                     </div>
                                 </div>
                             </div>
@@ -262,25 +482,27 @@
                     </div>
                 {% else %}
                     <div class="empty-state">
-                        <p>No therapist statistics available.</p>
+                        <p><i class="fas fa-info-circle"></i> No therapist statistics available.</p>
                     </div>
                 {% endif %}
             </div>
             
             <!-- Recent Assignments -->
             <div class="card">
-                <h2>Recent Assignments</h2>
+                <h2><i class="fas fa-history"></i> Recent Assignments</h2>
                 
                 {% if recent_assignments %}
                     <div>
                         {% for assignment in recent_assignments %}
                             <div class="recent-assignment">
                                 <div>
+                                    <i class="fas fa-user-graduate"></i>
                                     <strong class="student-name">{{ assignment.student_name }}</strong>
                                     <span class="text-muted">→</span>
                                     <strong class="therapist-name">Dr. {{ assignment.therapist_name }}</strong>
                                 </div>
                                 <div>
+                                    <i class="fas fa-calendar-alt"></i>
                                     <span class="text-muted">{{ assignment.created_at.strftime('%Y-%m-%d') }}</span>
                                 </div>
                             </div>
@@ -288,7 +510,7 @@
                     </div>
                 {% else %}
                     <div class="empty-state">
-                        <p>No recent assignments found.</p>
+                        <p><i class="fas fa-info-circle"></i> No recent assignments found.</p>
                     </div>
                 {% endif %}
             </div>

@@ -3,28 +3,231 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Therapist-Student Assignments - Wellbeing Chatbot Admin</title>
+    <title>Therapist-Student Assignments - Wellbeing Assistant Admin</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
+        /* Add this temporary CSS to ensure proper styling */
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #f3f4f6;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        .sidebar {
+            width: 250px;
+            background-color: #1f2937;
+            color: white;
+            padding: 20px 0;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            z-index: 100;
+        }
+        
+        .sidebar h2 {
+            padding: 0 20px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 20px;
+        }
+        
+        .sidebar ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .sidebar ul li {
+            margin-bottom: 5px;
+        }
+        
+        .sidebar ul li a {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+        
+        .sidebar ul li a:hover {
+            background-color: #374151;
+        }
+        
+        .sidebar ul li.active a {
+            background-color: #4a6fa5;
+            font-weight: 500;
+        }
+        
+        .sidebar ul li a i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+        
+        .main-content {
+            flex: 1;
+            margin-left: 250px;
+            padding: 30px;
+        }
+        
+        h1 {
+            margin-bottom: 30px;
+            color: #111827;
+            font-weight: 600;
+            font-size: 24px;
+        }
+        
+        h2 {
+            margin: 0 0 20px;
+            color: #111827;
+            font-weight: 600;
+            font-size: 18px;
+        }
+        
+        .header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .header-section h1 {
+            margin-bottom: 0;
+        }
+        
+        .header-section div {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            text-decoration: none;
+        }
+        
+        .btn i {
+            margin-right: 6px;
+        }
+        
+        .primary-btn {
+            background-color: #4a6fa5;
+            color: white;
+        }
+        
+        .primary-btn:hover {
+            background-color: #3b5998;
+        }
+        
+        .secondary-btn {
+            background-color: #e5e7eb;
+            color: #4b5563;
+        }
+        
+        .secondary-btn:hover {
+            background-color: #d1d5db;
+        }
+        
+        .danger-btn {
+            background-color: #ef4444;
+            color: white;
+        }
+        
+        .danger-btn:hover {
+            background-color: #dc2626;
+        }
+        
+        .card {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+        
+        .alert {
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            border-left: 4px solid;
+        }
+        
+        .error {
+            background-color: #fee2e2;
+            border-color: #ef4444;
+            color: #b91c1c;
+        }
+        
+        .success {
+            background-color: #d1fae5;
+            border-color: #10b981;
+            color: #047857;
+        }
+        
+        .warning {
+            background-color: #fef3c7;
+            border-color: #f59e0b;
+            color: #92400e;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 30px;
+            color: #6b7280;
+            font-size: 16px;
+        }
+        
+        .text-muted {
+            color: #6b7280;
+        }
+        
+        /* Assignment card styles */
         .assignment-card {
             margin-bottom: 15px;
-            padding: 15px;
-            border-radius: 5px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            background-color: #f9fafb;
+            border-left: 4px solid #4a6fa5;
+            transition: all 0.2s;
+        }
+        
+        .assignment-card:hover {
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+        
+        .assignment-card:last-child {
+            margin-bottom: 0;
         }
         
         .assignment-header {
             display: flex;
             justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 10px;
+            align-items: center;
+            margin-bottom: 15px;
         }
         
         .assignment-header h3 {
             margin: 0;
             font-size: 16px;
             font-weight: 600;
+            color: #111827;
         }
         
         .assignment-header .therapist-name {
@@ -39,6 +242,7 @@
         .assignment-details {
             display: flex;
             justify-content: space-between;
+            align-items: center;
         }
         
         .assignment-info {
@@ -46,21 +250,43 @@
         }
         
         .assignment-info p {
-            margin: 5px 0;
+            margin: 8px 0;
             font-size: 14px;
+            color: #4b5563;
+            display: flex;
+            align-items: center;
+        }
+        
+        .assignment-info p strong {
+            width: 160px;
+            color: #111827;
+            display: inline-block;
+        }
+        
+        .assignment-info p i {
+            margin-right: 8px;
+            color: #6b7280;
+            width: 16px;
+            text-align: center;
         }
         
         .assignment-actions {
             display: flex;
             gap: 10px;
+            align-items: center;
         }
         
         .badge {
-            display: inline-block;
-            padding: 3px 6px;
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 8px;
             font-size: 12px;
-            font-weight: 600;
-            border-radius: 4px;
+            font-weight: 500;
+            border-radius: 9999px;
+        }
+        
+        .badge i {
+            margin-right: 4px;
         }
         
         .badge-blue {
@@ -69,8 +295,33 @@
         }
         
         .badge-green {
-            background-color: #dcfce7;
-            color: #15803d;
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+        
+        .form-group {
+            margin-bottom: 16px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #4b5563;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: #4a6fa5;
+            box-shadow: 0 0 0 2px rgba(74, 111, 165, 0.2);
         }
         
         .form-group-flex {
@@ -83,80 +334,80 @@
             flex: 1;
         }
         
-        .stats-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-        
-        .stat-card {
-            background-color: white;
-            border-radius: 5px;
-            padding: 15px;
-            text-align: center;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        }
-        
-        .stat-card h3 {
-            font-size: 24px;
-            margin: 5px 0;
-        }
-        
-        .stat-card p {
-            font-size: 14px;
-            color: #6b7280;
-            margin: 0;
-        }
-        
-        /* Modal Styles */
+        /* Modal styles */
         .modal {
             display: none;
             position: fixed;
-            z-index: 100;
+            z-index: 1000;
             left: 0;
             top: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.4);
+            background-color: rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.3s;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
         
         .modal-content {
             background-color: white;
             margin: 10% auto;
-            padding: 20px;
-            width: 400px;
+            padding: 0;
+            border-radius: 8px;
+            width: 500px;
             max-width: 90%;
-            border-radius: 5px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            animation: slideDown 0.3s;
+        }
+        
+        @keyframes slideDown {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
         }
         
         .modal-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 15px;
+            padding: 16px 20px;
+            border-bottom: 1px solid #e5e7eb;
         }
         
         .modal-header h2 {
             margin: 0;
             font-size: 18px;
+            font-weight: 600;
+            color: #111827;
         }
         
         .close {
+            cursor: pointer;
             font-size: 22px;
             font-weight: bold;
-            cursor: pointer;
+            color: #6b7280;
+            transition: color 0.2s;
+        }
+        
+        .close:hover {
+            color: #111827;
         }
         
         .modal-body {
-            margin-bottom: 20px;
+            padding: 20px;
         }
         
         .modal-footer {
             display: flex;
             justify-content: flex-end;
             gap: 10px;
+            padding: 16px 20px;
+            border-top: 1px solid #e5e7eb;
+            background-color: #f9fafb;
+            border-bottom-left-radius: 8px;
+            border-bottom-right-radius: 8px;
         }
     </style>
 </head>
@@ -165,15 +416,15 @@
         <aside class="sidebar">
             <h2>Admin Panel</h2>
             <ul>
-                <li><a href="{{ url_for('admin.dashboard') }}">Dashboard</a></li>
-                <li><a href="{{ url_for('admin.user_management') }}">User Management</a></li>
-                <li><a href="{{ url_for('admin.therapist_management') }}">Therapist Management</a></li>
-                <li><a href="{{ url_for('admin.therapist_assignments') }}" class="active">Therapist Assignments</a></li>
-                <li><a href="{{ url_for('admin.chat_logs') }}">Chat Logs</a></li>
-                <li><a href="{{ url_for('admin.feedback_dashboard') }}">Feedback Analysis</a></li>
-                <li><a href="{{ url_for('admin.resources') }}">Resource Management</a></li>
-                <li><a href="{{ url_for('admin.settings') }}">Settings</a></li>
-                <li><a href="{{ url_for('auth.logout') }}">Logout</a></li>
+                <li><a href="{{ url_for('admin.dashboard') }}"><i class="fas fa-chart-line"></i> Dashboard</a></li>
+                <li><a href="{{ url_for('admin.user_management') }}"><i class="fas fa-users"></i> User Management</a></li>
+                <li><a href="{{ url_for('admin.therapist_management') }}"><i class="fas fa-user-md"></i> Therapist Management</a></li>
+                <li class="active"><a href="{{ url_for('admin.therapist_assignments') }}"><i class="fas fa-clipboard-list"></i> Therapist Assignments</a></li>
+                <li><a href="{{ url_for('admin.chat_logs') }}"><i class="fas fa-comments"></i> Chat Logs</a></li>
+                <li><a href="{{ url_for('admin.feedback_dashboard') }}"><i class="fas fa-star"></i> Feedback Analysis</a></li>
+                <li><a href="{{ url_for('admin.resources') }}"><i class="fas fa-book"></i> Resource Management</a></li>
+                <li><a href="{{ url_for('admin.settings') }}"><i class="fas fa-cog"></i> Settings</a></li>
+                <li><a href="{{ url_for('auth.logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
             </ul>
         </aside>
         
@@ -181,8 +432,12 @@
             <div class="header-section">
                 <h1>Therapist-Student Assignments</h1>
                 <div>
-                    <a href="{{ url_for('admin.assignment_stats') }}" class="btn secondary-btn">View Stats</a>
-                    <button class="btn primary-btn" onclick="showCreateModal()">Create Assignment</button>
+                    <a href="{{ url_for('admin.assignment_stats') }}" class="btn secondary-btn">
+                        <i class="fas fa-chart-bar"></i> View Stats
+                    </a>
+                    <button class="btn primary-btn" onclick="showCreateModal()">
+                        <i class="fas fa-plus"></i> Create Assignment
+                    </button>
                 </div>
             </div>
             
@@ -208,27 +463,29 @@
                                     <span class="text-muted">→</span>
                                     <span class="therapist-name">Dr. {{ assignment.therapist_name }}</span>
                                 </h3>
-                                <span class="badge badge-blue">{{ assignment.session_count }} sessions</span>
+                                <span class="badge badge-blue">
+                                    <i class="fas fa-calendar-check"></i> {{ assignment.session_count }} sessions
+                                </span>
                             </div>
                             
                             <div class="assignment-details">
                                 <div class="assignment-info">
-                                    <p><strong>Student Email:</strong> {{ assignment.student_email }}</p>
-                                    <p><strong>Therapist Specialization:</strong> {{ assignment.therapist_specialization }}</p>
-                                    <p><strong>Assigned:</strong> {{ assignment.created_at.strftime('%Y-%m-%d') }}</p>
+                                    <p><i class="fas fa-envelope"></i> <strong>Student Email:</strong> {{ assignment.student_email }}</p>
+                                    <p><i class="fas fa-stethoscope"></i> <strong>Therapist Specialization:</strong> {{ assignment.therapist_specialization }}</p>
+                                    <p><i class="fas fa-clock"></i> <strong>Assigned:</strong> {{ assignment.created_at.strftime('%Y-%m-%d') }}</p>
                                     {% if assignment.next_session %}
-                                        <p><strong>Next Session:</strong> {{ assignment.next_session.strftime('%Y-%m-%d %H:%M') }}</p>
+                                        <p><i class="fas fa-calendar-alt"></i> <strong>Next Session:</strong> {{ assignment.next_session.strftime('%Y-%m-%d %H:%M') }}</p>
                                     {% else %}
-                                        <p><strong>Next Session:</strong> Not scheduled</p>
+                                        <p><i class="fas fa-calendar-alt"></i> <strong>Next Session:</strong> Not scheduled</p>
                                     {% endif %}
                                 </div>
                                 
                                 <div class="assignment-actions">
                                     <button class="btn secondary-btn" onclick="showChangeModal('{{ assignment._id }}', '{{ assignment.student_name }}', '{{ assignment.therapist_name }}', '{{ assignment.therapist_id }}')">
-                                        Change Therapist
+                                        <i class="fas fa-exchange-alt"></i> Change
                                     </button>
                                     <button class="btn danger-btn" onclick="showDeleteModal('{{ assignment._id }}', '{{ assignment.student_name }}', '{{ assignment.therapist_name }}')">
-                                        Remove
+                                        <i class="fas fa-trash-alt"></i> Remove
                                     </button>
                                 </div>
                             </div>
@@ -237,6 +494,7 @@
                 {% else %}
                     <div class="empty-state">
                         <p>No active therapist-student assignments found.</p>
+                        <p class="text-muted">Create a new assignment to get started.</p>
                     </div>
                 {% endif %}
             </div>
@@ -247,14 +505,14 @@
     <div id="createModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>Create New Assignment</h2>
+                <h2><i class="fas fa-plus-circle"></i> Create New Assignment</h2>
                 <span class="close" onclick="closeModal('createModal')">&times;</span>
             </div>
             
             <div class="modal-body">
                 <form id="createForm" action="{{ url_for('admin.create_assignment') }}" method="post">
                     <div class="form-group">
-                        <label for="student_id">Student</label>
+                        <label for="student_id"><i class="fas fa-user-graduate"></i> Student</label>
                         <select id="student_id" name="student_id" class="form-control" required>
                             <option value="" disabled selected>Select Student</option>
                             {% for student in unassigned_students %}
@@ -264,7 +522,7 @@
                     </div>
                     
                     <div class="form-group">
-                        <label for="therapist_id">Therapist</label>
+                        <label for="therapist_id"><i class="fas fa-user-md"></i> Therapist</label>
                         <select id="therapist_id" name="therapist_id" class="form-control" required>
                             <option value="" disabled selected>Select Therapist</option>
                             {% for therapist in therapists %}
@@ -276,8 +534,12 @@
             </div>
             
             <div class="modal-footer">
-                <button class="btn secondary-btn" onclick="closeModal('createModal')">Cancel</button>
-                <button class="btn primary-btn" onclick="document.getElementById('createForm').submit()">Create Assignment</button>
+                <button class="btn secondary-btn" onclick="closeModal('createModal')">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+                <button class="btn primary-btn" onclick="document.getElementById('createForm').submit()">
+                    <i class="fas fa-check"></i> Create Assignment
+                </button>
             </div>
         </div>
     </div>
@@ -286,7 +548,7 @@
     <div id="changeModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>Change Therapist</h2>
+                <h2><i class="fas fa-exchange-alt"></i> Change Therapist</h2>
                 <span class="close" onclick="closeModal('changeModal')">&times;</span>
             </div>
             
@@ -295,7 +557,7 @@
                 
                 <form id="changeForm" action="" method="post">
                     <div class="form-group">
-                        <label for="new_therapist_id">New Therapist</label>
+                        <label for="new_therapist_id"><i class="fas fa-user-md"></i> New Therapist</label>
                         <select id="new_therapist_id" name="new_therapist_id" class="form-control" required>
                             <option value="" disabled selected>Select New Therapist</option>
                             {% for therapist in therapists %}
@@ -307,8 +569,12 @@
             </div>
             
             <div class="modal-footer">
-                <button class="btn secondary-btn" onclick="closeModal('changeModal')">Cancel</button>
-                <button class="btn primary-btn" onclick="document.getElementById('changeForm').submit()">Change Therapist</button>
+                <button class="btn secondary-btn" onclick="closeModal('changeModal')">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+                <button class="btn primary-btn" onclick="document.getElementById('changeForm').submit()">
+                    <i class="fas fa-check"></i> Change Therapist
+                </button>
             </div>
         </div>
     </div>
@@ -317,7 +583,7 @@
     <div id="deleteModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>Remove Assignment</h2>
+                <h2><i class="fas fa-trash-alt"></i> Remove Assignment</h2>
                 <span class="close" onclick="closeModal('deleteModal')">&times;</span>
             </div>
             
@@ -330,8 +596,12 @@
             </div>
             
             <div class="modal-footer">
-                <button class="btn secondary-btn" onclick="closeModal('deleteModal')">Cancel</button>
-                <button class="btn danger-btn" onclick="document.getElementById('deleteForm').submit()">Remove Assignment</button>
+                <button class="btn secondary-btn" onclick="closeModal('deleteModal')">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+                <button class="btn danger-btn" onclick="document.getElementById('deleteForm').submit()">
+                    <i class="fas fa-trash-alt"></i> Remove Assignment
+                </button>
             </div>
         </div>
     </div>

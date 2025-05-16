@@ -3,27 +3,254 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Therapist Requests - Admin Panel</title>
+    <title>Therapist Requests - Wellbeing Assistant Admin</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
+        /* Add this temporary CSS to ensure proper styling */
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #f3f4f6;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        .sidebar {
+            width: 250px;
+            background-color: #1f2937;
+            color: white;
+            padding: 20px 0;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            z-index: 100;
+        }
+        
+        .sidebar h2 {
+            padding: 0 20px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 20px;
+        }
+        
+        .sidebar ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .sidebar ul li {
+            margin-bottom: 5px;
+        }
+        
+        .sidebar ul li a {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+        
+        .sidebar ul li a:hover {
+            background-color: #374151;
+        }
+        
+        .sidebar ul li.active a {
+            background-color: #4a6fa5;
+            font-weight: 500;
+        }
+        
+        .sidebar ul li a i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+        
+        .main-content {
+            flex: 1;
+            margin-left: 250px;
+            padding: 30px;
+        }
+        
+        h1 {
+            margin-bottom: 20px;
+            color: #111827;
+            font-weight: 600;
+            font-size: 24px;
+        }
+        
+        h2 {
+            margin: 0 0 20px;
+            color: #111827;
+            font-weight: 600;
+            font-size: 18px;
+        }
+        
+        h3 {
+            margin: 0 0 15px;
+            color: #111827;
+            font-weight: 600;
+            font-size: 16px;
+        }
+        
+        h4 {
+            margin: 10px 0;
+            color: #4b5563;
+            font-weight: 500;
+            font-size: 14px;
+        }
+        
+        p {
+            margin: 8px 0;
+            color: #4b5563;
+        }
+        
+        strong {
+            color: #111827;
+            font-weight: 500;
+        }
+        
+        .filter-section {
+            margin-bottom: 25px;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .filter-section h3 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+        
+        .filter-section form {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: flex-end;
+        }
+        
+        .form-group {
+            margin-bottom: 0;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #4b5563;
+            font-size: 14px;
+        }
+        
+        .form-group input {
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: #4a6fa5;
+            box-shadow: 0 0 0 2px rgba(74, 111, 165, 0.2);
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            background-color: #4a6fa5;
+            color: white;
+        }
+        
+        .btn i {
+            margin-right: 6px;
+        }
+        
+        .btn:hover {
+            background-color: #3b5998;
+        }
+        
+        .btn-secondary {
+            background-color: #e5e7eb;
+            color: #4b5563;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #d1d5db;
+        }
+        
+        .btn-secondary i {
+            margin-right: 6px;
+        }
+        
+        .requests-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
         .request-card {
-            padding: 15px;
+            padding: 20px;
             border: 1px solid #e5e7eb;
             border-radius: 8px;
-            margin-bottom: 15px;
-            background-color: #fff;
+            background-color: white;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            transition: all 0.2s;
         }
         
         .request-card:hover {
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+        
+        .request-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        .request-header h3 {
+            margin: 0;
+            color: #111827;
+            font-weight: 600;
+            font-size: 16px;
         }
         
         .status-badge {
-            display: inline-block;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 0.75rem;
-            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            padding: 5px 10px;
+            border-radius: 9999px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .status-badge i {
+            margin-right: 4px;
         }
         
         .status-pending {
@@ -31,34 +258,228 @@
             color: #92400e;
         }
         
+        .request-details {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .request-details p {
+            margin: 5px 0;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .request-details p i {
+            margin-right: 8px;
+            width: 16px;
+            text-align: center;
+            color: #6b7280;
+        }
+        
+        .urgency-high {
+            color: #b91c1c !important;
+            font-weight: 500;
+        }
+        
+        .urgency-high i {
+            color: #b91c1c !important;
+        }
+        
+        .urgency-medium {
+            color: #92400e !important;
+            font-weight: 500;
+        }
+        
+        .urgency-medium i {
+            color: #92400e !important;
+        }
+        
+        .description-box {
+            margin: 15px 0;
+            padding: 15px;
+            background-color: #f9fafb;
+            border-radius: 6px;
+            border-left: 3px solid #4a6fa5;
+        }
+        
+        .description-box h4 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: #111827;
+            font-weight: 500;
+        }
+        
+        .description-box p {
+            margin: 0;
+            white-space: pre-line;
+        }
+        
         .action-buttons {
             display: flex;
             gap: 10px;
+            margin-top: 15px;
         }
         
         .btn-assign {
-            background-color: #2563eb;
+            background-color: #4a6fa5;
             color: white;
             border: none;
-            padding: 8px 12px;
-            border-radius: 4px;
+            padding: 8px 16px;
+            border-radius: 6px;
             cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        
+        .btn-assign:hover {
+            background-color: #3b5998;
+        }
+        
+        .btn-assign i {
+            margin-right: 6px;
         }
         
         .btn-reject {
-            background-color: #dc2626;
+            background-color: #ef4444;
             color: white;
             border: none;
-            padding: 8px 12px;
-            border-radius: 4px;
+            padding: 8px 16px;
+            border-radius: 6px;
             cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            transition: all 0.2s;
         }
         
-        .filter-section {
-            margin-bottom: 20px;
-            padding: 15px;
-            background-color: #f9fafb;
+        .btn-reject:hover {
+            background-color: #dc2626;
+        }
+        
+        .btn-reject i {
+            margin-right: 6px;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            background-color: white;
             border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .empty-state h3 {
+            font-size: 18px;
+            margin-bottom: 10px;
+            color: #111827;
+        }
+        
+        .empty-state p {
+            font-size: 14px;
+            color: #6b7280;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.3s;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .modal-content {
+            background-color: white;
+            margin: 10% auto;
+            padding: 25px;
+            border-radius: 8px;
+            width: 500px;
+            max-width: 90%;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            animation: slideDown 0.3s;
+        }
+        
+        @keyframes slideDown {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        .modal-content h2 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            color: #111827;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .modal-content textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 14px;
+            resize: vertical;
+            min-height: 100px;
+        }
+        
+        .modal-content textarea:focus {
+            outline: none;
+            border-color: #4a6fa5;
+            box-shadow: 0 0 0 2px rgba(74, 111, 165, 0.2);
+        }
+        
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .form-actions button {
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+        }
+        
+        .form-actions button:first-child {
+            background-color: #e5e7eb;
+            color: #4b5563;
+        }
+        
+        .form-actions button:first-child:hover {
+            background-color: #d1d5db;
+        }
+        
+        .btn-danger {
+            background-color: #ef4444;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background-color: #dc2626;
         }
     </style>
 </head>
@@ -67,24 +488,25 @@
         <aside class="sidebar">
             <h2>Admin Panel</h2>
             <ul>
-                <li><a href="{{ url_for('admin.dashboard') }}">Dashboard</a></li>
-                <li><a href="{{ url_for('admin.user_management') }}">User Management</a></li>
-                <li><a href="{{ url_for('admin.therapist_management') }}">Therapist Management</a></li>
-                <li><a href="{{ url_for('admin.therapist_assignments') }}" class="active">Therapist Assignments</a></li>
-                <li><a href="{{ url_for('admin.assignment_stats') }}">Therapist Assignment Stats</a></li>
-                <li><a href="{{ url_for('admin.chat_logs') }}">Chat Logs</a></li>
-                <li><a href="{{ url_for('admin.feedback_dashboard') }}">Feedback Analysis</a></li>
-                <li><a href="{{ url_for('admin.resources') }}">Resource Management</a></li>
-                <li><a href="{{ url_for('admin.settings') }}">Settings</a></li>
-                <li><a href="{{ url_for('auth.logout') }}">Logout</a></li>
+                <li><a href="{{ url_for('admin.dashboard') }}"><i class="fas fa-chart-line"></i> Dashboard</a></li>
+                <li><a href="{{ url_for('admin.user_management') }}"><i class="fas fa-users"></i> User Management</a></li>
+                <li><a href="{{ url_for('admin.therapist_management') }}"><i class="fas fa-user-md"></i> Therapist Management</a></li>
+                <li class="active"><a href="{{ url_for('admin.therapist_requests') }}"><i class="fas fa-clipboard-check"></i> Therapist Requests</a></li>
+                <li><a href="{{ url_for('admin.therapist_assignments') }}"><i class="fas fa-clipboard-list"></i> Therapist Assignments</a></li>
+                <li><a href="{{ url_for('admin.assignment_stats') }}"><i class="fas fa-chart-bar"></i> Assignment Stats</a></li>
+                <li><a href="{{ url_for('admin.chat_logs') }}"><i class="fas fa-comments"></i> Chat Logs</a></li>
+                <li><a href="{{ url_for('admin.feedback_dashboard') }}"><i class="fas fa-star"></i> Feedback Analysis</a></li>
+                <li><a href="{{ url_for('admin.resources') }}"><i class="fas fa-book"></i> Resource Management</a></li>
+                <li><a href="{{ url_for('admin.settings') }}"><i class="fas fa-cog"></i> Settings</a></li>
+                <li><a href="{{ url_for('auth.logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
             </ul>
         </aside>
         
         <div class="main-content">
-            <h1>Pending Therapist Requests</h1>
+            <h1><i class="fas fa-clipboard-check"></i> Pending Therapist Requests</h1>
             
             <div class="filter-section">
-                <h3>Filter Requests</h3>
+                <h3><i class="fas fa-filter"></i> Filter Requests</h3>
                 <form action="{{ url_for('admin.therapist_requests') }}" method="GET">
                     <div class="form-group">
                         <label for="date_from">From Date:</label>
@@ -94,8 +516,12 @@
                         <label for="date_to">To Date:</label>
                         <input type="date" id="date_to" name="date_to" value="{{ request.args.get('date_to', '') }}">
                     </div>
-                    <button type="submit" class="btn">Apply Filter</button>
-                    <a href="{{ url_for('admin.therapist_requests') }}" class="btn-secondary">Clear</a>
+                    <button type="submit" class="btn">
+                        <i class="fas fa-search"></i> Apply Filter
+                    </button>
+                    <a href="{{ url_for('admin.therapist_requests') }}" class="btn-secondary">
+                        <i class="fas fa-times"></i> Clear
+                    </a>
                 </form>
             </div>
             
@@ -104,38 +530,44 @@
                     {% for req in requests %}
                         <div class="request-card">
                             <div class="request-header">
-                                <h3>Request #{{ req._id }}</h3>
-                                <span class="status-badge status-pending">Pending</span>
+                                <h3><i class="fas fa-file-alt"></i> Request #{{ req._id }}</h3>
+                                <span class="status-badge status-pending">
+                                    <i class="fas fa-clock"></i> Pending
+                                </span>
                             </div>
                             <div class="request-details">
-                                <p><strong>Student:</strong> {{ req.student_name }} ({{ req.student_email }})</p>
-                                <p><strong>Date Submitted:</strong> {{ req.created_at.strftime('%B %d, %Y at %I:%M %p') }}</p>
-                                <p><strong>Concerns:</strong> {{ req.concerns|join(', ') }}</p>
+                                <p><i class="fas fa-user-graduate"></i> <strong>Student:</strong> {{ req.student_name }} ({{ req.student_email }})</p>
+                                <p><i class="fas fa-calendar-alt"></i> <strong>Date Submitted:</strong> {{ req.created_at.strftime('%B %d, %Y at %I:%M %p') }}</p>
+                                <p><i class="fas fa-tag"></i> <strong>Concerns:</strong> {{ req.concerns|join(', ') }}</p>
                                 
                                 {% if req.urgency_level == 'urgent' %}
-                                    <p class="urgency-high"><strong>Urgency:</strong> High - Requires immediate attention</p>
+                                    <p class="urgency-high"><i class="fas fa-exclamation-triangle"></i> <strong>Urgency:</strong> High - Requires immediate attention</p>
                                 {% elif req.urgency_level == 'soon' %}
-                                    <p class="urgency-medium"><strong>Urgency:</strong> Medium - Needs attention this week</p>
+                                    <p class="urgency-medium"><i class="fas fa-exclamation"></i> <strong>Urgency:</strong> Medium - Needs attention this week</p>
                                 {% else %}
-                                    <p><strong>Urgency:</strong> Normal</p>
+                                    <p><i class="fas fa-info-circle"></i> <strong>Urgency:</strong> Normal</p>
                                 {% endif %}
                                 
                                 <div class="description-box">
-                                    <h4>Student Description:</h4>
+                                    <h4><i class="fas fa-quote-left"></i> Student Description:</h4>
                                     <p>{{ req.issue_description }}</p>
                                 </div>
                                 
                                 <div class="action-buttons">
-                                    <a href="{{ url_for('admin.assign_therapist', request_id=req._id) }}" class="btn-assign">Assign Therapist</a>
-                                    <button type="button" class="btn-reject" onclick="showRejectModal('{{ req._id }}')">Reject Request</button>
+                                    <a href="{{ url_for('admin.assign_therapist', request_id=req._id) }}" class="btn-assign">
+                                        <i class="fas fa-user-md"></i> Assign Therapist
+                                    </a>
+                                    <button type="button" class="btn-reject" onclick="showRejectModal('{{ req._id }}')">
+                                        <i class="fas fa-times-circle"></i> Reject Request
+                                    </button>
                                 </div>
                             </div>
                         </div>
                     {% endfor %}
                 {% else %}
                     <div class="empty-state">
-                        <h3>No pending requests</h3>
-                        <p>There are currently no pending therapist requests in the system.</p>
+                        <h3><i class="fas fa-check-circle"></i> No pending requests</h3>
+                        <p>There are currently no pending therapist requests in the system. New requests will appear here when students submit them.</p>
                     </div>
                 {% endif %}
             </div>
@@ -145,15 +577,19 @@
     <!-- Reject Request Modal -->
     <div id="rejectModal" class="modal">
         <div class="modal-content">
-            <h2>Reject Therapist Request</h2>
+            <h2><i class="fas fa-times-circle"></i> Reject Therapist Request</h2>
             <form id="rejectForm" action="" method="POST">
                 <div class="form-group">
                     <label for="reason">Reason for Rejection:</label>
-                    <textarea id="reason" name="reason" rows="4" required></textarea>
+                    <textarea id="reason" name="reason" rows="4" placeholder="Please provide a reason for rejecting this request..." required></textarea>
                 </div>
                 <div class="form-actions">
-                    <button type="button" onclick="closeModal()">Cancel</button>
-                    <button type="submit" class="btn-danger">Reject Request</button>
+                    <button type="button" onclick="closeModal()">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                    <button type="submit" class="btn-danger">
+                        <i class="fas fa-times-circle"></i> Reject Request
+                    </button>
                 </div>
             </form>
         </div>
@@ -161,7 +597,7 @@
     
     <script>
         function showRejectModal(requestId) {
-            document.getElementById('rejectForm').action = "/admin/reject-request/" + requestId;
+            document.getElementById('rejectForm').action = "{{ url_for('admin.reject_request', request_id='PLACEHOLDER') }}".replace('PLACEHOLDER', requestId);
             document.getElementById('rejectModal').style.display = "block";
         }
         

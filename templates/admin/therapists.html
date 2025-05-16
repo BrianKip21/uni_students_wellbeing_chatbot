@@ -3,15 +3,198 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Therapist Management - Wellbeing Chatbot Admin</title>
+    <title>Therapist Management - Wellbeing Assistant Admin</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
+        /* Add this temporary CSS to ensure proper styling */
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #f3f4f6;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        .sidebar {
+            width: 250px;
+            background-color: #1f2937;
+            color: white;
+            padding: 20px 0;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            z-index: 100;
+        }
+        
+        .sidebar h2 {
+            padding: 0 20px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 20px;
+        }
+        
+        .sidebar ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .sidebar ul li {
+            margin-bottom: 5px;
+        }
+        
+        .sidebar ul li a {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+        
+        .sidebar ul li a:hover {
+            background-color: #374151;
+        }
+        
+        .sidebar ul li.active a {
+            background-color: #4a6fa5;
+            font-weight: 500;
+        }
+        
+        .sidebar ul li a i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+        
+        .main-content {
+            flex: 1;
+            margin-left: 250px;
+            padding: 30px;
+        }
+        
+        h1 {
+            margin-bottom: 30px;
+            color: #111827;
+            font-weight: 600;
+            font-size: 24px;
+        }
+        
+        .header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        
+        .header-section h1 {
+            margin-bottom: 0;
+        }
+        
+        .primary-btn {
+            background-color: #4a6fa5;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            transition: background-color 0.3s;
+        }
+        
+        .primary-btn:hover {
+            background-color: #3b5998;
+        }
+        
+        .primary-btn i {
+            margin-right: 8px;
+        }
+        
+        .table-container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        table th {
+            background-color: #f9fafb;
+            color: #4b5563;
+            font-weight: 500;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        table td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #e5e7eb;
+            color: #1f2937;
+            font-size: 14px;
+        }
+        
+        table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        table tbody tr:hover {
+            background-color: #f9fafb;
+        }
+        
+        .empty-table-message {
+            text-align: center;
+            padding: 24px;
+            color: #6b7280;
+        }
+        
+        .alert {
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            border-left: 4px solid;
+        }
+        
+        .error {
+            background-color: #fee2e2;
+            border-color: #ef4444;
+            color: #b91c1c;
+        }
+        
+        .success {
+            background-color: #d1fae5;
+            border-color: #10b981;
+            color: #047857;
+        }
+        
+        .warning {
+            background-color: #fef3c7;
+            border-color: #f59e0b;
+            color: #92400e;
+        }
+        
         .badge {
             display: inline-block;
             padding: 4px 8px;
             border-radius: 4px;
             font-size: 12px;
-            font-weight: bold;
+            font-weight: 500;
         }
         
         .badge-active {
@@ -31,13 +214,15 @@
         
         .action-buttons button, 
         .action-buttons a {
-            padding: 5px 10px;
-            border-radius: 4px;
+            padding: 6px 12px;
+            border-radius: 6px;
             font-size: 12px;
+            font-weight: 500;
             cursor: pointer;
             border: none;
             text-decoration: none;
             text-align: center;
+            transition: all 0.2s;
         }
         
         .btn-edit {
@@ -45,9 +230,17 @@
             color: #1e40af;
         }
         
+        .btn-edit:hover {
+            background-color: #bfdbfe;
+        }
+        
         .btn-reset {
             background-color: #fef3c7;
             color: #92400e;
+        }
+        
+        .btn-reset:hover {
+            background-color: #fde68a;
         }
         
         .btn-deactivate {
@@ -55,11 +248,20 @@
             color: #b91c1c;
         }
         
+        .btn-deactivate:hover {
+            background-color: #fecaca;
+        }
+        
         .btn-activate {
             background-color: #d1fae5;
             color: #065f46;
         }
         
+        .btn-activate:hover {
+            background-color: #a7f3d0;
+        }
+        
+        /* Modal styles */
         .modal {
             display: none;
             position: fixed;
@@ -69,42 +271,86 @@
             width: 100%;
             height: 100%;
             background-color: rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.3s;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
         
         .modal-content {
             background-color: #fff;
             margin: 10% auto;
-            padding: 20px;
-            border-radius: 5px;
-            width: 400px;
+            padding: 0;
+            border-radius: 8px;
+            width: 450px;
             max-width: 90%;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            animation: slideDown 0.3s;
+        }
+        
+        @keyframes slideDown {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
         }
         
         .modal-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 15px;
+            padding: 16px 20px;
+            border-bottom: 1px solid #e5e7eb;
         }
         
         .modal-header h3 {
             margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+            color: #111827;
         }
         
         .close {
             cursor: pointer;
             font-size: 20px;
             font-weight: bold;
+            color: #6b7280;
+            transition: color 0.2s;
+        }
+        
+        .close:hover {
+            color: #111827;
         }
         
         .modal-body {
-            margin-bottom: 20px;
+            padding: 20px;
         }
         
         .modal-footer {
             display: flex;
             justify-content: flex-end;
             gap: 10px;
+            padding: 16px 20px;
+            border-top: 1px solid #e5e7eb;
+            background-color: #f9fafb;
+            border-bottom-left-radius: 8px;
+            border-bottom-right-radius: 8px;
+        }
+        
+        .secondary-btn {
+            background-color: #e5e7eb;
+            color: #4b5563;
+            border: none;
+            border-radius: 6px;
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .secondary-btn:hover {
+            background-color: #d1d5db;
         }
     </style>
 </head>
@@ -113,22 +359,24 @@
         <aside class="sidebar">
             <h2>Admin Panel</h2>
             <ul>
-                <li><a href="{{ url_for('admin.dashboard') }}">Dashboard</a></li>
-                <li><a href="{{ url_for('admin.user_management') }}">User Management</a></li>
-                <li><a href="{{ url_for('admin.therapist_management') }}" class="active">Therapist Management</a></li>
-                <li><a href="{{ url_for('admin.therapist_requests') }}">Therapist Assignments</a></li>
-                <li><a href="{{ url_for('admin.chat_logs') }}">Chat Logs</a></li>
-                <li><a href="{{ url_for('admin.feedback_dashboard') }}">Feedback Analysis</a></li>
-                <li><a href="{{ url_for('admin.resources') }}">Resource Management</a></li>
-                <li><a href="{{ url_for('admin.settings') }}">Settings</a></li>
-                <li><a href="{{ url_for('auth.logout') }}">Logout</a></li>
+                <li><a href="{{ url_for('admin.dashboard') }}"><i class="fas fa-chart-line"></i> Dashboard</a></li>
+                <li><a href="{{ url_for('admin.user_management') }}"><i class="fas fa-users"></i> User Management</a></li>
+                <li class="active"><a href="{{ url_for('admin.therapist_management') }}"><i class="fas fa-user-md"></i> Therapist Management</a></li>
+                <li><a href="{{ url_for('admin.therapist_requests') }}"><i class="fas fa-clipboard-list"></i> Therapist Assignments</a></li>
+                <li><a href="{{ url_for('admin.chat_logs') }}"><i class="fas fa-comments"></i> Chat Logs</a></li>
+                <li><a href="{{ url_for('admin.feedback_dashboard') }}"><i class="fas fa-star"></i> Feedback Analysis</a></li>
+                <li><a href="{{ url_for('admin.resources') }}"><i class="fas fa-book"></i> Resource Management</a></li>
+                <li><a href="{{ url_for('admin.settings') }}"><i class="fas fa-cog"></i> System Settings</a></li>
+                <li><a href="{{ url_for('auth.logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
             </ul>
         </aside>
         
         <div class="main-content">
             <div class="header-section">
                 <h1>Therapist Management</h1>
-                <a href="{{ url_for('admin.create_therapist') }}" class="btn primary-btn">Add New Therapist</a>
+                <a href="{{ url_for('admin.create_therapist') }}" class="primary-btn">
+                    <i class="fas fa-plus"></i> Add New Therapist
+                </a>
             </div>
             
             {% with messages = get_flashed_messages(with_categories=true) %}
@@ -170,13 +418,21 @@
                                 <td>{{ therapist.last_login|default('Never')|format_datetime }}</td>
                                 <td>
                                     <div class="action-buttons">
-                                        <a href="{{ url_for('admin.edit_therapist', therapist_id=therapist._id) }}" class="btn-edit">Edit</a>
-                                        <button onclick="showResetPasswordModal('{{ therapist._id }}')" class="btn-reset">Reset Password</button>
+                                        <a href="{{ url_for('admin.edit_therapist', therapist_id=therapist._id) }}" class="btn-edit">
+                                            <i class="fas fa-edit"></i> Edit
+                                        </a>
+                                        <button onclick="showResetPasswordModal('{{ therapist._id }}')" class="btn-reset">
+                                            <i class="fas fa-key"></i> Reset
+                                        </button>
                                         
                                         {% if therapist.status == 'Active' %}
-                                            <button onclick="showStatusModal('{{ therapist._id }}', 'deactivate')" class="btn-deactivate">Deactivate</button>
+                                            <button onclick="showStatusModal('{{ therapist._id }}', 'deactivate')" class="btn-deactivate">
+                                                <i class="fas fa-ban"></i> Deactivate
+                                            </button>
                                         {% else %}
-                                            <button onclick="showStatusModal('{{ therapist._id }}', 'activate')" class="btn-activate">Activate</button>
+                                            <button onclick="showStatusModal('{{ therapist._id }}', 'activate')" class="btn-activate">
+                                                <i class="fas fa-check-circle"></i> Activate
+                                            </button>
                                         {% endif %}
                                     </div>
                                 </td>
@@ -204,9 +460,9 @@
                 <p>Are you sure you want to reset this therapist's password? A new temporary password will be generated and sent to their email.</p>
             </div>
             <div class="modal-footer">
-                <button onclick="closeModal('resetPasswordModal')" class="btn secondary-btn">Cancel</button>
+                <button onclick="closeModal('resetPasswordModal')" class="secondary-btn">Cancel</button>
                 <form id="resetPasswordForm" method="post" action="">
-                    <button type="submit" class="btn primary-btn">Reset Password</button>
+                    <button type="submit" class="primary-btn">Reset Password</button>
                 </form>
             </div>
         </div>
@@ -223,9 +479,9 @@
                 <p id="statusModalMessage"></p>
             </div>
             <div class="modal-footer">
-                <button onclick="closeModal('statusModal')" class="btn secondary-btn">Cancel</button>
+                <button onclick="closeModal('statusModal')" class="secondary-btn">Cancel</button>
                 <form id="statusForm" method="post" action="">
-                    <button type="submit" class="btn primary-btn" id="statusSubmitBtn">Confirm</button>
+                    <button type="submit" class="primary-btn" id="statusSubmitBtn">Confirm</button>
                 </form>
             </div>
         </div>
@@ -248,12 +504,12 @@
                 title.textContent = 'Deactivate Therapist';
                 message.textContent = 'Are you sure you want to deactivate this therapist? They will no longer be able to log in or access the system.';
                 submitBtn.textContent = 'Deactivate';
-                submitBtn.className = 'btn btn-deactivate';
+                submitBtn.className = 'primary-btn btn-deactivate';
             } else {
                 title.textContent = 'Activate Therapist';
                 message.textContent = 'Are you sure you want to activate this therapist? They will be able to log in and access the system.';
                 submitBtn.textContent = 'Activate';
-                submitBtn.className = 'btn btn-activate';
+                submitBtn.className = 'primary-btn btn-activate';
             }
             
             form.action = "{{ url_for('admin.toggle_therapist_status', therapist_id='PLACEHOLDER') }}".replace('PLACEHOLDER', therapistId);

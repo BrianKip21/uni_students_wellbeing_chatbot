@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ resource.title }} - Wellbeing Assistant</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css"> 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+
+    <style>
+        {% if settings.theme_mode == 'dark' %}
+        /* Dark mode styles */
+        body {
+            background-color: #121212 !important;
+            color: #e0e0e0 !important;
+        }
+        
+        .bg-white, .bg-gray-50, .bg-gray-300 {
+            background-color: #1e1e1e !important;
+        }
+        
+        .text-gray-700, .text-gray-800, .text-gray-900 {
+            color: #e0e0e0 !important;
+        }
+        
+        .text-gray-500, .text-gray-600 {
+            color: #a0a0a0 !important;
+        }
+        
+        .bg-gray-50, .bg-gray-100, .bg-gray-200 {
+            background-color: #2a2a2a !important;
+        }
+        
+        .border-gray-200, .border-gray-300 {
+            border-color: #333 !important;
+        }
+
+        .hover\:bg-gray-100:hover {
+            background-color: #333333 !important;
+        }
+        {% endif %}
+        
+        {% if settings.contrast == 'high' %}
+        /* High contrast styles */
+        body {
+            background-color: #ffffff !important;
+            color: #000000 !important;
+        }
+        
+        .text-gray-500, .text-gray-600, .text-gray-700, .text-gray-800, .text-gray-900 {
+            color: #000000 !important;
+        }
+        
+        .bg-gray-800, .bg-gray-700 {
+            background-color: #000000 !important;
+        }
+        
+        .text-gray-200, .text-white {
+            color: #ffffff !important;
+        }
+        
+        input, select, button {
+            border: 2px solid #000000 !important;
+        }
+
+        .bg-gray-50, .bg-gray-100, .bg-gray-200, .bg-gray-300 {
+            background-color: #ffffff !important;
+            border: 2px solid #000000 !important;
+        }
+
+        .resource-card {
+            border: 2px solid #000000 !important;
+        }
+        {% endif %}
+        
+        {% if settings.text_size == 'lg' %}
+        /* Large text */
+        body {
+            font-size: 1.125rem !important;
+        }
+        
+        .text-sm {
+            font-size: 0.9375rem !important;
+        }
+        
+        .text-lg, .text-xl, .text-2xl, .text-3xl {
+            font-size: 1.3125rem !important;
+        }
+        {% elif settings.text_size == 'xl' %}
+        /* Extra large text */
+        body {
+            font-size: 1.25rem !important;
+        }
+        
+        .text-sm {
+            font-size: 1.0625rem !important;
+        }
+        
+        .text-lg, .text-xl {
+            font-size: 1.5rem !important;
+        }
+
+        .text-2xl, .text-3xl {
+            font-size: 1.75rem !important;
+        }
+        {% endif %}
+
+        /* Resource card hover effect */
+        .resource-card {
+            transition: transform 0.2s ease-in-out;
+        }
+        .resource-card:hover {
+            transform: translateY(-5px);
+        }
+    </style>
+</head>
+
+<body class="bg-gray-200 flex text-gray-900">
+    <!-- Sidebar Navigation -->
+    <aside class="w-64 h-screen bg-gray-800 text-gray-200 p-4 fixed">
+        <h1 class="text-2xl font-bold mb-6">Wellbeing Assistant</h1>
+        <nav>
+            <ul class="space-y-4">
+                <li><a href="{{ url_for('dashboard.index') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-chart-line"></i> Dashboard</a></li>
+                <li><a href="{{ url_for('tracking.index') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-chart-bar"></i> Wellness Tracker</a></li>
+                <li><a href="{{ url_for('chatbot.chatbot_page') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-comments"></i> Chat</a></li>
+                <li><a href="{{ url_for('dashboard.therapist_appointments') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-calendar-alt"></i> Therapist</a></li>
+                <li><a href="{{ url_for('dashboard.profile') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-user"></i> Profile</a></li>
+                <li><a href="{{ url_for('dashboard.student_resources') }}" class="block p-2 bg-gray-700 rounded"> <i class="fas fa-book"></i> Resources</a></li>
+                <li><a href="{{ url_for('dashboard.settings') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-cog"></i> Settings</a></li>
+                <li><a href="{{ url_for('auth.logout') }}" class="block p-2 hover:bg-gray-700 rounded mt-8"> <i class="fas fa-sign-out-alt"></i> Logout</a></li>
+            </ul>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="ml-64 p-8 w-full">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="{% if category == 'error' %}bg-red-100 border-l-4 border-red-500 text-red-700{% elif category == 'success' %}bg-green-100 border-l-4 border-green-500 text-green-700{% else %}bg-blue-100 border-l-4 border-blue-500 text-blue-700{% endif %} p-4 mb-6" role="alert">
+                        <p>{{ message }}</p>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    
+        <!-- Back Button -->
+        <a href="{{ url_for('dashboard.student_resources') }}" class="inline-flex items-center text-blue-600 hover:underline mb-6">
+            <i class="fas fa-arrow-left mr-2"></i> Back to Resources
+        </a>
+        
+        <!-- Resource Header -->
+        <div class="bg-white p-6 rounded-lg shadow-md mb-6">
+            <div class="flex items-start">
+                <div class="text-3xl bg-gray-700 text-white p-4 rounded mr-6">
+                    {% if resource.resource_type == 'video' %}
+                        <i class="fas fa-video"></i>
+                    {% elif resource.resource_type == 'article' %}
+                        <i class="fas fa-newspaper"></i>
+                    {% elif resource.resource_type == 'link' %}
+                        <i class="fas fa-link"></i>
+                    {% else %}
+                        <i class="fas fa-book"></i>
+                    {% endif %}
+                </div>
+                <div>
+                    <h2 class="text-3xl font-bold text-gray-800">{{ resource.title }}</h2>
+                    <p class="text-gray-600 mt-2">{{ resource.description }}</p>
+                    {% if resource.created_at %}
+                        <p class="text-sm text-gray-500 mt-2">Added on {{ resource.created_at.strftime('%B %d, %Y') }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Resource Content -->
+        <div class="bg-white p-6 rounded-lg shadow-md mb-6">
+            {% if resource.resource_type == 'video' and resource.file_path %}
+                <!-- Video Resource -->
+                <div class="aspect-w-16 aspect-h-9 mb-4">
+                    <video controls class="w-full rounded">
+                        <source src="{{ url_for('static', filename=resource.file_path) }}" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                </div>
+                {% if resource.content %}
+                    <div class="mt-4 prose max-w-none">
+                        {{ resource.content|safe }}
+                    </div>
+                {% endif %}
+            {% elif resource.resource_type == 'article' %}
+                <!-- Article Resource -->
+                <div class="prose max-w-none">
+                    {{ resource.content|safe }}
+                </div>
+            {% elif resource.resource_type == 'link' %}
+                <!-- Link Resource -->
+                <div class="text-center mb-6">
+                    <a href="{{ resource.content }}" target="_blank" class="inline-block bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-lg transition">
+                        Visit External Resource <i class="fas fa-external-link-alt ml-2"></i>
+                    </a>
+                </div>
+                <div class="bg-gray-100 p-4 rounded-lg">
+                    <p class="text-gray-700 mb-0">
+                        <i class="fas fa-info-circle text-blue-500 mr-2"></i>
+                        This resource will open in a new tab. Please note that external resources are not maintained by our team.
+                    </p>
+                </div>
+            {% else %}
+                <!-- Generic Content -->
+                {% if resource.content %}
+                    <div class="prose max-w-none">
+                        {{ resource.content|safe }}
+                    </div>
+                {% else %}
+                    <p class="text-gray-700">No additional content available for this resource.</p>
+                {% endif %}
+            {% endif %}
+        </div>
+        
+        <!-- Related Resources -->
+        {% if related_resources and related_resources|length > 0 %}
+        <h3 class="text-xl font-semibold mt-8 mb-4">Related Resources</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {% for related in related_resources %}
+                <div class="bg-gray-300 p-4 rounded shadow resource-card">
+                    <div class="text-xl bg-gray-700 text-white p-2 rounded inline-block mb-3">
+                        {% if related.resource_type == 'video' %}
+                            <i class="fas fa-video"></i>
+                        {% elif related.resource_type == 'article' %}
+                            <i class="fas fa-newspaper"></i>
+                        {% elif related.resource_type == 'link' %}
+                            <i class="fas fa-link"></i>
+                        {% else %}
+                            <i class="fas fa-book"></i>
+                        {% endif %}
+                    </div>
+                    <h4 class="font-semibold mb-1">{{ related.title }}</h4>
+                    <p class="text-gray-700 text-sm mb-2">{{ related.description|truncate(75) }}</p>
+                    <a href="{{ url_for('dashboard.student_resource_detail', resource_id=related._id) }}" class="text-blue-600 hover:underline text-sm">
+                        Learn More →
+                    </a>
+                </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </main>
+
+    <!-- Optional JavaScript -->
+    <script src="{{ url_for('static', filename='dashboard.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wellbeing Assistant - Settings</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css"> 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+
+    <style>
+        {% if settings.theme_mode == 'dark' %}
+        /* Dark mode styles */
+        body {
+            background-color: #121212 !important;
+            color: #e0e0e0 !important;
+        }
+        
+        .bg-white {
+            background-color: #1e1e1e !important;
+        }
+        
+        .text-gray-700, .text-gray-800, .text-gray-900 {
+            color: #e0e0e0 !important;
+        }
+        
+        .text-gray-500, .text-gray-600 {
+            color: #a0a0a0 !important;
+        }
+        
+        .bg-gray-50, .bg-gray-100, .bg-gray-200 {
+            background-color: #2a2a2a !important;
+        }
+        
+        .border-gray-200, .border-gray-300 {
+            border-color: #333 !important;
+        }
+
+        .hover\:bg-gray-100:hover {
+            background-color: #333333 !important;
+        }
+
+        .hover\:bg-gray-200:hover {
+            background-color: #444444 !important;
+        }
+
+        input:checked + div {
+            background-color: #3f6212 !important;
+        }
+        {% endif %}
+        
+        {% if settings.contrast == 'high' %}
+        /* High contrast styles */
+        body {
+            background-color: #ffffff !important;
+            color: #000000 !important;
+        }
+        
+        .text-gray-500, .text-gray-600, .text-gray-700, .text-gray-800, .text-gray-900 {
+            color: #000000 !important;
+        }
+        
+        .bg-gray-800 {
+            background-color: #000000 !important;
+        }
+        
+        .text-gray-200 {
+            color: #ffffff !important;
+        }
+        
+        input, select, button {
+            border: 2px solid #000000 !important;
+        }
+
+        .bg-gray-50, .bg-gray-100, .bg-gray-200 {
+            background-color: #ffffff !important;
+            border: 2px solid #000000 !important;
+        }
+
+        /* Toggle switch high contrast */
+        input:checked + div {
+            background-color: #000000 !important; 
+        }
+        
+        input:checked + div div {
+            background-color: #ffffff !important;
+        }
+        {% endif %}
+        
+        {% if settings.text_size == 'lg' %}
+        /* Large text */
+        body {
+            font-size: 1.125rem !important;
+        }
+        
+        .text-sm {
+            font-size: 0.9375rem !important;
+        }
+        
+        .text-lg, .text-xl, .text-2xl, .text-3xl {
+            font-size: 1.3125rem !important;
+        }
+        {% elif settings.text_size == 'xl' %}
+        /* Extra large text */
+        body {
+            font-size: 1.25rem !important;
+        }
+        
+        .text-sm {
+            font-size: 1.0625rem !important;
+        }
+        
+        .text-lg, .text-xl {
+            font-size: 1.5rem !important;
+        }
+
+        .text-2xl, .text-3xl {
+            font-size: 1.75rem !important;
+        }
+        {% endif %}
+
+        /* Toggle switch styling */
+        .toggle-checkbox:checked {
+            right: 0;
+            border-color: #68D391;
+        }
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: #68D391;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-200 flex text-gray-900">
+    <!-- Sidebar Navigation -->
+    <aside class="w-64 h-screen bg-gray-800 text-gray-200 p-4 fixed">
+        <h1 class="text-2xl font-bold mb-6">Wellbeing Assistant</h1>
+        <nav>
+            <ul class="space-y-4">
+                <li><a href="{{ url_for('dashboard.index') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-chart-line"></i> Dashboard</a></li>
+                <li><a href="{{ url_for('tracking.index') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-chart-bar"></i> Wellness Tracker</a></li>
+                <li><a href="{{ url_for('chatbot.chatbot_page') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-comments"></i> Chat</a></li>
+                <li><a href="{{ url_for('dashboard.therapist_appointments') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-calendar-alt"></i> Therapist</a></li>
+                <li><a href="{{ url_for('dashboard.profile') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-user"></i> Profile</a></li>
+                <li><a href="{{ url_for('dashboard.student_resources') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-book"></i> Resources</a></li>
+                <li><a href="{{ url_for('dashboard.settings') }}" class="block p-2 bg-gray-700 rounded"> <i class="fas fa-cog"></i> Settings</a></li>
+                <li><a href="{{ url_for('auth.logout') }}" class="block p-2 hover:bg-gray-700 rounded mt-8"> <i class="fas fa-sign-out-alt"></i> Logout</a></li>
+            </ul>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="ml-64 p-8 w-full">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="{% if category == 'error' %}bg-red-100 border-l-4 border-red-500 text-red-700{% elif category == 'success' %}bg-green-100 border-l-4 border-green-500 text-green-700{% else %}bg-blue-100 border-l-4 border-blue-500 text-blue-700{% endif %} p-4 mb-6" role="alert">
+                        <p>{{ message }}</p>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    
+        <h2 class="text-3xl font-bold text-gray-800 mb-6">Settings</h2>
+        
+        <!-- Settings Sections -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Accessibility Settings -->
+            <div class="bg-white p-6 rounded shadow">
+                <h3 class="text-xl font-semibold mb-4">Accessibility</h3>
+                <form action="{{ url_for('dashboard.settings') }}" method="post">
+                    <input type="hidden" name="form_type" value="accessibility">
+                    
+                    <div class="mb-4">
+                        <label class="block text-gray-700 font-medium mb-2">Text Size</label>
+                        <div class="flex space-x-4">
+                            <label class="inline-flex items-center">
+                                <input type="radio" name="text_size" value="md" class="form-radio" 
+                                    {% if settings.text_size == 'md' %}checked{% endif %}>
+                                <span class="ml-2 text-gray-700">Normal</span>
+                            </label>
+                            <label class="inline-flex items-center">
+                                <input type="radio" name="text_size" value="lg" class="form-radio" 
+                                    {% if settings.text_size == 'lg' %}checked{% endif %}>
+                                <span class="ml-2 text-gray-700">Large</span>
+                            </label>
+                            <label class="inline-flex items-center">
+                                <input type="radio" name="text_size" value="xl" class="form-radio" 
+                                    {% if settings.text_size == 'xl' %}checked{% endif %}>
+                                <span class="ml-2 text-gray-700">Extra Large</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-6">
+                        <label class="block text-gray-700 font-medium mb-2">Contrast</label>
+                        <div class="flex space-x-4">
+                            <label class="inline-flex items-center">
+                                <input type="radio" name="contrast" value="normal" class="form-radio" 
+                                    {% if settings.contrast == 'normal' %}checked{% endif %}>
+                                <span class="ml-2 text-gray-700">Normal</span>
+                            </label>
+                            <label class="inline-flex items-center">
+                                <input type="radio" name="contrast" value="high" class="form-radio" 
+                                    {% if settings.contrast == 'high' %}checked{% endif %}>
+                                <span class="ml-2 text-gray-700">High Contrast</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                        Save Accessibility Settings
+                    </button>
+                </form>
+            </div>
+            
+            <!-- Theme Settings -->
+            <div class="bg-white p-6 rounded shadow">
+                <h3 class="text-xl font-semibold mb-4">Theme</h3>
+                <form action="{{ url_for('dashboard.settings') }}" method="post">
+                    <input type="hidden" name="form_type" value="theme">
+                    
+                    <div class="mb-6">
+                        <label class="block text-gray-700 font-medium mb-2">Mode</label>
+                        <div class="flex space-x-4">
+                            <label class="inline-flex items-center">
+                                <input type="radio" name="theme_mode" value="light" class="form-radio" 
+                                    {% if settings.theme_mode == 'light' %}checked{% endif %}>
+                                <span class="ml-2 text-gray-700">Light</span>
+                            </label>
+                            <label class="inline-flex items-center">
+                                <input type="radio" name="theme_mode" value="dark" class="form-radio" 
+                                    {% if settings.theme_mode == 'dark' %}checked{% endif %}>
+                                <span class="ml-2 text-gray-700">Dark</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                        Save Theme Settings
+                    </button>
+                </form>
+            </div>
+            
+            <!-- Dashboard Preferences -->
+            <div class="bg-white p-6 rounded shadow">
+                <h3 class="text-xl font-semibold mb-4">Dashboard Preferences</h3>
+                <form action="{{ url_for('dashboard.settings') }}" method="post">
+                    <input type="hidden" name="form_type" value="dashboard">
+                    
+                    <div class="mb-4">
+                        <label class="block text-gray-700 font-medium mb-2">Visible Widgets</label>
+                        <div class="space-y-2">
+                            <label class="inline-flex items-center">
+                                <input type="checkbox" name="widgets" value="mood_tracker" class="form-checkbox" 
+                                    {% if not settings.widgets or 'mood_tracker' in settings.widgets %}checked{% endif %}>
+                                <span class="ml-2 text-gray-700">Mood Tracker</span>
+                            </label>
+                            <br>
+                            <label class="inline-flex items-center">
+                                <input type="checkbox" name="widgets" value="quick_actions" class="form-checkbox" 
+                                    {% if not settings.widgets or 'quick_actions' in settings.widgets %}checked{% endif %}>
+                                <span class="ml-2 text-gray-700">Quick Actions</span>
+                            </label>
+                            <br>
+                            <label class="inline-flex items-center">
+                                <input type="checkbox" name="widgets" value="resources" class="form-checkbox" 
+                                    {% if not settings.widgets or 'resources' in settings.widgets %}checked{% endif %}>
+                                <span class="ml-2 text-gray-700">Recommended Resources</span>
+                            </label>
+                            <br>
+                            <label class="inline-flex items-center">
+                                <input type="checkbox" name="widgets" value="conversations" class="form-checkbox" 
+                                    {% if not settings.widgets or 'conversations' in settings.widgets %}checked{% endif %}>
+                                <span class="ml-2 text-gray-700">Recent Conversations</span>
+                            </label>
+                            <br>
+                            <label class="inline-flex items-center">
+                                <input type="checkbox" name="widgets" value="progress" class="form-checkbox" 
+                                    {% if not settings.widgets or 'progress' in settings.widgets %}checked{% endif %}>
+                                <span class="ml-2 text-gray-700">Weekly Progress</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-6">
+                        <label class="block text-gray-700 font-medium mb-2" for="default_view">Default View</label>
+                        <select id="default_view" name="default_view" class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                            <option value="dashboard" {% if settings.default_view == 'dashboard' %}selected{% endif %}>Dashboard</option>
+                            <option value="tracking" {% if settings.default_view == 'tracking' %}selected{% endif %}>Wellness Tracker</option>
+                            <option value="chatbot" {% if settings.default_view == 'chatbot' %}selected{% endif %}>Chat</option>
+                        </select>
+                    </div>
+                    
+                    <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                        Save Dashboard Settings
+                    </button>
+                </form>
+            </div>
+            
+            <!-- Reminder Settings -->
+            <div class="bg-white p-6 rounded shadow">
+                <h3 class="text-xl font-semibold mb-4">Reminders</h3>
+                <form action="{{ url_for('dashboard.settings') }}" method="post">
+                    <input type="hidden" name="form_type" value="reminders">
+                    
+                    <div class="mb-4">
+                        <label class="block text-gray-700 font-medium mb-2" for="reminder_time">Check-in Reminder Time</label>
+                        <input type="time" id="reminder_time" name="reminder_time" value="{{ settings.reminder_time }}" 
+                            class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                    </div>
+                    
+                    <div class="mb-6">
+                        <label class="block text-gray-700 font-medium mb-2" for="checkin_frequency">Check-in Frequency</label>
+                        <select id="checkin_frequency" name="checkin_frequency" class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                            <option value="daily" {% if settings.checkin_frequency == 'daily' %}selected{% endif %}>Daily</option>
+                            <option value="weekdays" {% if settings.checkin_frequency == 'weekdays' %}selected{% endif %}>Weekdays Only</option>
+                            <option value="weekly" {% if settings.checkin_frequency == 'weekly' %}selected{% endif %}>Weekly</option>
+                        </select>
+                    </div>
+                    
+                    <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                        Save Reminder Settings
+                    </button>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <!-- Optional JavaScript -->
+    <script src="{{ url_for('static', filename='dashboard.js') }}"></script>
+</body>
+</html>

@@ -260,25 +260,6 @@ def settings():
     
     return render_template('settings.html', user=user, settings=user_settings)
 
-@dashboard_bp.route('/student_resources')
-@login_required
-def resources():
-    """Student resources page."""
-    # Get user from database
-    user_id = ObjectId(session['user'])
-    user = find_user_by_id(user_id)
-    
-    if not user:
-        flash('User not found. Please log in again.', 'error')
-        return redirect(url_for('auth.login'))
-    
-    # Get resources
-    resources = list(mongo.db.resources.find())
-    
-    # Get user settings
-    settings = user.get('settings', {})
-    
-    return render_template('student_resources.html', resources=resources, settings=settings, user=user)
 
 @dashboard_bp.route('/download_data')
 @login_required
@@ -400,6 +381,127 @@ def download_data_json():
         logger.error(f"JSON data download error: {e}")
         flash('An error occurred while generating your data download.', 'error')
         return redirect(url_for('dashboard.settings'))
+    
+@dashboard_bp.route('/student_resources')
+@login_required
+def student_resources():
+    """Student resources page."""
+    # Get user from database
+    user_id = ObjectId(session['user'])
+    user = find_user_by_id(user_id)
+    
+    if not user:
+        flash('User not found. Please log in again.', 'error')
+        return redirect(url_for('auth.login'))
+    
+    # Get user settings
+    settings = user.get('settings', {})
+    
+    # Handle search query if present
+    search_query = request.args.get('query', '').strip()
+    
+    # Get category/type filter if present
+    resource_type = request.args.get('type', '')
+    
+    try:
+        # Build query for resources
+        query = {}
+        
+        if search_query:
+            # Search in title and description
+            query['$or'] = [
+                {'title': {'$regex': search_query, '$options': 'i'}},
+                {'description': {'$regex': search_query, '$options': 'i'}}
+            ]
+        
+        if resource_type:
+            query['resource_type'] = resource_type
+        
+        # Get resources (sorted by most recently added)
+        resources = list(mongo.db.resources.find(query).sort('created_at', -1))
+        
+        # Get unique resource types for filtering
+        resource_types = mongo.db.resources.distinct('resource_type')
+        
+        # Log this page visit
+        mongo.db.user_activity.insert_one({
+            'user_id': str(user_id),
+            'activity_type': 'resource_page_view',
+            'timestamp': datetime.datetime.now()
+        })
+        
+    except Exception as e:
+        logger.error(f"Error fetching student resources: {e}")
+        flash('An error occurred while loading resources.', 'error')
+        resources = []
+        resource_types = []
+    
+    return render_template(
+        'student_resources.html',
+        user=user,
+        settings=settings,
+        resources=resources,
+        resource_types=resource_types,
+        search_query=search_query,
+        selected_type=resource_type
+    )
+
+
+@dashboard_bp.route('/student_resources/<resource_id>')
+@login_required
+def student_resource_detail(resource_id):
+    """Detail page for a specific student resource."""
+    # Get user from database
+    user_id = ObjectId(session['user'])
+    user = find_user_by_id(user_id)
+    
+    if not user:
+        flash('User not found. Please log in again.', 'error')
+        return redirect(url_for('auth.login'))
+    
+    # Get user settings
+    settings = user.get('settings', {})
+    
+    try:
+        # Get the specific resource
+        resource = mongo.db.resources.find_one({'_id': ObjectId(resource_id)})
+        
+        if not resource:
+            flash('Resource not found.', 'error')
+            return redirect(url_for('dashboard.student_resources'))
+        
+        # Get related resources (same resource type, up to 3)
+        if resource.get('resource_type'):
+            related_resources = list(mongo.db.resources.find({
+                'resource_type': resource.get('resource_type'),
+                '_id': {'$ne': ObjectId(resource_id)}
+            }).limit(3))
+        else:
+            related_resources = list(mongo.db.resources.find({
+                '_id': {'$ne': ObjectId(resource_id)}
+            }).limit(3))
+        
+        # Log this resource view
+        mongo.db.user_activity.insert_one({
+            'user_id': str(user_id),
+            'activity_type': 'resource_view',
+            'resource_id': resource_id,
+            'timestamp': datetime.datetime.now()
+        })
+        
+    except Exception as e:
+        logger.error(f"Error fetching resource details: {e}")
+        flash('An error occurred while loading the resource.', 'error')
+        return redirect(url_for('dashboard.student_resources'))
+    
+    return render_template(
+        'student_resource_detail.html',
+        user=user,
+        settings=settings,
+        resource=resource,
+        related_resources=related_resources
+    )
+
 @dashboard_bp.route('/request-therapist')
 @login_required
 def request_therapist():
@@ -1090,3 +1192,4 @@ def shared_resources():
         logger.error(f"Shared resources error: {e}")
         flash('An error occurred while loading shared resources', 'error')
         return redirect(url_for('dashboard.index'))
+    

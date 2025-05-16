@@ -3,35 +3,285 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Assign Therapist - Admin Panel</title>
+    <title>Assign Therapist - Wellbeing Assistant Admin</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        .request-details {
-            background-color: #f9fafb;
-            padding: 15px;
-            border-radius: 8px;
+        /* Add this temporary CSS to ensure proper styling */
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #f3f4f6;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        .sidebar {
+            width: 250px;
+            background-color: #1f2937;
+            color: white;
+            padding: 20px 0;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            z-index: 100;
+        }
+        
+        .sidebar h2 {
+            padding: 0 20px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             margin-bottom: 20px;
+        }
+        
+        .sidebar ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .sidebar ul li {
+            margin-bottom: 5px;
+        }
+        
+        .sidebar ul li a {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+        
+        .sidebar ul li a:hover {
+            background-color: #374151;
+        }
+        
+        .sidebar ul li.active a {
+            background-color: #4a6fa5;
+            font-weight: 500;
+        }
+        
+        .sidebar ul li a i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+        
+        .main-content {
+            flex: 1;
+            margin-left: 250px;
+            padding: 30px;
+        }
+        
+        h1 {
+            margin-bottom: 20px;
+            color: #111827;
+            font-weight: 600;
+            font-size: 24px;
+        }
+        
+        h2 {
+            margin: 0 0 20px;
+            color: #111827;
+            font-weight: 600;
+            font-size: 18px;
+        }
+        
+        h3 {
+            margin: 0 0 5px;
+            color: #111827;
+            font-weight: 600;
+            font-size: 16px;
+        }
+        
+        p {
+            margin: 8px 0;
+            color: #4b5563;
+            font-size: 14px;
+        }
+        
+        strong {
+            color: #111827;
+            font-weight: 500;
+        }
+        
+        .breadcrumbs {
+            margin-bottom: 20px;
+        }
+        
+        .breadcrumbs a {
+            color: #4a6fa5;
+            text-decoration: none;
+            font-size: 14px;
+            display: inline-flex;
+            align-items: center;
+        }
+        
+        .breadcrumbs a:hover {
+            text-decoration: underline;
+        }
+        
+        .breadcrumbs a i {
+            margin-right: 5px;
+        }
+        
+        .request-details {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .request-details h2 {
+            display: flex;
+            align-items: center;
+            margin-top: 0;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        .request-details h2 i {
+            margin-right: 10px;
+            color: #4a6fa5;
+        }
+        
+        .request-details p {
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+        }
+        
+        .request-details p i {
+            width: 20px;
+            margin-right: 10px;
+            color: #6b7280;
+            text-align: center;
+        }
+        
+        .urgent-label {
+            color: #b91c1c;
+            font-weight: 500;
+        }
+        
+        .soon-label {
+            color: #92400e;
+            font-weight: 500;
+        }
+        
+        .description-box {
+            margin-top: 15px;
+            padding: 15px;
+            background-color: #f9fafb;
+            border-radius: 6px;
+            border-left: 3px solid #4a6fa5;
+        }
+        
+        .description-box h3 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .description-box h3 i {
+            margin-right: 8px;
+            color: #4a6fa5;
+        }
+        
+        .description-box p {
+            margin: 0;
+            white-space: pre-line;
+        }
+        
+        .therapist-filter {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .search-input {
+            flex: 1;
+            padding: 10px 15px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z'%3E%3C/path%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: 10px center;
+            background-size: 20px;
+            padding-left: 40px;
+            max-width: 400px;
+        }
+        
+        .search-input:focus {
+            outline: none;
+            border-color: #4a6fa5;
+            box-shadow: 0 0 0 2px rgba(74, 111, 165, 0.2);
+        }
+        
+        .sort-options {
+            display: flex;
+            align-items: center;
+            margin-left: 15px;
+        }
+        
+        .sort-options label {
+            margin-right: 8px;
+            font-size: 14px;
+            color: #4b5563;
+        }
+        
+        .sort-options select {
+            padding: 8px 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+            background-color: white;
+        }
+        
+        .sort-options select:focus {
+            outline: none;
+            border-color: #4a6fa5;
+            box-shadow: 0 0 0 2px rgba(74, 111, 165, 0.2);
+        }
+        
+        .therapists-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 30px;
         }
         
         .therapist-card {
             border: 1px solid #e5e7eb;
             border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 15px;
-            transition: all 0.3s ease;
+            padding: 20px;
+            transition: all 0.2s ease;
             cursor: pointer;
             display: flex;
             align-items: center;
+            background-color: white;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
         }
         
         .therapist-card:hover {
-            border-color: #2563eb;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            border-color: #4a6fa5;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
         }
         
         .therapist-card.selected {
             background-color: #eff6ff;
-            border-color: #2563eb;
+            border-color: #4a6fa5;
+            box-shadow: 0 0 0 2px rgba(74, 111, 165, 0.3);
         }
         
         .therapist-icon {
@@ -44,37 +294,136 @@
             justify-content: center;
             margin-right: 15px;
             font-size: 20px;
-            color: #2563eb;
+            color: #4a6fa5;
+            font-weight: 600;
         }
         
         .therapist-details {
             flex-grow: 1;
         }
         
+        .therapist-details h3 {
+            margin: 0 0 5px;
+            color: #111827;
+            font-weight: 600;
+            font-size: 16px;
+        }
+        
+        .therapist-details p {
+            margin: 0 0 8px;
+            color: #4b5563;
+            font-size: 14px;
+        }
+        
         .therapist-meta {
             display: flex;
             justify-content: space-between;
-            margin-top: 5px;
+            margin-top: 8px;
+            font-size: 13px;
+            color: #6b7280;
         }
         
         .capacity-indicator {
-            width: 100px;
+            width: 100%;
             height: 8px;
             background-color: #e5e7eb;
             border-radius: 4px;
             overflow: hidden;
-            margin-top: 5px;
+            margin-top: 8px;
         }
         
         .capacity-fill {
             height: 100%;
-            background-color: #2563eb;
+            background-color: #4a6fa5;
+        }
+        
+        .capacity-fill.high {
+            background-color: #ef4444;
+        }
+        
+        .capacity-fill.medium {
+            background-color: #f59e0b;
         }
         
         .therapist-actions {
             margin-top: 30px;
             display: flex;
             justify-content: space-between;
+            align-items: center;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            background-color: #4a6fa5;
+            color: white;
+            text-decoration: none;
+        }
+        
+        .btn i {
+            margin-right: 8px;
+        }
+        
+        .btn:hover {
+            background-color: #3b5998;
+        }
+        
+        .btn:disabled {
+            background-color: #9ca3af;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+        
+        .btn-secondary {
+            background-color: #e5e7eb;
+            color: #4b5563;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #d1d5db;
+        }
+        
+        .btn-secondary i {
+            margin-right: 8px;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .empty-state h3 {
+            font-size: 18px;
+            margin-bottom: 10px;
+            color: #111827;
+        }
+        
+        .empty-state p {
+            font-size: 14px;
+            color: #6b7280;
+            max-width: 500px;
+            margin: 0 auto 20px;
         }
     </style>
 </head>
@@ -83,32 +432,33 @@
         <aside class="sidebar">
             <h2>Admin Panel</h2>
             <ul>
-                <li><a href="{{ url_for('admin.dashboard') }}">Dashboard</a></li>
-                <li><a href="{{ url_for('admin.user_management') }}">User Management</a></li>
-                <li><a href="{{ url_for('admin.therapist_management') }}">Therapist Management</a></li>
-                <li><a href="{{ url_for('admin.therapist_requests') }}" class="active">Therapist Assignments</a></li>
-                <li><a href="{{ url_for('admin.assignment_stats') }}">Therapist Assignment Stats</a></li>
-                <li><a href="{{ url_for('admin.chat_logs') }}">Chat Logs</a></li>
-                <li><a href="{{ url_for('admin.feedback_dashboard') }}">Feedback Analysis</a></li>
-                <li><a href="{{ url_for('admin.resources') }}">Resource Management</a></li>
-                <li><a href="{{ url_for('admin.settings') }}">Settings</a></li>
-                <li><a href="{{ url_for('auth.logout') }}">Logout</a></li>
+                <li><a href="{{ url_for('admin.dashboard') }}"><i class="fas fa-chart-line"></i> Dashboard</a></li>
+                <li><a href="{{ url_for('admin.user_management') }}"><i class="fas fa-users"></i> User Management</a></li>
+                <li><a href="{{ url_for('admin.therapist_management') }}"><i class="fas fa-user-md"></i> Therapist Management</a></li>
+                <li class="active"><a href="{{ url_for('admin.therapist_requests') }}"><i class="fas fa-clipboard-check"></i> Therapist Requests</a></li>
+                <li><a href="{{ url_for('admin.therapist_assignments') }}"><i class="fas fa-clipboard-list"></i> Therapist Assignments</a></li>
+                <li><a href="{{ url_for('admin.assignment_stats') }}"><i class="fas fa-chart-bar"></i> Assignment Stats</a></li>
+                <li><a href="{{ url_for('admin.chat_logs') }}"><i class="fas fa-comments"></i> Chat Logs</a></li>
+                <li><a href="{{ url_for('admin.feedback_dashboard') }}"><i class="fas fa-star"></i> Feedback Analysis</a></li>
+                <li><a href="{{ url_for('admin.resources') }}"><i class="fas fa-book"></i> Resource Management</a></li>
+                <li><a href="{{ url_for('admin.settings') }}"><i class="fas fa-cog"></i> Settings</a></li>
+                <li><a href="{{ url_for('auth.logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
             </ul>
         </aside>
         
         <div class="main-content">
-            <h1>Assign Therapist</h1>
+            <h1><i class="fas fa-user-md"></i> Assign Therapist</h1>
             
             <div class="breadcrumbs">
-                <a href="{{ url_for('admin.therapist_requests') }}">← Back to Therapist Requests</a>
+                <a href="{{ url_for('admin.therapist_requests') }}"><i class="fas fa-arrow-left"></i> Back to Therapist Requests</a>
             </div>
             
             <div class="request-details">
-                <h2>Request Information</h2>
-                <p><strong>Student:</strong> {{ student.first_name }} {{ student.last_name }} ({{ student.email }})</p>
-                <p><strong>Date Submitted:</strong> {{ request.created_at.strftime('%B %d, %Y at %I:%M %p') }}</p>
-                <p><strong>Concerns:</strong> {{ request.concerns|join(', ') }}</p>
-                <p><strong>Preferred Session Type:</strong> 
+                <h2><i class="fas fa-info-circle"></i> Request Information</h2>
+                <p><i class="fas fa-user-graduate"></i> <strong>Student:</strong> {{ student.first_name }} {{ student.last_name }} ({{ student.email }})</p>
+                <p><i class="fas fa-calendar-alt"></i> <strong>Date Submitted:</strong> {{ request.created_at.strftime('%B %d, %Y at %I:%M %p') }}</p>
+                <p><i class="fas fa-tag"></i> <strong>Concerns:</strong> {{ request.concerns|join(', ') }}</p>
+                <p><i class="fas fa-video"></i> <strong>Preferred Session Type:</strong> 
                     {% if request.preferred_session_type == 'online' %}
                         Online (Video)
                     {% elif request.preferred_session_type == 'in_person' %}
@@ -117,27 +467,29 @@
                         No Preference
                     {% endif %}
                 </p>
-                <p><strong>Urgency Level:</strong> 
+                <p>
                     {% if request.urgency_level == 'urgent' %}
+                        <i class="fas fa-exclamation-triangle" style="color: #b91c1c;"></i> <strong>Urgency Level:</strong> 
                         <span class="urgent-label">High - Requires immediate attention</span>
                     {% elif request.urgency_level == 'soon' %}
+                        <i class="fas fa-exclamation" style="color: #92400e;"></i> <strong>Urgency Level:</strong> 
                         <span class="soon-label">Medium - Needs attention this week</span>
                     {% else %}
-                        Normal
+                        <i class="fas fa-info-circle"></i> <strong>Urgency Level:</strong> Normal
                     {% endif %}
                 </p>
                 
                 <div class="description-box">
-                    <h3>Student Description:</h3>
+                    <h3><i class="fas fa-quote-left"></i> Student Description:</h3>
                     <p>{{ request.issue_description }}</p>
                 </div>
             </div>
             
-            <h2>Select a Therapist</h2>
+            <h2><i class="fas fa-users"></i> Select a Therapist</h2>
             <div class="therapist-filter">
                 <input type="text" id="therapistSearch" placeholder="Search therapists by name or specialization..." class="search-input">
                 <div class="sort-options">
-                    <label for="sortBy">Sort by:</label>
+                    <label for="sortBy"><i class="fas fa-sort"></i> Sort by:</label>
                     <select id="sortBy" onchange="sortTherapists()">
                         <option value="load">Current Load</option>
                         <option value="name">Name</option>
@@ -156,13 +508,14 @@
                                 </div>
                                 <div class="therapist-details">
                                     <h3>Dr. {{ therapist.first_name }} {{ therapist.last_name }}</h3>
-                                    <p>{{ therapist.specialization }}</p>
+                                    <p><i class="fas fa-stethoscope"></i> {{ therapist.specialization }}</p>
                                     <div class="therapist-meta">
-                                        <span>{{ therapist.current_students }} / {{ therapist.max_students }} students</span>
-                                        <span>{{ therapist.office_hours.description }}</span>
+                                        <span><i class="fas fa-users"></i> {{ therapist.current_students }} / {{ therapist.max_students }} students</span>
+                                        <span><i class="fas fa-clock"></i> {{ therapist.office_hours.description }}</span>
                                     </div>
                                     <div class="capacity-indicator">
-                                        <div class="capacity-fill" style="width: {{ (therapist.current_students / therapist.max_students) * 100 }}%;"></div>
+                                        {% set percentage = (therapist.current_students / therapist.max_students) * 100 %}
+                                        <div class="capacity-fill {% if percentage >= 80 %}high{% elif percentage >= 50 %}medium{% endif %}" style="width: {{ percentage }}%;"></div>
                                     </div>
                                 </div>
                                 <input type="radio" name="therapist_id" value="{{ therapist._id }}" id="therapist-{{ therapist._id }}" style="display: none;">
@@ -170,16 +523,22 @@
                         {% endfor %}
                     {% else %}
                         <div class="empty-state">
-                            <h3>No available therapists</h3>
+                            <h3><i class="fas fa-exclamation-circle"></i> No available therapists</h3>
                             <p>There are currently no therapists available or all therapists have reached their maximum capacity.</p>
-                            <a href="{{ url_for('admin.therapist_management') }}" class="btn">Manage Therapists</a>
+                            <a href="{{ url_for('admin.therapist_management') }}" class="btn">
+                                <i class="fas fa-user-md"></i> Manage Therapists
+                            </a>
                         </div>
                     {% endif %}
                 </div>
                 
                 <div class="therapist-actions">
-                    <a href="{{ url_for('admin.therapist_requests') }}" class="btn-secondary">Cancel</a>
-                    <button type="submit" class="btn" id="assignBtn" disabled>Assign Therapist</button>
+                    <a href="{{ url_for('admin.therapist_requests') }}" class="btn-secondary">
+                        <i class="fas fa-times"></i> Cancel
+                    </a>
+                    <button type="submit" class="btn" id="assignBtn" disabled>
+                        <i class="fas fa-check"></i> Assign Therapist
+                    </button>
                 </div>
             </form>
         </div>
@@ -248,6 +607,18 @@
                     card.style.display = 'none';
                 }
             });
+            
+            // Check if any therapists are visible
+            const visibleTherapists = document.querySelectorAll('.therapist-card[style="display: flex;"]').length;
+            if (visibleTherapists === 0 && searchTerm !== '') {
+                // Could add an empty state message here
+                console.log('No matching therapists found');
+            }
+        });
+        
+        // Sort by load by default on page load
+        window.addEventListener('DOMContentLoaded', function() {
+            sortTherapists();
         });
     </script>
 </body>

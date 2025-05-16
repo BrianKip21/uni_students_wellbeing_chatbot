@@ -1358,24 +1358,24 @@ def assignment_stats():
 @admin_required
 def assign_therapist(request_id):
     """Assign a therapist to a student request."""
-    request_data = mongo.db.therapist_requests.find_one({'_id': ObjectId(request_id)})
-    
-    if not request_data:
-        flash('Request not found', 'error')
-        return redirect(url_for('admin.therapist_requests'))
-    
-    if request_data['status'] != 'pending':
-        flash('This request has already been processed', 'warning')
-        return redirect(url_for('admin.therapist_requests'))
-    
-    student = mongo.db.users.find_one({'_id': request_data['student_id']})
-    
-    if not student:
-        flash('Student not found', 'error')
-        return redirect(url_for('admin.therapist_requests'))
-    
-    if request.method == 'POST':
-        try:
+    try:
+        request_data = mongo.db.therapist_requests.find_one({'_id': ObjectId(request_id)})
+        
+        if not request_data:
+            flash('Request not found', 'error')
+            return redirect(url_for('admin.therapist_requests'))
+        
+        if request_data['status'] != 'pending':
+            flash('This request has already been processed', 'warning')
+            return redirect(url_for('admin.therapist_requests'))
+        
+        student = mongo.db.users.find_one({'_id': request_data['student_id']})
+        
+        if not student:
+            flash('Student not found', 'error')
+            return redirect(url_for('admin.therapist_requests'))
+        
+        if request.method == 'POST':
             therapist_id = request.form.get('therapist_id')
             
             if not therapist_id:
@@ -1388,27 +1388,55 @@ def assign_therapist(request_id):
                 flash('Selected therapist not found', 'error')
                 return redirect(url_for('admin.assign_therapist', request_id=request_id))
             
-            # Check therapist capacity
-            if therapist['current_students'] >= therapist['max_students']:
+            # Check therapist capacity with improved handling
+            current_students = therapist.get('current_students', 0)
+            if not isinstance(current_students, int):
+                current_students = 0
+                
+            max_students = therapist.get('max_students', 20)
+            if not isinstance(max_students, int):
+                max_students = 20
+            
+            if current_students >= max_students:
                 flash('Selected therapist has reached maximum student capacity', 'error')
                 return redirect(url_for('admin.assign_therapist', request_id=request_id))
             
-            # Create assignment
+            # Check if student already has an active assignment
+            existing_assignment = mongo.db.appointments.find_one({
+                'student_id': student['_id'],
+                'status': 'active'
+            })
+            
+            if existing_assignment:
+                existing_therapist = mongo.db.therapists.find_one({'_id': existing_assignment['therapist_id']})
+                if existing_therapist:
+                    therapist_name = f"{existing_therapist['first_name']} {existing_therapist['last_name']}"
+                    flash(f'This student is already assigned to {therapist_name}', 'error')
+                else:
+                    flash('This student already has an active therapist assignment', 'error')
+                return redirect(url_for('admin.therapist_requests'))
+            
+            # Create assignment - using appointments collection for consistency
             assignment = {
                 'student_id': student['_id'],
                 'therapist_id': therapist['_id'],
                 'status': 'active',
                 'created_at': datetime.now(timezone.utc),
                 'updated_at': datetime.now(timezone.utc),
+                'next_session': None,
+                'session_count': 0,
                 'notes': 'Assigned by admin based on student request'
             }
             
-            assignment_result = mongo.db.therapist_assignments.insert_one(assignment)
+            assignment_result = mongo.db.appointments.insert_one(assignment)
             
             # Update therapist's current student count
             mongo.db.therapists.update_one(
                 {'_id': therapist['_id']},
-                {'$inc': {'current_students': 1}}
+                {'$set': {
+                    'current_students': current_students + 1,
+                    'max_students': max_students  # Ensure max_students exists
+                }}
             )
             
             # Update request status
@@ -1432,26 +1460,73 @@ def assign_therapist(request_id):
             
             flash('Therapist assigned successfully', 'success')
             return redirect(url_for('admin.therapist_requests'))
+        
+        # Get available therapists with improved filtering
+        therapists = list(mongo.db.therapists.find({'status': 'Active'}))
+        available_therapists = []
+        
+        for t in therapists:
+            # Get current_students with default 0
+            current = t.get('current_students')
+            if not isinstance(current, int):
+                current = 0
             
-        except Exception as e:
-            logger.error(f"Assign therapist error: {e}")
-            flash('An error occurred while assigning the therapist', 'error')
-            return redirect(url_for('admin.assign_therapist', request_id=request_id))
-     
-    # Get available therapists (with capacity)
-    therapists = list(mongo.db.therapists.find({'status': 'Active'}))
-    available_therapists = [
-        t for t in therapists 
-        if isinstance(t.get('current_students'), int) and 
-        isinstance(t.get('max_students'), int) and 
-        t['current_students'] < t['max_students']
-    ]
-    available_therapists.sort(key=lambda x: x['current_students'])
+            # Get max_students with default 20
+            max_val = t.get('max_students')
+            if not isinstance(max_val, int):
+                max_val = 20
+            
+            # Check if therapist has capacity
+            if current < max_val:
+                # Update the therapist object with the corrected values
+                t['current_students'] = current
+                t['max_students'] = max_val
+                available_therapists.append(t)
+                
+        # If no available therapists after filtering, offer to update capacity data
+        if not available_therapists and therapists:
+            # Update therapist records to fix missing capacity data
+            updated_count = 0
+            for t in therapists:
+                # Calculate actual student count
+                student_count = mongo.db.appointments.count_documents({
+                    'therapist_id': t['_id'],
+                    'status': 'active'
+                })
+                
+                # Update therapist record
+                result = mongo.db.therapists.update_one(
+                    {'_id': t['_id']},
+                    {'$set': {
+                        'current_students': student_count,
+                        'max_students': 20
+                    }}
+                )
+                
+                if result.modified_count:
+                    updated_count += 1
+                    
+                # Add to available therapists if has capacity
+                if student_count < 20:
+                    t['current_students'] = student_count
+                    t['max_students'] = 20
+                    available_therapists.append(t)
+            
+            if updated_count > 0:
+                flash(f'Updated capacity data for {updated_count} therapists', 'info')
+        
+        # Sort therapists by current load
+        available_therapists.sort(key=lambda x: x['current_students'])
 
-    return render_template('admin/assign_therapist.html', 
-                         request=request_data, 
-                         student=student,
-                         therapists=available_therapists)
+        return render_template('admin/assign_therapist.html', 
+                             request=request_data, 
+                             student=student,
+                             therapists=available_therapists)
+                             
+    except Exception as e:
+        logger.error(f"Assign therapist error: {e}")
+        flash('An error occurred while processing the therapist assignment', 'error')
+        return redirect(url_for('admin.therapist_requests'))
 
 @admin_bp.route('/reject-request/<request_id>', methods=['POST'])
 @admin_required
