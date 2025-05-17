@@ -748,6 +748,69 @@ def send_therapist_message():
     except Exception as e:
         logger.error(f"Send therapist message error: {e}")
         return jsonify({'success': False, 'error': 'An error occurred'})
+    
+@dashboard_bp.route('/get-new-messages')
+@login_required
+def get_new_messages():
+    """Poll for new therapist messages"""
+    try:
+        student_id = ObjectId(session.get('user'))
+        last_id = request.args.get('last_id')
+        
+        # Check if student has an assigned therapist
+        assignment = mongo.db.therapist_assignments.find_one({
+            'student_id': student_id,
+            'status': 'active'
+        })
+        
+        if not assignment:
+            return jsonify({'success': False, 'error': 'No assigned therapist'})
+        
+        therapist_id = assignment['therapist_id']
+        
+        # Build query for new messages
+        query = {
+            'student_id': student_id,
+            'therapist_id': therapist_id,
+            'sender': 'therapist',  # Only fetch therapist messages
+            'read': False  # Only unread messages
+        }
+        
+        # If last_id is provided, only get messages newer than that
+        if last_id:
+            try:
+                query['_id'] = {'$gt': ObjectId(last_id)}
+            except:
+                # Invalid ID format, ignore this condition
+                pass
+        
+        # Get new messages
+        messages = list(mongo.db.therapist_chats.find(query).sort('timestamp', 1))
+        
+        # Format messages for response
+        formatted_messages = []
+        for msg in messages:
+            formatted_messages.append({
+                'id': str(msg['_id']),
+                'message': msg['message'],
+                'sender': msg['sender'],
+                'timestamp': msg['timestamp'].strftime('%I:%M %p | %b %d')
+            })
+            
+            # Mark as read
+            mongo.db.therapist_chats.update_one(
+                {'_id': msg['_id']},
+                {'$set': {'read': True}}
+            )
+        
+        return jsonify({
+            'success': True,
+            'messages': formatted_messages
+        })
+        
+    except Exception as e:
+        logger.error(f"Get new messages error: {e}")
+        return jsonify({'success': False, 'error': 'An error occurred'})
 
 @dashboard_bp.route('/therapist-appointments')
 @login_required

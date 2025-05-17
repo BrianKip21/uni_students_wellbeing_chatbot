@@ -435,7 +435,7 @@
                 const lastMessage = document.querySelector('.chat-messages .message:last-child');
                 let lastId = lastMessage ? lastMessage.getAttribute('data-id') : null;
                 
-                fetch(`{{ url_for("dashboard.get_new_messages") }}?last_id=${lastId || ''}`)
+                fetch('{{ url_for("dashboard.get_new_messages") }}?last_id=${lastId || ''}')
                     .then(response => response.json())
                     .then(data => {
                         if (data.success && data.messages && data.messages.length > 0) {

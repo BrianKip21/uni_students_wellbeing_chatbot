@@ -1,6 +1,9 @@
 // Static/user_management.js
 
 document.addEventListener('DOMContentLoaded', function() {
+    // Enable debug logging to troubleshoot API requests
+    addDebugLogging();
+
     // DOM elements
     const searchBox = document.getElementById('search-box');
     const addUserButton = document.getElementById('add-user-button');
@@ -26,11 +29,44 @@ document.addEventListener('DOMContentLoaded', function() {
         userId: null
     };
 
+    // Override fetch to automatically include CSRF tokens
+    const originalFetch = window.fetch;
+    window.fetch = function(url, options = {}) {
+        // Create a new options object
+        const newOptions = { ...options };
+        
+        // Add headers if they don't exist
+        newOptions.headers = newOptions.headers || {};
+        
+        // Add CSRF token to all non-GET requests
+        if (!newOptions.method || newOptions.method !== 'GET') {
+            const token = getCSRFToken();
+            if (token) {
+                newOptions.headers['X-CSRF-Token'] = token;
+                console.log('Adding CSRF token to request:', token.substring(0, 5) + '...');
+            } else {
+                console.warn('CSRF token not found in cookies. This request might fail.');
+            }
+        }
+        
+        return originalFetch(url, newOptions);
+    };
+
     // Get CSRF token for secure requests
     function getCSRFToken() {
-        return document.cookie.split('; ')
+        const token = document.cookie.split('; ')
             .find(row => row.startsWith('csrf_token='))
             ?.split('=')[1];
+        
+        // Also check for a meta tag as a fallback
+        if (!token) {
+            const metaTag = document.querySelector('meta[name="csrf-token"]');
+            if (metaTag) {
+                return metaTag.getAttribute('content');
+            }
+        }
+        
+        return token;
     }
     
     // Add event listeners
@@ -97,13 +133,48 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Helper function to handle fetch responses
     function handleFetchResponse(response, errorMsg) {
+        console.log('Response status:', response.status);
         const contentType = response.headers.get('content-type');
+        console.log('Response content-type:', contentType);
+        
+        // Handle specific status codes
+        if (response.status === 403) {
+            // Check if this is a CSRF error
+            return response.text().then(text => {
+                console.log('403 Response text:', text.substring(0, 200));
+                try {
+                    const errorData = JSON.parse(text);
+                    if (errorData.code === 'csrf_failed' || text.includes('CSRF token')) {
+                        console.error('CSRF validation failed');
+                        showCSRFErrorModal();
+                        throw new Error('Security validation failed. Please try refreshing the page.');
+                    } else {
+                        throw new Error(errorData.message || 'Access denied. You may not have permission for this action.');
+                    }
+                } catch (e) {
+                    if (e.message.includes('Security validation failed')) {
+                        throw e;
+                    }
+                    throw new Error('Access denied. You may not have permission for this action.');
+                }
+            });
+        }
+        
+        if (response.status === 401) {
+            // Handle authentication errors
+            showAuthErrorModal();
+            throw new Error('Your session has expired. Please log in again.');
+        }
         
         if (!response.ok) {
             return response.text().then(text => {
-                console.error('Error response:', text);
+                console.error('Error response:', text.substring(0, 200));
                 // Check if the response is HTML
                 if (text.trim().startsWith('<!DOCTYPE html>') || text.trim().startsWith('<html>')) {
+                    if (text.includes('login') || text.includes('sign in')) {
+                        showAuthErrorModal();
+                        throw new Error('Your session has expired. Please log in again.');
+                    }
                     throw new Error('Received HTML instead of JSON. Your session may have expired.');
                 }
                 // Try to parse as JSON if possible
@@ -112,6 +183,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     throw new Error(errorData.message || errorMsg);
                 } catch (e) {
                     // If parsing fails, throw a generic error
+                    if (e.message.includes('Your session has expired')) {
+                        throw e;
+                    }
                     throw new Error(`${errorMsg}: Server returned an invalid response`);
                 }
             });
@@ -123,6 +197,83 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         return response.json();
+    }
+    
+    // Show CSRF error modal
+    function showCSRFErrorModal() {
+        // Create a modal to explain the CSRF error
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.style.display = 'flex';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Security Validation Failed</h2>
+                    <button type="button" class="close" aria-label="Close">&times;</button>
+                </div>
+                <div style="padding: 24px;">
+                    <p>Your session security token has expired or is invalid. This usually happens when:</p>
+                    <ul>
+                        <li>Your session has been inactive for too long</li>
+                        <li>You've logged in from another browser tab</li>
+                        <li>Browser cookies have been cleared</li>
+                    </ul>
+                    <p>The page will reload to get a fresh security token.</p>
+                </div>
+                <div class="form-actions" style="margin: 0 24px 24px;">
+                    <button type="button" id="refresh-page" class="add-button">Refresh Page</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        
+        // Add click handler for close button
+        modal.querySelector('.close').addEventListener('click', function() {
+            modal.remove();
+        });
+        
+        // Add click handler for refresh button
+        modal.querySelector('#refresh-page').addEventListener('click', function() {
+            window.location.reload();
+        });
+        
+        // Auto-reload after 5 seconds
+        setTimeout(() => {
+            window.location.reload();
+        }, 5000);
+    }
+    
+    // Show authentication error modal
+    function showAuthErrorModal() {
+        // Create a modal to explain the authentication error
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.style.display = 'flex';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Session Expired</h2>
+                    <button type="button" class="close" aria-label="Close">&times;</button>
+                </div>
+                <div style="padding: 24px;">
+                    <p>Your session has expired. You need to log in again to continue.</p>
+                </div>
+                <div class="form-actions" style="margin: 0 24px 24px;">
+                    <button type="button" id="login-redirect" class="add-button">Log In</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        
+        // Add click handler for close button
+        modal.querySelector('.close').addEventListener('click', function() {
+            modal.remove();
+        });
+        
+        // Add click handler for login button
+        modal.querySelector('#login-redirect').addEventListener('click', function() {
+            window.location.href = '/login?next=' + encodeURIComponent(window.location.pathname);
+        });
     }
     
     // Functions
@@ -203,6 +354,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         confirmMessage.textContent = `Are you sure you want to ${action} this user?`;
         confirmAction.textContent = 'Confirm';
+        confirmAction.classList.remove('danger-button');
         
         currentActionState = {
             action: 'updateStatus',
@@ -316,13 +468,11 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Add a new user
     function addUser(userData) {
-        const csrfToken = getCSRFToken();
-        
         fetch('/api/users', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-Token': csrfToken
+                'Content-Type': 'application/json'
+                // CSRF token will be added automatically by our fetch override
             },
             body: JSON.stringify(userData)
         })
@@ -340,13 +490,11 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Update an existing user
     function updateUser(userId, userData) {
-        const csrfToken = getCSRFToken();
-        
         fetch(`/api/users/${userId}`, {
             method: 'PUT',
             headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-Token': csrfToken
+                'Content-Type': 'application/json'
+                // CSRF token will be added automatically by our fetch override
             },
             body: JSON.stringify(userData)
         })
@@ -364,13 +512,11 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Update a user's status
     function updateUserStatus(userId, newStatus) {
-        const csrfToken = getCSRFToken();
-        
         fetch(`/api/users/${userId}/status`, {
             method: 'PUT',
             headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-Token': csrfToken
+                'Content-Type': 'application/json'
+                // CSRF token will be added automatically by our fetch override
             },
             body: JSON.stringify({ status: newStatus })
         })
@@ -387,13 +533,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Delete a user
     function deleteUser(userId) {
-        const csrfToken = getCSRFToken();
-        
         fetch(`/api/users/${userId}`, {
-            method: 'DELETE',
-            headers: {
-                'X-CSRF-Token': csrfToken
-            }
+            method: 'DELETE'
+            // CSRF token will be added automatically by our fetch override
         })
         .then(response => handleFetchResponse(response, 'Failed to delete user'))
         .then(result => {
@@ -571,7 +713,7 @@ document.addEventListener('DOMContentLoaded', function() {
         return re.test(email);
     }
     
-    // Add temporary debugging code to help identify issues
+    // Add debugging code to help identify issues
     function addDebugLogging() {
         const originalFetch = window.fetch;
         window.fetch = function(url, options) {
@@ -587,8 +729,16 @@ document.addEventListener('DOMContentLoaded', function() {
                     throw error;
                 });
         };
+
+        // Also log all CSRF tokens for debugging
+        console.log('CSRF Token in cookies:', getCSRFToken());
+        
+        // Check for CSRF meta tag
+        const metaTag = document.querySelector('meta[name="csrf-token"]');
+        if (metaTag) {
+            console.log('CSRF Token in meta tag:', metaTag.getAttribute('content'));
+        } else {
+            console.log('No CSRF meta tag found');
+        }
     }
-    
-    // Uncomment this line to enable debug logging
-    // addDebugLogging();
 });
