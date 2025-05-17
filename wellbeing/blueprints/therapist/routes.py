@@ -627,89 +627,99 @@ def complete_appointment(appointment_id):
         flash('An error occurred while completing the appointment', 'error')
     
     return redirect(url_for('therapist.appointments'))
-
 @therapist_bp.route('/students')
 @therapist_required
 def students():
     """View assigned students."""
-    therapist_id = ObjectId(session['user'])
-    therapist = find_therapist_by_id(therapist_id)
-    
-    if not therapist:
-        flash('Therapist not found. Please log in again.', 'error')
-        return redirect(url_for('auth.login'))
-    
-    # Get all active student assignments
-    assignments = list(mongo.db.therapist_assignments.find({
-        'therapist_id': therapist_id,
-        'status': 'active'
-    }))
-    
-    # Log the number of assignments found (for debugging)
-    logger.info(f"Found {len(assignments)} active assignments for therapist ID {therapist_id}")
-    
-    # Get user settings
-    settings = mongo.db.settings.find_one() or {}
-    
-    # Get student details for each assignment
-    students_data = []
-    for assignment in assignments:
-        student_id = assignment.get('student_id')
-        if not student_id:
-            logger.warning(f"Assignment {assignment['_id']} has no student_id field")
-            continue
-            
-        student = mongo.db.users.find_one({'_id': student_id})
-        if not student:
-            logger.warning(f"Student with ID {student_id} not found")
-            continue
-            
-        # Get latest appointment
-        latest_appointment = mongo.db.appointments.find_one({
-            'student_id': student_id,
-            'therapist_id': therapist_id
-        }, sort=[('date', -1)])
+    try:
+        therapist_id = ObjectId(session['user'])
+        therapist = find_therapist_by_id(therapist_id)
         
-        # Get next upcoming appointment
-        next_appointment = mongo.db.appointments.find_one({
-            'student_id': student_id,
+        if not therapist:
+            flash('Therapist not found. Please log in again.', 'error')
+            return redirect(url_for('auth.login'))
+        
+        # Get all active student assignments
+        assignments = list(mongo.db.therapist_assignments.find({
             'therapist_id': therapist_id,
-            'date': {'$gte': datetime.now()},
-            'status': 'scheduled'
-        }, sort=[('date', 1)])
+            'status': 'active'
+        }))
         
-        # Count total sessions
-        total_sessions = mongo.db.appointments.count_documents({
-            'student_id': student_id,
-            'therapist_id': therapist_id,
-            'status': 'completed'
-        })
+        # Log the number of assignments found (for debugging)
+        logger.info(f"Found {len(assignments)} active assignments for therapist ID {therapist_id}")
         
-        # Get unread messages
-        unread_messages = mongo.db.therapist_chats.count_documents({
-            'student_id': student_id,
-            'therapist_id': therapist_id,
-            'sender': 'student',
-            'read': False
-        })
+        # Get user settings
+        settings = mongo.db.settings.find_one() or {}
         
-        students_data.append({
-            'student': student,
-            'assignment': assignment,
-            'latest_appointment': latest_appointment,
-            'next_appointment': next_appointment,
-            'total_sessions': total_sessions,
-            'unread_messages': unread_messages,
-            'assigned_at': assignment.get('created_at', datetime.now())
-        })
+        # Get student details for each assignment
+        students_data = []
+        for assignment in assignments:
+            try:
+                student_id = assignment.get('student_id')
+                if not student_id:
+                    logger.warning(f"Assignment {assignment.get('_id')} has no student_id field")
+                    continue
+                    
+                student = mongo.db.users.find_one({'_id': student_id})
+                if not student:
+                    logger.warning(f"Student with ID {student_id} not found")
+                    continue
+                    
+                # Get latest appointment with safety checks
+                latest_appointment = mongo.db.appointments.find_one({
+                    'student_id': student_id,
+                    'therapist_id': therapist_id
+                }, sort=[('date', -1)])
+                
+                # Get next upcoming appointment with safety checks
+                next_appointment = mongo.db.appointments.find_one({
+                    'student_id': student_id,
+                    'therapist_id': therapist_id,
+                    'date': {'$gte': datetime.now()},
+                    'status': 'scheduled'
+                }, sort=[('date', 1)])
+                
+                # Count total sessions
+                total_sessions = mongo.db.appointments.count_documents({
+                    'student_id': student_id,
+                    'therapist_id': therapist_id,
+                    'status': 'completed'
+                })
+                
+                # Get unread messages
+                unread_messages = mongo.db.therapist_chats.count_documents({
+                    'student_id': student_id,
+                    'therapist_id': therapist_id,
+                    'sender': 'student',
+                    'read': False
+                })
+                
+                students_data.append({
+                    'student': student,
+                    'assignment': assignment,
+                    'latest_appointment': latest_appointment,
+                    'next_appointment': next_appointment,
+                    'total_sessions': total_sessions,
+                    'unread_messages': unread_messages,
+                    'assigned_at': assignment.get('created_at', datetime.now())
+                })
+            except Exception as e:
+                logger.error(f"Error processing student data: {e}")
+                continue
+        
+        # Sort students by most recently assigned
+        students_data.sort(key=lambda x: x.get('assigned_at', datetime.now()), reverse=True)
+        
+        return render_template('therapist/students.html',
+                            therapist=therapist,
+                            students_data=students_data,
+                            settings=settings)
     
-    # Sort students by most recently assigned
-    students_data.sort(key=lambda x: x.get('assigned_at', datetime.now()), reverse=True)
+    except Exception as e:
+        logger.error(f"Error in students route: {e}")
+        flash('An error occurred while loading your students', 'error')
+        return redirect(url_for('therapist.index'))
     
-    return render_template('therapist/students.html',
-                         therapist=therapist,
-                         students_data=students_data,
-                         settings=settings)
 @therapist_bp.route('/student-details/<student_id>')
 @therapist_required
 def student_details(student_id):
@@ -1306,11 +1316,15 @@ def schedule_appointment(student_id):
         date_str = day['date_str']
         if date_str in booked_slots:
             day['slots'] = [slot for slot in day['slots'] if slot not in booked_slots[date_str]]
+
+    
+    settings = mongo.db.settings.find_one() or {}
     
     return render_template('therapist/schedule_appointment.html',
                          therapist=therapist,
                          student=student,
-                         available_slots=available_slots)
+                         available_slots=available_slots,
+                         settings=settings)
 
 @therapist_bp.route('/schedule-appointment-from-calendar', methods=['POST'])
 @therapist_required

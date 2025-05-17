@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Details | Therapist Portal</title>
+    <title>Student Details | Wellbeing Assistant</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css"> 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
 
     <style>
-        {% if settings.theme_mode == 'dark' %}
+        {% if settings and settings.theme_mode == 'dark' %}
         /* Dark mode styles */
         body {
             background-color: #121212 !important;
@@ -35,79 +35,94 @@
         .border-gray-200, .border-gray-300 {
             border-color: #333 !important;
         }
+
+        .hover\:bg-gray-100:hover {
+            background-color: #333333 !important;
+        }
+
+        /* Additional dark mode styles for stats cards */
+        .bg-blue-50 {
+            background-color: #0f172a !important;
+        }
+        
+        .bg-red-50 {
+            background-color: #2c1216 !important;
+        }
+        
+        .bg-orange-50 {
+            background-color: #2c180f !important;
+        }
+        
+        .bg-green-50 {
+            background-color: #0f2817 !important;
+        }
         {% endif %}
         
-        .tab-content {
-            display: none;
+        {% if settings and settings.contrast == 'high' %}
+        /* High contrast styles */
+        body {
+            background-color: #ffffff !important;
+            color: #000000 !important;
         }
         
-        .tab-content.active {
-            display: block;
+        .text-gray-500, .text-gray-600, .text-gray-700, .text-gray-800, .text-gray-900 {
+            color: #000000 !important;
         }
         
-        .status-badge {
-            display: inline-flex;
-            align-items: center;
-            padding: 0.25rem 0.5rem;
-            border-radius: 9999px;
-            font-size: 0.75rem;
-            font-weight: 500;
+        .bg-gray-800 {
+            background-color: #000000 !important;
         }
         
-        .status-completed {
-            background-color: #d1fae5;
-            color: #065f46;
+        .text-gray-200 {
+            color: #ffffff !important;
         }
         
-        .status-scheduled {
-            background-color: #dbeafe;
-            color: #1e40af;
+        /* Additional high contrast styles */
+        .bg-blue-50, .bg-red-50, .bg-orange-50, .bg-green-50 {
+            background-color: #ffffff !important;
+            border: 2px solid #000000 !important;
         }
         
-        .status-cancelled {
-            background-color: #fee2e2;
-            color: #b91c1c;
+        .text-blue-500, .text-red-500, .text-orange-500, .text-green-500 {
+            color: #000000 !important;
         }
         
-        .timeline-item {
-            position: relative;
-            padding-left: 28px;
-            padding-bottom: 20px;
+        .text-blue-700, .text-red-700, .text-orange-700, .text-green-700 {
+            color: #000000 !important;
+        }
+        {% endif %}
+        
+        {% if settings and settings.text_size == 'lg' %}
+        /* Large text */
+        body {
+            font-size: 1.125rem !important;
         }
         
-        .timeline-item:before {
-            content: "";
-            position: absolute;
-            left: 0;
-            top: 0;
-            bottom: 0;
-            width: 2px;
-            background-color: #e5e7eb;
+        .text-sm {
+            font-size: 0.9375rem !important;
         }
         
-        .timeline-marker {
-            position: absolute;
-            left: -8px;
-            width: 18px;
-            height: 18px;
-            border-radius: 50%;
-            background-color: #dbeafe;
-            border: 2px solid #2563eb;
-            z-index: 1;
+        .text-lg, .text-xl, .text-2xl, .text-3xl {
+            font-size: 1.3125rem !important;
+        }
+        {% elif settings and settings.text_size == 'xl' %}
+        /* Extra large text */
+        body {
+            font-size: 1.25rem !important;
         }
         
-        .concern-tag {
-            display: inline-flex;
-            align-items: center;
-            padding: 0.25rem 0.75rem;
-            border-radius: 9999px;
-            font-size: 0.75rem;
-            font-weight: 500;
-            background-color: #dbeafe;
-            color: #1e40af;
-            margin-right: 0.5rem;
-            margin-bottom: 0.5rem;
+        .text-sm {
+            font-size: 1.0625rem !important;
         }
+        
+        .text-lg, .text-xl {
+            font-size: 1.5rem !important;
+        }
+
+        .text-2xl, .text-3xl {
+            font-size: 1.75rem !important;
+        }
+        {% endif %}
     </style>
 </head>
 
@@ -119,9 +134,12 @@
             <ul class="space-y-4">
                 <li><a href="{{ url_for('therapist.index') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-chart-line"></i> Dashboard</a></li>
                 <li><a href="{{ url_for('therapist.appointments') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-calendar-alt"></i> Appointments</a></li>
-                <li><a href="{{ url_for('therapist.students') }}" class="block p-2 bg-gray-700 rounded"> <i class="fas fa-user-graduate"></i> My Students</a></li>
+                <li><a href="{{ url_for('therapist.students') }}" class="block p-2 hover:bg-gray-700 rounded bg-gray-700"> <i class="fas fa-user-graduate"></i> My Students</a></li>
+                <li><a href="{{ url_for('therapist.calendar') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-calendar"></i> Calendar</a></li>
+                <li><a href="{{ url_for('therapist.resources') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-book-medical"></i> Resources</a></li>
                 <li><a href="{{ url_for('therapist.profile') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-user"></i> Profile</a></li>
-                <li><a href="{{ url_for('therapist.settings') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-cog"></i> Settings</a></li>
+                <li><a href="{{ url_for('therapist.student_requests') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-user-plus"></i> Student Requests</a></li>
+                <li><a href="{{ url_for('therapist.reports') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-chart-bar"></i> Reports</a></li>
                 <li><a href="{{ url_for('auth.logout') }}" class="block p-2 hover:bg-gray-700 rounded mt-8"> <i class="fas fa-sign-out-alt"></i> Logout</a></li>
             </ul>
         </nav>
@@ -132,602 +150,457 @@
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
-                    {% set bg_color = "bg-blue-100 border-blue-500" %}
-                    {% set text_color = "text-blue-700" %}
-                    
-                    {% if category == 'error' %}
-                        {% set bg_color = "bg-red-100 border-red-500" %}
-                        {% set text_color = "text-red-700" %}
-                    {% elif category == 'success' %}
-                        {% set bg_color = "bg-green-100 border-green-500" %}
-                        {% set text_color = "text-green-700" %}
-                    {% elif category == 'warning' %}
-                        {% set bg_color = "bg-yellow-100 border-yellow-500" %}
-                        {% set text_color = "text-yellow-700" %}
-                    {% endif %}
-                    
-                    <div class="{{ bg_color }} border-l-4 {{ text_color }} p-4 mb-6" role="alert">
+                    <div class="bg-{% if category == 'error' %}red{% else %}blue{% endif %}-100 border-l-4 border-{% if category == 'error' %}red{% else %}blue{% endif %}-500 text-{% if category == 'error' %}red{% else %}blue{% endif %}-700 p-4 mb-6" role="alert">
                         <p>{{ message }}</p>
                     </div>
                 {% endfor %}
             {% endif %}
         {% endwith %}
-        
-        <!-- Breadcrumb Navigation -->
-        <div class="flex text-sm text-gray-500 mb-6">
-            <a href="{{ url_for('therapist.dashboard') }}" class="hover:text-gray-700">Dashboard</a>
-            <span class="mx-2">/</span>
-            <a href="{{ url_for('therapist.students') }}" class="hover:text-gray-700">My Students</a>
-            <span class="mx-2">/</span>
-            <span class="text-gray-700">{{ student.first_name }} {{ student.last_name }}</span>
-        </div>
-        
-        <div class="flex justify-between items-start mb-6">
+    
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
             <div>
-                <h2 class="text-3xl font-bold text-gray-800">{{ student.first_name }} {{ student.last_name }}</h2>
-                <p class="text-gray-600">Student ID: {{ student.student_id or "N/A" }}</p>
+                <h2 class="text-3xl font-bold text-gray-800">Student Details</h2>
+                <p class="text-gray-600">{{ student.first_name }} {{ student.last_name }}</p>
             </div>
-            
-            <div class="flex space-x-2">
-                <a href="{{ url_for('therapist.chat', student_id=student._id) }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                    <i class="fas fa-comments mr-2"></i> Chat
+            <div class="flex flex-wrap gap-3">
+                <a href="{{ url_for('therapist.students') }}" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded">
+                    <i class="fas fa-arrow-left mr-2"></i> Back to Students
                 </a>
-                <a href="{{ url_for('therapist.schedule_appointment', student_id=student._id) }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-                    <i class="fas fa-calendar-plus mr-2"></i> Schedule Session
+                <a href="{{ url_for('therapist.schedule_appointment', student_id=student._id) }}" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
+                    <i class="fas fa-calendar-plus mr-2"></i> Schedule Appointment
+                </a>
+                <a href="{{ url_for('therapist.chat', student_id=student._id) }}" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded">
+                    <i class="fas fa-comment mr-2"></i> Message
                 </a>
             </div>
         </div>
         
-        <!-- Student Overview -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-            <!-- Main Info -->
-            <div class="bg-white p-6 rounded shadow col-span-2">
-                <h3 class="text-xl font-medium mb-4">Student Information</h3>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                    <div>
-                        <h4 class="text-sm font-medium text-gray-500">Email Address</h4>
-                        <p>{{ student.email }}</p>
-                    </div>
-                    <div>
-                        <h4 class="text-sm font-medium text-gray-500">Assignment Date</h4>
-                        <p>{{ assignment.created_at.strftime('%B %d, %Y') }}</p>
-                    </div>
-                    <div>
-                        <h4 class="text-sm font-medium text-gray-500">Total Sessions</h4>
-                        <p>{{ stats.total_sessions }}</p>
-                    </div>
-                    <div>
-                        <h4 class="text-sm font-medium text-gray-500">Last Session</h4>
-                        <p>
-                            {% if stats.days_since_last_session is not none %}
-                                {{ stats.days_since_last_session }} days ago
-                            {% else %}
-                                No sessions yet
-                            {% endif %}
-                        </p>
+        <!-- Student Profile Card -->
+        <div class="bg-white rounded shadow mb-6 p-6">
+            <div class="flex flex-col md:flex-row">
+                <div class="md:w-1/4 mb-4 md:mb-0">
+                    <div class="bg-gray-100 h-48 w-48 mx-auto rounded-full flex items-center justify-center">
+                        <span class="text-5xl text-gray-500">{{ student.first_name[0] }}{{ student.last_name[0] }}</span>
                     </div>
                 </div>
-                
-                {% if request_data %}
-                    <div class="mb-6">
-                        <h4 class="text-sm font-medium text-gray-500 mb-2">Initial Concerns</h4>
-                        <div class="flex flex-wrap">
-                            {% for concern in request_data.concerns %}
-                                <span class="concern-tag">{{ concern }}</span>
-                            {% endfor %}
+                <div class="md:w-3/4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <h3 class="text-xl font-bold mb-4">Personal Information</h3>
+                            <div class="mb-2">
+                                <span class="text-gray-600">Full Name:</span>
+                                <span class="font-medium">{{ student.first_name }} {{ student.last_name }}</span>
+                            </div>
+                            <div class="mb-2">
+                                <span class="text-gray-600">Email:</span>
+                                <span class="font-medium">{{ student.email }}</span>
+                            </div>
+                            <div class="mb-2">
+                                <span class="text-gray-600">Student ID:</span>
+                                <span class="font-medium">{{ student.student_id if student.student_id else 'N/A' }}</span>
+                            </div>
+                            <div class="mb-2">
+                                <span class="text-gray-600">Department:</span>
+                                <span class="font-medium">{{ student.department if student.department else 'N/A' }}</span>
+                            </div>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold mb-4">Assignment Details</h3>
+                            <div class="mb-2">
+                                <span class="text-gray-600">Assigned Since:</span>
+                                <span class="font-medium">{{ assignment.assigned_date.strftime('%B %d, %Y') if assignment and assignment.assigned_date else 'N/A' }}</span>
+                            </div>
+                            <div class="mb-2">
+                                <span class="text-gray-600">Assignment Type:</span>
+                                <span class="font-medium">{{ request_data.request_type if request_data and request_data.request_type else 'Standard' }}</span>
+                            </div>
+                            <div class="mb-2">
+                                <span class="text-gray-600">Status:</span>
+                                <span class="font-medium">Active</span>
+                            </div>
                         </div>
                     </div>
                     
-                    <div>
-                        <h4 class="text-sm font-medium text-gray-500 mb-2">Initial Description</h4>
-                        <p class="text-gray-700 bg-gray-50 p-3 rounded">{{ request_data.issue_description }}</p>
-                    </div>
-                {% endif %}
-            </div>
-            
-            <!-- Stats Card -->
-            <div class="space-y-4">
-                <div class="bg-white p-6 rounded shadow">
-                    <h3 class="text-xl font-medium mb-4">Session Statistics</h3>
-                    
-                    <div class="space-y-4">
-                        <div>
-                            <div class="flex justify-between items-center mb-1">
-                                <span class="text-sm font-medium text-gray-500">Completed Sessions</span>
-                                <span class="text-sm font-medium">{{ stats.total_sessions }}</span>
+                    <!-- Student Statistics -->
+                    <div class="mt-6">
+                        <h3 class="text-xl font-bold mb-4">Student Statistics</h3>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div class="bg-blue-50 p-3 rounded">
+                                <div class="text-blue-500 font-bold text-2xl">{{ stats.total_sessions }}</div>
+                                <div class="text-sm text-blue-700">Sessions Completed</div>
                             </div>
-                            <div class="w-full bg-gray-200 rounded-full h-2">
-                                <div class="bg-blue-500 h-2 rounded-full" style="width: {{ (stats.total_sessions / 10) * 100 }}%;"></div>
+                            <div class="bg-red-50 p-3 rounded">
+                                <div class="text-red-500 font-bold text-2xl">{{ stats.cancelled_sessions }}</div>
+                                <div class="text-sm text-red-700">Cancelled Sessions</div>
                             </div>
-                        </div>
-                        
-                        <div>
-                            <div class="flex justify-between items-center mb-1">
-                                <span class="text-sm font-medium text-gray-500">Cancelled Sessions</span>
-                                <span class="text-sm font-medium">{{ stats.cancelled_sessions }}</span>
+                            <div class="bg-orange-50 p-3 rounded">
+                                <div class="text-orange-500 font-bold text-2xl">{{ stats.rescheduled_sessions }}</div>
+                                <div class="text-sm text-orange-700">Rescheduled Sessions</div>
                             </div>
-                            <div class="w-full bg-gray-200 rounded-full h-2">
-                                <div class="bg-red-500 h-2 rounded-full" style="width: {{ (stats.cancelled_sessions / 10) * 100 }}%;"></div>
-                            </div>
-                        </div>
-                        
-                        <div>
-                            <div class="flex justify-between items-center mb-1">
-                                <span class="text-sm font-medium text-gray-500">Rescheduled Sessions</span>
-                                <span class="text-sm font-medium">{{ stats.rescheduled_sessions }}</span>
-                            </div>
-                            <div class="w-full bg-gray-200 rounded-full h-2">
-                                <div class="bg-yellow-500 h-2 rounded-full" style="width: {{ (stats.rescheduled_sessions / 10) * 100 }}%;"></div>
+                            <div class="bg-green-50 p-3 rounded">
+                                <div class="text-green-500 font-bold text-2xl">{{ stats.days_since_last_session if stats.days_since_last_session is not none else 'N/A' }}</div>
+                                <div class="text-sm text-green-700">Days Since Last Session</div>
                             </div>
                         </div>
                     </div>
-                </div>
-                
-                <!-- Upcoming Sessions -->
-                <div class="bg-white p-6 rounded shadow">
-                    <h3 class="text-xl font-medium mb-4">Upcoming Sessions</h3>
-                    
-                    {% if upcoming_appointments and upcoming_appointments|length > 0 %}
-                        {% for appt in upcoming_appointments %}
-                            <div class="{% if not loop.last %}mb-4 pb-4 border-b border-gray-200{% endif %}">
-                                <div class="flex justify-between items-start">
-                                    <div>
-                                        <p class="font-medium">{{ appt.date.strftime('%A, %B %d, %Y') }}</p>
-                                        <p class="text-sm text-gray-500">{{ appt.time }} - {{ appt.session_type }}</p>
-                                    </div>
-                                    <span class="status-badge status-scheduled">Scheduled</span>
-                                </div>
-                            </div>
-                        {% endfor %}
-                    {% else %}
-                        <p class="text-gray-500 text-center py-2">No upcoming sessions scheduled</p>
-                        <div class="text-center mt-2">
-                            <a href="{{ url_for('therapist.schedule_appointment', student_id=student._id) }}" class="text-sm text-blue-500 hover:text-blue-700">
-                                <i class="fas fa-calendar-plus mr-1"></i> Schedule Now
-                            </a>
-                        </div>
-                    {% endif %}
                 </div>
             </div>
         </div>
         
         <!-- Tabs Navigation -->
-        <div class="mb-6">
-            <div class="border-b border-gray-200">
-                <nav class="-mb-px flex space-x-8">
-                    <a href="#" class="tab-btn active whitespace-nowrap py-4 px-1 border-b-2 border-blue-500 font-medium text-sm text-blue-600" data-tab="sessions">
-                        Session History
-                    </a>
-                    <a href="#" class="tab-btn whitespace-nowrap py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300" data-tab="notes">
-                        Session Notes
-                    </a>
-                    <a href="#" class="tab-btn whitespace-nowrap py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300" data-tab="messages">
-                        Recent Messages
-                    </a>
-                    <a href="#" class="tab-btn whitespace-nowrap py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300" data-tab="resources">
-                        Shared Resources
-                    </a>
-                </nav>
-            </div>
+        <div class="mb-6 overflow-x-auto">
+            <ul class="flex border-b">
+                <li class="mr-1">
+                    <a href="#appointments" class="inline-block py-2 px-4 text-blue-500 border-b-2 border-blue-500 font-medium" onclick="showTab('appointments'); return false;">Appointments</a>
+                </li>
+                <li class="mr-1">
+                    <a href="#notes" class="inline-block py-2 px-4 text-gray-500 font-medium" onclick="showTab('notes'); return false;">Session Notes</a>
+                </li>
+                <li class="mr-1">
+                    <a href="#resources" class="inline-block py-2 px-4 text-gray-500 font-medium" onclick="showTab('resources'); return false;">Shared Resources</a>
+                </li>
+                <li class="mr-1">
+                    <a href="#messages" class="inline-block py-2 px-4 text-gray-500 font-medium" onclick="showTab('messages'); return false;">Recent Messages</a>
+                </li>
+            </ul>
         </div>
         
-        <!-- Tab Content: Session History -->
-        <div id="sessions-tab" class="tab-content active">
-            <div class="bg-white rounded shadow overflow-hidden">
-                <div class="px-6 py-4 border-b border-gray-200">
-                    <h3 class="text-lg font-medium">Session History</h3>
+        <!-- Appointments Tab -->
+        <div id="appointments" class="tab-content">
+            <div class="mb-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold">Upcoming Appointments</h3>
+                    <a href="{{ url_for('therapist.schedule_appointment', student_id=student._id) }}" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm">
+                        <i class="fas fa-plus mr-1"></i> New Appointment
+                    </a>
                 </div>
                 
-                {% if past_appointments and past_appointments|length > 0 %}
-                    <div class="divide-y divide-gray-200">
-                        {% for appt in past_appointments %}
-                            <div class="p-6">
-                                <div class="flex justify-between items-start mb-3">
-                                    <div>
-                                        <h4 class="font-medium">{{ appt.date.strftime('%A, %B %d, %Y') }}</h4>
-                                        <p class="text-sm text-gray-500">{{ appt.time }} - {{ appt.session_type }}</p>
-                                    </div>
-                                    <span class="status-badge status-{{ appt.status }}">{{ appt.status|title }}</span>
-                                </div>
-                                
-                                {% if appt.status == 'completed' %}
-                                    {% if session_notes and session_notes[appt._id|string] %}
-                                        <div class="mt-3">
-                                            <h5 class="text-sm font-medium text-gray-700 mb-1">Session Summary</h5>
-                                            <p class="text-sm text-gray-600">{{ session_notes[appt._id|string].summary|truncate(150) }}</p>
-                                            <div class="mt-2">
-                                                <a href="#" class="text-sm text-blue-500 hover:text-blue-700" onclick="viewNotes('{{ appt._id }}'); return false;">
-                                                    View Complete Notes
-                                                </a>
-                                            </div>
-                                        </div>
-                                    {% else %}
-                                        <div class="mt-3 text-center py-3 bg-yellow-50 rounded text-sm text-yellow-700">
-                                            Session notes have not been added yet
-                                            <a href="{{ url_for('therapist.add_session_notes', appointment_id=appt._id) }}" class="ml-2 font-medium text-yellow-700 hover:text-yellow-900">
-                                                Add Notes
-                                            </a>
-                                        </div>
-                                    {% endif %}
-                                {% elif appt.status == 'cancelled' %}
-                                    <div class="mt-3 text-sm text-gray-500">
-                                        <p><strong>Cancellation Reason:</strong> {{ appt.cancellation_reason or "No reason provided" }}</p>
-                                    </div>
-                                {% endif %}
-                            </div>
-                        {% endfor %}
+                {% if upcoming_appointments %}
+                    <div class="bg-white rounded shadow overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date & Time</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                {% for appointment in upcoming_appointments %}
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="font-medium text-gray-900">{{ appointment.date.strftime('%B %d, %Y') }}</div>
+                                        <div class="text-sm text-gray-500">{{ appointment.time }}</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="text-gray-900">{{ appointment.session_type|title }}</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                            {{ appointment.status|title }}
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                        <a href="{{ url_for('therapist.appointments') }}" class="text-blue-600 hover:text-blue-900 mr-3">View</a>
+                                        <a href="{{ url_for('therapist.complete_appointment', appointment_id=appointment._id) }}" class="text-indigo-600 hover:text-indigo-900 mr-3" onclick="return confirm('Are you sure you want to mark this appointment as completed?')">Complete</a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
                     </div>
                 {% else %}
-                    <div class="p-6 text-center">
-                        <p class="text-gray-500">No past sessions found</p>
-                    </div>
-                {% endif %}
-            </div>
-        </div>
-        
-        <!-- Tab Content: Session Notes -->
-        <div id="notes-tab" class="tab-content">
-            <div class="bg-white rounded shadow overflow-hidden">
-                <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-                    <h3 class="text-lg font-medium">Session Notes</h3>
-                    <a href="{{ url_for('therapist.add_session_notes', appointment_id=past_appointments[0]._id) if past_appointments else '#' }}" class="inline-flex items-center px-3 py-1 border border-transparent text-sm leading-5 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-500 focus:outline-none focus:border-blue-700 focus:shadow-outline-blue transition ease-in-out duration-150 {{ 'opacity-50 cursor-not-allowed' if not past_appointments }}">
-                        <i class="fas fa-plus mr-1"></i> Add Notes
-                    </a>
-                </div>
-                
-                {% if session_notes and session_notes|length > 0 %}
-                    <div class="divide-y divide-gray-200">
-                        {% for appt_id, note in session_notes.items() %}
-                            {% set appointment = namespace(found=none) %}
-                            {% for appt in past_appointments %}
-                                {% if appt._id|string == appt_id %}
-                                    {% set appointment.found = appt %}
-                                {% endif %}
-                            {% endfor %}
-                            
-                            <div class="p-6">
-                                <div class="flex justify-between items-start mb-4">
-                                    <div>
-                                        <h4 class="font-medium">Session on {{ appointment.found.date.strftime('%B %d, %Y') if appointment.found else 'Unknown Date' }}</h4>
-                                        <p class="text-sm text-gray-500">Created: {{ note.created_at.strftime('%B %d, %Y') }}</p>
-                                    </div>
-                                    <div>
-                                        <a href="{{ url_for('therapist.add_session_notes', appointment_id=appt_id) }}" class="text-sm text-blue-500 hover:text-blue-700">
-                                            <i class="fas fa-edit mr-1"></i> Edit
-                                        </a>
-                                    </div>
-                                </div>
-                                
-                                <div>
-                                    <h5 class="text-sm font-medium text-gray-700 mb-1">Summary</h5>
-                                    <p class="text-sm text-gray-600 mb-3">{{ note.summary }}</p>
-                                    
-                                    {% if note.topics_discussed %}
-                                        <h5 class="text-sm font-medium text-gray-700 mb-1">Topics Discussed</h5>
-                                        <ul class="list-disc list-inside text-sm text-gray-600 mb-3">
-                                            {% for topic in note.topics_discussed %}
-                                                <li>{{ topic }}</li>
-                                            {% endfor %}
-                                        </ul>
-                                    {% endif %}
-                                    
-                                    {% if note.progress %}
-                                        <h5 class="text-sm font-medium text-gray-700 mb-1">Progress</h5>
-                                        <p class="text-sm text-gray-600 mb-3">{{ note.progress }}</p>
-                                    {% endif %}
-                                    
-                                    {% if note.action_items %}
-                                        <h5 class="text-sm font-medium text-gray-700 mb-1">Action Items & Homework</h5>
-                                        <ul class="list-disc list-inside text-sm text-gray-600 mb-3">
-                                            {% for item in note.action_items %}
-                                                <li>{{ item }}</li>
-                                            {% endfor %}
-                                        </ul>
-                                    {% endif %}
-                                    
-                                    {% if note.next_steps %}
-                                        <h5 class="text-sm font-medium text-gray-700 mb-1">Next Steps</h5>
-                                        <p class="text-sm text-gray-600">{{ note.next_steps }}</p>
-                                    {% endif %}
-                                </div>
-                                
-                                {% if note.shared_resources and note.shared_resources|length > 0 %}
-                                    <div class="mt-4 pt-4 border-t border-gray-200">
-                                        <h5 class="text-sm font-medium text-gray-700 mb-2">Shared Resources</h5>
-                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                            {% for resource in note.shared_resources %}
-                                                <div class="border border-gray-200 rounded p-3 text-sm">
-                                                    <div class="flex items-center">
-                                                        {% if resource.type == 'article' %}
-                                                            <i class="fas fa-newspaper text-purple-500 mr-2"></i>
-                                                        {% elif resource.type == 'video' %}
-                                                            <i class="fas fa-video text-red-500 mr-2"></i>
-                                                        {% elif resource.type == 'exercise' %}
-                                                            <i class="fas fa-dumbbell text-green-500 mr-2"></i>
-                                                        {% else %}
-                                                            <i class="fas fa-file-alt text-blue-500 mr-2"></i>
-                                                        {% endif %}
-                                                        <span class="font-medium">{{ resource.title }}</span>
-                                                    </div>
-                                                    <p class="mt-1 text-gray-600">{{ resource.description|truncate(100) }}</p>
-                                                    <a href="{{ resource.url }}" target="_blank" class="mt-2 text-blue-500 hover:text-blue-700 inline-block">
-                                                        View Resource
-                                                    </a>
-                                                </div>
-                                            {% endfor %}
-                                        </div>
-                                    </div>
-                                {% endif %}
+                    <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-exclamation-circle text-yellow-400"></i>
                             </div>
-                        {% endfor %}
-                    </div>
-                {% else %}
-                    <div class="p-6 text-center">
-                        <p class="text-gray-500">No session notes have been created</p>
-                        {% if past_appointments and past_appointments|length > 0 %}
-                            <a href="{{ url_for('therapist.add_session_notes', appointment_id=past_appointments[0]._id) }}" class="mt-2 inline-block text-blue-500 hover:text-blue-700">
-                                <i class="fas fa-plus mr-1"></i> Add First Session Note
-                            </a>
-                        {% else %}
-                            <p class="mt-2 text-sm text-gray-500">Complete a session first to add notes</p>
-                        {% endif %}
-                    </div>
-                {% endif %}
-            </div>
-        </div>
-        
-        <!-- Tab Content: Recent Messages -->
-        <div id="messages-tab" class="tab-content">
-            <div class="bg-white rounded shadow overflow-hidden">
-                <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-                    <h3 class="text-lg font-medium">Recent Messages</h3>
-                    <a href="{{ url_for('therapist.chat', student_id=student._id) }}" class="text-sm text-blue-500 hover:text-blue-700">
-                        <i class="fas fa-external-link-alt mr-1"></i> Open Chat
-                    </a>
-                </div>
-                
-                {% if recent_messages and recent_messages|length > 0 %}
-                    <div class="divide-y divide-gray-200">
-                        {% for message in recent_messages %}
-                            <div class="p-6">
-                                <div class="flex justify-between items-start mb-2">
-                                    <span class="text-sm font-medium {{ 'text-blue-600' if message.sender == 'therapist' else 'text-green-600' }}">
-                                        {{ message.sender|title }}
-                                    </span>
-                                    <span class="text-xs text-gray-500">{{ message.timestamp.strftime('%B %d, %Y at %I:%M %p') }}</span>
-                                </div>
-                                <p class="text-gray-700">{{ message.message }}</p>
-                            </div>
-                        {% endfor %}
-                    </div>
-                    
-                    <div class="px-6 py-4 bg-gray-50 border-t border-gray-200">
-                        <a href="{{ url_for('therapist.chat', student_id=student._id) }}" class="text-blue-500 hover:text-blue-700">
-                            View all messages
-                        </a>
-                    </div>
-                {% else %}
-                    <div class="p-6 text-center">
-                        <p class="text-gray-500">No messages found</p>
-                        <a href="{{ url_for('therapist.chat', student_id=student._id) }}" class="mt-2 inline-block text-blue-500 hover:text-blue-700">
-                            <i class="fas fa-comments mr-1"></i> Start Conversation
-                        </a>
-                    </div>
-                {% endif %}
-            </div>
-        </div>
-        
-        <!-- Tab Content: Shared Resources -->
-        <div id="resources-tab" class="tab-content">
-            <div class="bg-white rounded shadow overflow-hidden">
-                <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-                    <h3 class="text-lg font-medium">Shared Resources</h3>
-                    <button type="button" class="inline-flex items-center px-3 py-1 border border-transparent text-sm leading-5 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-500 focus:outline-none focus:border-blue-700 focus:shadow-outline-blue transition ease-in-out duration-150" onclick="showShareResourceModal()">
-                        <i class="fas fa-share mr-1"></i> Share Resource
-                    </button>
-                </div>
-                
-                {% if shared_resources and shared_resources|length > 0 %}
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-6">
-                        {% for resource in shared_resources %}
-                            <div class="border border-gray-200 rounded-lg p-4">
-                                <div class="flex items-center mb-3">
-                                    {% if resource.type == 'article' %}
-                                        <div class="bg-purple-100 p-3 rounded-full text-purple-500 mr-3">
-                                            <i class="fas fa-newspaper"></i>
-                                        </div>
-                                    {% elif resource.type == 'video' %}
-                                        <div class="bg-red-100 p-3 rounded-full text-red-500 mr-3">
-                                            <i class="fas fa-video"></i>
-                                        </div>
-                                    {% elif resource.type == 'exercise' %}
-                                        <div class="bg-green-100 p-3 rounded-full text-green-500 mr-3">
-                                            <i class="fas fa-dumbbell"></i>
-                                        </div>
-                                    {% else %}
-                                        <div class="bg-blue-100 p-3 rounded-full text-blue-500 mr-3">
-                                            <i class="fas fa-file-alt"></i>
-                                        </div>
-                                    {% endif %}
-                                    
-                                    <div>
-                                        <h4 class="font-medium">{{ resource.title }}</h4>
-                                        <p class="text-sm text-gray-500">Shared on {{ resource.shared_at.strftime('%B %d, %Y') }}</p>
-                                    </div>
-                                </div>
-                                
-                                <p class="text-sm text-gray-600 mb-3">{{ resource.description }}</p>
-                                
-                                <div class="flex justify-between items-center">
-                                    <a href="{{ resource.url }}" target="_blank" class="text-blue-500 hover:text-blue-700 text-sm">
-                                        <i class="fas fa-external-link-alt mr-1"></i> View Resource
+                            <div class="ml-3">
+                                <p class="text-sm text-yellow-700">
+                                    No upcoming appointments scheduled.
+                                    <a href="{{ url_for('therapist.schedule_appointment', student_id=student._id) }}" class="font-medium underline text-yellow-700 hover:text-yellow-600">
+                                        Schedule a new appointment
                                     </a>
-                                    
-                                    {% if resource.custom_message %}
-                                        <button type="button" class="text-gray-500 hover:text-gray-700 text-sm" onclick="showMessage('{{ resource.custom_message }}')">
-                                            <i class="fas fa-comment-alt mr-1"></i> View Note
-                                        </button>
-                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div>
+                <h3 class="text-xl font-bold mb-4">Past Appointments</h3>
+                {% if past_appointments %}
+                    <div class="bg-white rounded shadow overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date & Time</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Session Notes</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                {% for appointment in past_appointments %}
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="font-medium text-gray-900">{{ appointment.date.strftime('%B %d, %Y') }}</div>
+                                        <div class="text-sm text-gray-500">{{ appointment.time }}</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="text-gray-900">{{ appointment.session_type|title }}</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                                            {{ appointment.status|title }}
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        {% if session_notes and session_notes.get(appointment._id|string) %}
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                                Added
+                                            </span>
+                                        {% else %}
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                                                Missing
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                        <a href="{{ url_for('therapist.appointments') }}" class="text-blue-600 hover:text-blue-900 mr-3">View</a>
+                                        {% if session_notes and session_notes.get(appointment._id|string) %}
+                                            <a href="{{ url_for('therapist.add_session_notes', appointment_id=appointment._id) }}" class="text-indigo-600 hover:text-indigo-900">Edit Notes</a>
+                                        {% else %}
+                                            <a href="{{ url_for('therapist.add_session_notes', appointment_id=appointment._id) }}" class="text-green-600 hover:text-green-900">Add Notes</a>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="bg-gray-50 border-l-4 border-gray-400 p-4">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-info-circle text-gray-400"></i>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm text-gray-700">
+                                    No past appointments found.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Session Notes Tab -->
+        <div id="notes" class="tab-content hidden">
+            <h3 class="text-xl font-bold mb-4">Session Notes</h3>
+            
+            {% if session_notes %}
+                {% for appointment_id, note in session_notes.items() %}
+                    {% set appointment = None %}
+                    {% for a in past_appointments %}
+                        {% if a._id|string == appointment_id %}
+                            {% set appointment = a %}
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if appointment %}
+                        <div class="bg-white rounded shadow p-6 mb-4">
+                            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
+                                <div>
+                                    <h4 class="text-lg font-semibold">Session on {{ appointment.date.strftime('%B %d, %Y') }}</h4>
+                                    <p class="text-sm text-gray-500">{{ appointment.time }} - {{ appointment.session_type|title }}</p>
+                                </div>
+                                <a href="{{ url_for('therapist.add_session_notes', appointment_id=appointment._id) }}" class="text-blue-600 hover:text-blue-800 mt-2 sm:mt-0">
+                                    <i class="fas fa-edit"></i> Edit
+                                </a>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <h5 class="font-medium text-gray-700 mb-2">Session Summary</h5>
+                                <p class="text-gray-800">{{ note.summary }}</p>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <h5 class="font-medium text-gray-700 mb-2">Progress Notes</h5>
+                                <p class="text-gray-800">{{ note.progress_notes if note.progress_notes else note.progress }}</p>
+                            </div>
+                            
+                            {% if note.action_items %}
+                                <div class="mb-4">
+                                    <h5 class="font-medium text-gray-700 mb-2">Action Items</h5>
+                                    <ul class="list-disc pl-5 text-gray-800">
+                                        {% if note.action_items is string %}
+                                            {% for item in note.action_items.split('\n') %}
+                                                {% if item.strip() %}
+                                                    <li>{{ item }}</li>
+                                                {% endif %}
+                                            {% endfor %}
+                                        {% else %}
+                                            {% for item in note.action_items %}
+                                                {% if item %}
+                                                    <li>{{ item }}</li>
+                                                {% endif %}
+                                            {% endfor %}
+                                        {% endif %}
+                                    </ul>
+                                </div>
+                            {% endif %}
+                            
+                            {% if note.follow_up or note.next_steps %}
+                                <div>
+                                    <h5 class="font-medium text-gray-700 mb-2">Follow-up Plan</h5>
+                                    <p class="text-gray-800">{{ note.follow_up if note.follow_up else note.next_steps }}</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            {% else %}
+                <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-exclamation-circle text-yellow-400"></i>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm text-yellow-700">
+                                No session notes have been added yet.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+        
+        <!-- Shared Resources Tab -->
+        <div id="resources" class="tab-content hidden">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3">
+                <h3 class="text-xl font-bold">Shared Resources</h3>
+                <a href="{{ url_for('therapist.resources') }}" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
+                    <i class="fas fa-plus mr-2"></i> Share New Resource
+                </a>
+            </div>
+            
+            {% if shared_resources %}
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {% for resource in shared_resources %}
+                        <div class="bg-white rounded shadow p-4">
+                            <div class="flex justify-between items-start mb-2">
+                                <h4 class="font-semibold text-lg text-gray-800">{{ resource.title }}</h4>
+                                <div class="text-sm text-gray-500">{{ resource.shared_at.strftime('%b %d, %Y') }}</div>
+                            </div>
+                            <div class="mb-3 text-gray-700">
+                                <p>{{ resource.description|truncate(100) }}</p>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <a href="{{ resource.url }}" target="_blank" class="text-blue-600 hover:text-blue-800">
+                                    <i class="fas fa-external-link-alt mr-1"></i> View Resource
+                                </a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-exclamation-circle text-yellow-400"></i>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm text-yellow-700">
+                                No resources have been shared with this student yet.
+                                <a href="{{ url_for('therapist.resources') }}" class="font-medium underline text-yellow-700 hover:text-yellow-600">
+                                    Share a resource
+                                </a>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+        
+        <!-- Recent Messages Tab -->
+        <div id="messages" class="tab-content hidden">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3">
+                <h3 class="text-xl font-bold">Recent Messages</h3>
+                <a href="{{ url_for('therapist.chat', student_id=student._id) }}" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded">
+                    <i class="fas fa-comment mr-2"></i> View Full Chat
+                </a>
+            </div>
+            
+            {% if recent_messages %}
+                <div class="bg-white rounded shadow overflow-hidden">
+                    <div class="p-4 space-y-4">
+                        {% for message in recent_messages %}
+                            <div class="flex {% if message.sender_id == therapist_id or message.sender == 'therapist' %}justify-end{% endif %}">
+                                <div class="max-w-xs sm:max-w-md md:max-w-lg rounded-lg p-3 {% if message.sender_id == therapist_id or message.sender == 'therapist' %}bg-blue-100 text-blue-800{% else %}bg-gray-100 text-gray-800{% endif %}">
+                                    <p class="mb-1">{{ message.message }}</p>
+                                    <p class="text-xs text-gray-500 text-right">{{ message.timestamp.strftime('%b %d, %Y %I:%M %p') }}</p>
                                 </div>
                             </div>
                         {% endfor %}
                     </div>
-                {% else %}
-                    <div class="p-6 text-center">
-                        <p class="text-gray-500">No resources have been shared with this student</p>
-                        <button type="button" class="mt-2 inline-block text-blue-500 hover:text-blue-700" onclick="showShareResourceModal()">
-                            <i class="fas fa-share mr-1"></i> Share First Resource
-                        </button>
+                </div>
+            {% else %}
+                <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-exclamation-circle text-yellow-400"></i>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm text-yellow-700">
+                                No messages have been exchanged with this student yet.
+                                <a href="{{ url_for('therapist.chat', student_id=student._id) }}" class="font-medium underline text-yellow-700 hover:text-yellow-600">
+                                    Start a conversation
+                                </a>
+                            </p>
+                        </div>
                     </div>
-                {% endif %}
-            </div>
+                </div>
+            {% endif %}
         </div>
     </main>
-    
-    <!-- Share Resource Modal -->
-    <div id="shareResourceModal" class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center hidden z-50">
-        <div class="bg-white rounded-lg max-w-2xl w-full mx-4">
-            <div class="px-6 py-4 border-b border-gray-200">
-                <h3 class="text-lg font-medium">Share Resource with {{ student.first_name }}</h3>
-            </div>
-            
-            <form action="{{ url_for('therapist.share_resource') }}" method="POST">
-                <input type="hidden" name="student_id" value="{{ student._id }}">
-                
-                <div class="px-6 py-4">
-                    <div class="mb-4">
-                        <label for="resource_id" class="block text-sm font-medium text-gray-700 mb-1">Select Resource</label>
-                        <select id="resource_id" name="resource_id" class="w-full px-3 py-2 border border-gray-300 rounded-md" required>
-                            <option value="">-- Select a resource --</option>
-                            
-                            <optgroup label="System Resources">
-                                {% for resource in available_resources %}
-                                    <option value="{{ resource._id }}">{{ resource.title }} ({{ resource.type|title }})</option>
-                                {% endfor %}
-                            </optgroup>
-                            
-                            {% if custom_resources %}
-                                <optgroup label="Your Custom Resources">
-                                    {% for resource in custom_resources %}
-                                        <option value="{{ resource._id }}">{{ resource.title }} ({{ resource.type|title }})</option>
-                                    {% endfor %}
-                                </optgroup>
-                            {% endif %}
-                        </select>
-                    </div>
-                    
-                    <div class="mb-4">
-                        <label for="message" class="block text-sm font-medium text-gray-700 mb-1">Add a Message (Optional)</label>
-                        <textarea id="message" name="message" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md" placeholder="Add a note about why you're sharing this resource..."></textarea>
-                    </div>
-                </div>
-                
-                <div class="px-6 py-3 bg-gray-50 flex justify-end space-x-2">
-                    <button type="button" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50" onclick="hideShareResourceModal()">
-                        Cancel
-                    </button>
-                    <button type="submit" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">
-                        Share Resource
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-    
-    <!-- View Message Modal -->
-    <div id="viewMessageModal" class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center hidden z-50">
-        <div class="bg-white rounded-lg max-w-md w-full mx-4">
-            <div class="px-6 py-4 border-b border-gray-200">
-                <h3 class="text-lg font-medium">Resource Note</h3>
-            </div>
-            
-            <div class="px-6 py-4">
-                <p id="resourceMessage" class="text-gray-700"></p>
-            </div>
-            
-            <div class="px-6 py-3 bg-gray-50 flex justify-end">
-                <button type="button" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50" onclick="hideViewMessageModal()">
-                    Close
-                </button>
-            </div>
-        </div>
-    </div>
 
+    <!-- JavaScript for tab switching -->
     <script>
-        // Tab navigation
-        document.querySelectorAll('.tab-btn').forEach(tab => {
-            tab.addEventListener('click', function(e) {
-                e.preventDefault();
-                
-                // Remove active class from all tabs
-                document.querySelectorAll('.tab-btn').forEach(t => {
-                    t.classList.remove('active', 'border-blue-500', 'text-blue-600');
-                    t.classList.add('border-transparent', 'text-gray-500');
-                });
-                
-                // Add active class to clicked tab
-                this.classList.add('active', 'border-blue-500', 'text-blue-600');
-                this.classList.remove('border-transparent', 'text-gray-500');
-                
-                // Hide all tab content
-                document.querySelectorAll('.tab-content').forEach(content => {
-                    content.classList.remove('active');
-                });
-                
-                // Show corresponding tab content
-                document.getElementById(this.getAttribute('data-tab') + '-tab').classList.add('active');
-            });
-        });
-        
-        // View notes function (for clicking on session notes from history tab)
-        function viewNotes(appointmentId) {
-            // Switch to notes tab
-            document.querySelectorAll('.tab-btn').forEach(t => {
-                t.classList.remove('active', 'border-blue-500', 'text-blue-600');
-                t.classList.add('border-transparent', 'text-gray-500');
+        function showTab(tabId) {
+            // Hide all tab content
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.add('hidden');
             });
             
-            document.querySelector('[data-tab="notes"]').classList.add('active', 'border-blue-500', 'text-blue-600');
-            document.querySelector('[data-tab="notes"]').classList.remove('border-transparent', 'text-gray-500');
+            // Show the selected tab content
+            document.getElementById(tabId).classList.remove('hidden');
             
-            // Hide all tab content and show notes
-            document.querySelectorAll('.tab-content').forEach(content => {
-                content.classList.remove('active');
+            // Update active tab styles
+            document.querySelectorAll('.flex.border-b a').forEach(link => {
+                link.classList.remove('text-blue-500', 'border-b-2', 'border-blue-500');
+                link.classList.add('text-gray-500');
             });
             
-            document.getElementById('notes-tab').classList.add('active');
+            // Set active tab style
+            document.querySelector(`a[href="#${tabId}"]`).classList.remove('text-gray-500');
+            document.querySelector(`a[href="#${tabId}"]`).classList.add('text-blue-500', 'border-b-2', 'border-blue-500');
             
-            // TODO: Scroll to the specific note (would need element IDs for each note)
+            // Store active tab in sessionStorage
+            sessionStorage.setItem('activeStudentTab', tabId);
         }
         
-        // Share resource modal functions
-        function showShareResourceModal() {
-            document.getElementById('shareResourceModal').classList.remove('hidden');
-        }
-        
-        function hideShareResourceModal() {
-            document.getElementById('shareResourceModal').classList.add('hidden');
-        }
-        
-        // View message modal functions
-        function showMessage(message) {
-            document.getElementById('resourceMessage').textContent = message;
-            document.getElementById('viewMessageModal').classList.remove('hidden');
-        }
-        
-        function hideViewMessageModal() {
-            document.getElementById('viewMessageModal').classList.add('hidden');
-        }
-        
-        // Close modals when clicking outside
-        window.addEventListener('click', function(e) {
-            if (e.target === document.getElementById('shareResourceModal')) {
-                hideShareResourceModal();
-            }
-            
-            if (e.target === document.getElementById('viewMessageModal')) {
-                hideViewMessageModal();
+        // Set default tab or restore from sessionStorage
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedTab = sessionStorage.getItem('activeStudentTab');
+            if (savedTab && document.getElementById(savedTab)) {
+                showTab(savedTab);
+            } else if (!document.querySelector('.tab-content:not(.hidden)')) {
+                showTab('appointments');
             }
         });
     </script>

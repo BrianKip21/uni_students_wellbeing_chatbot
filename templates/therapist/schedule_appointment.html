@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Schedule Appointment | Wellbeing Assistant</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css"> 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+
+    <style>
+        {% if settings.theme_mode == 'dark' %}
+        /* Dark mode styles */
+        body {
+            background-color: #121212 !important;
+            color: #e0e0e0 !important;
+        }
+        
+        .bg-white {
+            background-color: #1e1e1e !important;
+        }
+        
+        .text-gray-700, .text-gray-800, .text-gray-900 {
+            color: #e0e0e0 !important;
+        }
+        
+        .text-gray-500, .text-gray-600 {
+            color: #a0a0a0 !important;
+        }
+        
+        .bg-gray-50, .bg-gray-100, .bg-gray-200 {
+            background-color: #2a2a2a !important;
+        }
+        
+        .border-gray-200, .border-gray-300 {
+            border-color: #333 !important;
+        }
+
+        .hover\:bg-gray-100:hover {
+            background-color: #333333 !important;
+        }
+
+        .hover\:bg-gray-200:hover {
+            background-color: #444444 !important;
+        }
+
+        .hover\:bg-green-200:hover {
+            background-color: #0d503c !important;
+        }
+
+        .hover\:bg-blue-200:hover {
+            background-color: #0d365e !important;
+        }
+
+        .bg-green-100 {
+            background-color: #064e3b !important;
+        }
+
+        .bg-blue-100 {
+            background-color: #0c4a6e !important;
+        }
+        {% endif %}
+        
+        {% if settings.contrast == 'high' %}
+        /* High contrast styles */
+        body {
+            background-color: #ffffff !important;
+            color: #000000 !important;
+        }
+        
+        .text-gray-500, .text-gray-600, .text-gray-700, .text-gray-800, .text-gray-900 {
+            color: #000000 !important;
+        }
+        
+        .bg-gray-800 {
+            background-color: #000000 !important;
+        }
+        
+        .text-gray-200 {
+            color: #ffffff !important;
+        }
+        
+        input, select, button {
+            border: 2px solid #000000 !important;
+        }
+
+        .bg-green-100, .bg-blue-100, .bg-gray-100 {
+            background-color: #ffffff !important;
+            border: 2px solid #000000 !important;
+        }
+
+        .text-green-500, .text-blue-500, .text-purple-500 {
+            color: #000000 !important;
+        }
+        {% endif %}
+        
+        {% if settings.text_size == 'lg' %}
+        /* Large text */
+        body {
+            font-size: 1.125rem !important;
+        }
+        
+        .text-sm {
+            font-size: 0.9375rem !important;
+        }
+        
+        .text-lg, .text-xl, .text-2xl, .text-3xl {
+            font-size: 1.3125rem !important;
+        }
+        {% elif settings.text_size == 'xl' %}
+        /* Extra large text */
+        body {
+            font-size: 1.25rem !important;
+        }
+        
+        .text-sm {
+            font-size: 1.0625rem !important;
+        }
+        
+        .text-lg, .text-xl {
+            font-size: 1.5rem !important;
+        }
+
+        .text-2xl, .text-3xl {
+            font-size: 1.75rem !important;
+        }
+        {% endif %}
+
+        /* Date picker styles */
+        .date-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+        }
+        
+        .date-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        
+        .date-card.selected {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+        }
+        
+        {% if settings.theme_mode == 'dark' %}
+        .date-card.selected {
+            border-color: #60a5fa;
+            background-color: #1e3a8a;
+        }
+        {% endif %}
+        
+        .time-slot {
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        
+        .time-slot:hover {
+            background-color: #eff6ff;
+            border-color: #3b82f6;
+        }
+        
+        .time-slot.selected {
+            background-color: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+        }
+        
+        {% if settings.theme_mode == 'dark' %}
+        .time-slot:hover {
+            background-color: #1e3a8a;
+            border-color: #60a5fa;
+        }
+        
+        .time-slot.selected {
+            background-color: #2563eb;
+            color: white;
+            border-color: #60a5fa;
+        }
+        {% endif %}
+    </style>
+</head>
+
+<body class="bg-gray-200 flex text-gray-900">
+    <!-- Sidebar Navigation -->
+    <aside class="w-64 h-screen bg-gray-800 text-gray-200 p-4 fixed">
+        <h1 class="text-2xl font-bold mb-6">Therapist Portal</h1>
+        <nav>
+            <ul class="space-y-4">
+                <li><a href="{{ url_for('therapist.index') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-chart-line"></i> Dashboard</a></li>
+                <li><a href="{{ url_for('therapist.appointments') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-calendar-alt"></i> Appointments</a></li>
+                <li><a href="{{ url_for('therapist.students') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-user-graduate"></i> My Students</a></li>
+                <li><a href="{{ url_for('therapist.calendar') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-calendar"></i> Calendar</a></li>
+                <li><a href="{{ url_for('therapist.resources') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-book-medical"></i> Resources</a></li>
+                <li><a href="{{ url_for('therapist.profile') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-user"></i> Profile</a></li>
+                <li><a href="{{ url_for('therapist.student_requests') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-user-plus"></i> Student Requests</a></li>
+                <li><a href="{{ url_for('therapist.reports') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-chart-bar"></i> Reports</a></li>
+                <li><a href="{{ url_for('auth.logout') }}" class="block p-2 hover:bg-gray-700 rounded mt-8"> <i class="fas fa-sign-out-alt"></i> Logout</a></li>
+            </ul>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="ml-64 p-8 w-full">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="bg-{% if category == 'error' %}red{% else %}blue{% endif %}-100 border-l-4 border-{% if category == 'error' %}red{% else %}blue{% endif %}-500 text-{% if category == 'error' %}red{% else %}blue{% endif %}-700 p-4 mb-6" role="alert">
+                        <p>{{ message }}</p>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    
+        <div class="flex justify-between items-center mb-6">
+            <div>
+                <h2 class="text-3xl font-bold text-gray-800">Schedule Appointment</h2>
+                <p class="text-gray-600">For: <span class="font-medium">{{ student.first_name }} {{ student.last_name }}</span></p>
+            </div>
+            <a href="{{ url_for('therapist.student_details', student_id=student._id) }}" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded">
+                <i class="fas fa-arrow-left mr-2"></i> Back to Student
+            </a>
+        </div>
+        
+        <!-- Appointment Form Container -->
+        <div class="bg-white rounded shadow p-6">
+            <form id="appointmentForm" action="{{ url_for('therapist.schedule_appointment', student_id=student._id) }}" method="POST">
+                <input type="hidden" id="date" name="date" value="">
+                <input type="hidden" id="time" name="time" value="">
+                
+                <!-- Date Selection -->
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold mb-4">1. Select a Date</h3>
+                    
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-3">
+                        {% for day in available_slots %}
+                            {% if day.slots %}
+                                <div class="date-card border border-gray-200 rounded p-3 text-center {% if loop.index == 1 %}selected{% endif %}" data-date="{{ day.date_str }}" onclick="selectDate(this, '{{ day.date_str }}')">
+                                    <div class="font-medium">{{ day.date.strftime('%a') }}</div>
+                                    <div class="text-xl font-bold mb-1">{{ day.date.strftime('%d') }}</div>
+                                    <div class="text-sm text-gray-600">{{ day.date.strftime('%b') }}</div>
+                                </div>
+                            {% else %}
+                                <div class="border border-gray-200 rounded p-3 text-center opacity-50 cursor-not-allowed">
+                                    <div class="font-medium">{{ day.date.strftime('%a') }}</div>
+                                    <div class="text-xl font-bold mb-1">{{ day.date.strftime('%d') }}</div>
+                                    <div class="text-sm text-gray-600">{{ day.date.strftime('%b') }}</div>
+                                    <div class="text-xs text-red-500 mt-1">No slots</div>
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <!-- Time Selection -->
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold mb-4">2. Select a Time</h3>
+                    
+                    {% for day in available_slots %}
+                        <div id="time-slots-{{ day.date_str }}" class="time-slots-container {% if loop.index != 1 %}hidden{% endif %}">
+                            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                                {% for slot in day.slots %}
+                                    <div class="time-slot border border-gray-200 rounded p-3 text-center {% if loop.index == 1 and loop.first %}selected{% endif %}" data-time="{{ slot }}" onclick="selectTime(this, '{{ slot }}')">
+                                        {{ slot }}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+                
+                <!-- Session Details -->
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold mb-4">3. Session Details</h3>
+                    
+                    <div class="mb-4">
+                        <label for="session_type" class="block text-gray-700 font-medium mb-2">Session Type</label>
+                        <select id="session_type" name="session_type" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500">
+                            <option value="online">Online</option>
+                            <option value="in-person">In-Person</option>
+                            <option value="phone">Phone</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="notes" class="block text-gray-700 font-medium mb-2">Session Notes (Optional)</label>
+                        <textarea id="notes" name="notes" rows="3" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500" placeholder="Any notes or preparation for this session..."></textarea>
+                    </div>
+                </div>
+                
+                <!-- Confirmation -->
+                <div class="bg-blue-50 border border-blue-200 rounded p-4 mb-6">
+                    <h4 class="font-semibold text-blue-700 mb-2">Appointment Summary</h4>
+                    <p class="mb-1">Student: <span class="font-medium">{{ student.first_name }} {{ student.last_name }}</span></p>
+                    <p class="mb-1">Date: <span id="summary-date" class="font-medium">{% if available_slots|length > 0 %}{{ available_slots[0].date.strftime('%A, %B %d, %Y') }}{% else %}Select a date{% endif %}</span></p>
+                    <p class="mb-1">Time: <span id="summary-time" class="font-medium">{% if available_slots|length > 0 and available_slots[0].slots|length > 0 %}{{ available_slots[0].slots[0] }}{% else %}Select a time{% endif %}</span></p>
+                    <p class="mb-1">Type: <span id="summary-type" class="font-medium">Online</span></p>
+                </div>
+                
+                <div class="flex justify-end space-x-3">
+                    <a href="{{ url_for('therapist.student_details', student_id=student._id) }}" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded">
+                        Cancel
+                    </a>
+                    <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
+                        Schedule Appointment
+                    </button>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <!-- JavaScript for interactive form -->
+    <script>
+        // Set initial values
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set default date and time
+            {% if available_slots|length > 0 and available_slots[0].slots|length > 0 %}
+                document.getElementById('date').value = '{{ available_slots[0].date_str }}';
+                document.getElementById('time').value = '{{ available_slots[0].slots[0] }}';
+            {% endif %}
+            
+            // Update type in summary when changed
+            document.getElementById('session_type').addEventListener('change', function() {
+                document.getElementById('summary-type').textContent = this.options[this.selectedIndex].text;
+            });
+        });
+        
+        // Function to select a date
+        function selectDate(element, date) {
+            // Update the hidden input
+            document.getElementById('date').value = date;
+            
+            // Update visual selection
+            const dateCards = document.querySelectorAll('.date-card');
+            dateCards.forEach(card => {
+                card.classList.remove('selected');
+            });
+            element.classList.add('selected');
+            
+            // Show corresponding time slots
+            const timeSlotContainers = document.querySelectorAll('.time-slots-container');
+            timeSlotContainers.forEach(container => {
+                container.classList.add('hidden');
+            });
+            document.getElementById('time-slots-' + date).classList.remove('hidden');
+            
+            // Select first time slot by default
+            const firstTimeSlot = document.querySelector('#time-slots-' + date + ' .time-slot');
+            if (firstTimeSlot) {
+                const time = firstTimeSlot.getAttribute('data-time');
+                selectTime(firstTimeSlot, time);
+            }
+            
+            // Update summary
+            updateDateInSummary(date);
+        }
+        
+        // Function to select a time
+        function selectTime(element, time) {
+            // Update the hidden input
+            document.getElementById('time').value = time;
+            
+            // Update visual selection
+            const timeSlots = document.querySelectorAll('.time-slot');
+            timeSlots.forEach(slot => {
+                slot.classList.remove('selected');
+            });
+            element.classList.add('selected');
+            
+            // Update summary
+            document.getElementById('summary-time').textContent = time;
+        }
+        
+        // Function to update the date in the summary
+        function updateDateInSummary(dateStr) {
+            // Find the corresponding day object
+            {% for day in available_slots %}
+            if ('{{ day.date_str }}' === dateStr) {
+                document.getElementById('summary-date').textContent = '{{ day.date.strftime("%A, %B %d, %Y") }}';
+                return;
+            }
+            {% endfor %}
+        }
+    </script>
+</body>
+</html>

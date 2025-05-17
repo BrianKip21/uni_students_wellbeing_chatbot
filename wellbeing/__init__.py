@@ -66,9 +66,12 @@ def create_app(test_config=None):
     from wellbeing.blueprints.admin import admin_bp
     from wellbeing.blueprints.tracking import tracking_bp
     from wellbeing.blueprints.chatbot import chatbot_bp
-    from wellbeing.blueprints.api import api_bp
     from wellbeing.blueprints.therapist import therapist_bp
-    
+
+    # Import the API blueprint and initialize it
+    from wellbeing.blueprints.api import init_blueprint
+    api_bp = init_blueprint()  
+
     app.register_blueprint(auth_bp)
     app.register_blueprint(therapist_bp, url_prefix='/therapist')
     app.register_blueprint(dashboard_bp)
@@ -76,7 +79,7 @@ def create_app(test_config=None):
     app.register_blueprint(tracking_bp)
     app.register_blueprint(chatbot_bp)
     app.register_blueprint(api_bp, url_prefix='/api')
-    
+        
     # Set up error handlers
     @app.errorhandler(404)
     def page_not_found(e):

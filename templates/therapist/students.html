@@ -249,14 +249,17 @@
         <!-- Students Grid -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {% for student_data in students_data %}
+                {% if student_data.student %}
                 <div class="bg-white p-6 rounded shadow student-card" data-status="{% if student_data.total_sessions == 0 %}new{% else %}active{% endif %}">
                     <div class="flex justify-between items-start mb-4">
                         <div class="flex items-center">
                             <div class="w-12 h-12 rounded-full bg-blue-100 text-blue-500 flex items-center justify-center font-bold text-lg mr-3">
-                                {{ student_data.student.first_name[0] }}{{ student_data.student.last_name[0] }}
+                                {% if student_data.student.first_name %}{{ student_data.student.first_name[0] }}{% endif %}{% if student_data.student.last_name %}{{ student_data.student.last_name[0] }}{% endif %}
                             </div>
                             <div>
-                                <h3 class="font-semibold text-lg">{{ student_data.student.first_name }} {{ student_data.student.last_name }}</h3>
+                                <h3 class="font-semibold text-lg">
+                                    {{ student_data.student.first_name }} {{ student_data.student.last_name }}
+                                </h3>
                                 <p class="text-sm text-gray-600">{{ student_data.student.email }}</p>
                             </div>
                         </div>
@@ -274,14 +277,27 @@
                         {% if student_data.latest_appointment %}
                             <div class="flex justify-between mb-1">
                                 <span class="text-gray-700">Last Session</span>
-                                <span class="font-medium">{{ student_data.latest_appointment.date.strftime('%b %d, %Y') }}</span>
+                                <span class="font-medium">
+                                    {% if student_data.latest_appointment and student_data.latest_appointment.date %}
+                                        {{ student_data.latest_appointment.date.strftime('%b %d, %Y') }}
+                                    {% else %}
+                                        No date available
+                                    {% endif %}
+                                </span>
                             </div>
                         {% endif %}
                         
                         {% if student_data.next_appointment %}
                             <div class="flex justify-between">
                                 <span class="text-gray-700">Next Appointment</span>
-                                <span class="font-medium">{{ student_data.next_appointment.date.strftime('%b %d') }} | {{ student_data.next_appointment.time }}</span>
+                                <span class="font-medium">
+                                    {% if student_data.next_appointment and student_data.next_appointment.date %}
+                                        {{ student_data.next_appointment.date.strftime('%b %d') }} | 
+                                        {{ student_data.next_appointment.time }}
+                                    {% else %}
+                                        No date available
+                                    {% endif %}
+                                </span>
                             </div>
                         {% endif %}
                     </div>
@@ -298,6 +314,7 @@
                         </a>
                     </div>
                 </div>
+                {% endif %}
             {% endfor %}
         </div>
         
@@ -325,8 +342,13 @@
             const activeFilter = document.querySelector('.active-filter').dataset.filter;
             
             students.forEach(student => {
-                const studentName = student.querySelector('h3').textContent.toLowerCase();
-                const studentEmail = student.querySelector('p').textContent.toLowerCase();
+                const nameElement = student.querySelector('h3');
+                const emailElement = student.querySelector('p');
+                
+                if (!nameElement || !emailElement) return;
+                
+                const studentName = nameElement.textContent.toLowerCase();
+                const studentEmail = emailElement.textContent.toLowerCase();
                 const studentStatus = student.dataset.status;
                 
                 // Check if matches search term
@@ -363,8 +385,13 @@
             
             // Filter students
             students.forEach(student => {
-                const studentName = student.querySelector('h3').textContent.toLowerCase();
-                const studentEmail = student.querySelector('p').textContent.toLowerCase();
+                const nameElement = student.querySelector('h3');
+                const emailElement = student.querySelector('p');
+                
+                if (!nameElement || !emailElement) return;
+                
+                const studentName = nameElement.textContent.toLowerCase();
+                const studentEmail = emailElement.textContent.toLowerCase();
                 const studentStatus = student.dataset.status;
                 
                 // Check if matches search term

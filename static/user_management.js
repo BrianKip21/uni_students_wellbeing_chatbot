@@ -68,15 +68,19 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Handle table actions (edit, enable/disable, delete)
     userTableBody.addEventListener('click', function(e) {
-        if (e.target.matches('.edit-button')) {
-            const userId = e.target.dataset.userId;
+        // Find the closest button if icon was clicked
+        const button = e.target.closest('.action-button');
+        if (!button) return;
+        
+        if (button.classList.contains('edit-button')) {
+            const userId = button.dataset.userId;
             openEditUserModal(userId);
-        } else if (e.target.matches('.enable-button, .disable-button')) {
-            const userId = e.target.dataset.userId;
-            const currentStatus = e.target.dataset.currentStatus;
+        } else if (button.classList.contains('enable-button') || button.classList.contains('disable-button')) {
+            const userId = button.dataset.userId;
+            const currentStatus = button.dataset.currentStatus;
             openStatusConfirmationModal(userId, currentStatus);
-        } else if (e.target.matches('.delete-button')) {
-            const userId = e.target.dataset.userId;
+        } else if (button.classList.contains('delete-button')) {
+            const userId = button.dataset.userId;
             openDeleteConfirmationModal(userId);
         }
     });
@@ -90,6 +94,36 @@ document.addEventListener('DOMContentLoaded', function() {
     cancelAction.addEventListener('click', function() {
         closeModals();
     });
+    
+    // Helper function to handle fetch responses
+    function handleFetchResponse(response, errorMsg) {
+        const contentType = response.headers.get('content-type');
+        
+        if (!response.ok) {
+            return response.text().then(text => {
+                console.error('Error response:', text);
+                // Check if the response is HTML
+                if (text.trim().startsWith('<!DOCTYPE html>') || text.trim().startsWith('<html>')) {
+                    throw new Error('Received HTML instead of JSON. Your session may have expired.');
+                }
+                // Try to parse as JSON if possible
+                try {
+                    const errorData = JSON.parse(text);
+                    throw new Error(errorData.message || errorMsg);
+                } catch (e) {
+                    // If parsing fails, throw a generic error
+                    throw new Error(`${errorMsg}: Server returned an invalid response`);
+                }
+            });
+        }
+        
+        // Check if content type is JSON
+        if (!contentType || !contentType.includes('application/json')) {
+            throw new Error('Received non-JSON response from server');
+        }
+        
+        return response.json();
+    }
     
     // Functions
     
@@ -121,7 +155,7 @@ document.addEventListener('DOMContentLoaded', function() {
         resetForm();
         modalTitle.textContent = 'Add New User';
         submitUserBtn.textContent = 'Add User';
-        userModal.style.display = 'block';
+        userModal.style.display = 'flex'; // Changed to flex for better centering
     }
     
     // Open modal to edit an existing user
@@ -132,12 +166,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Get user data
         fetch(`/api/users/${userId}`)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Failed to fetch user data');
-                }
-                return response.json();
-            })
+            .then(response => handleFetchResponse(response, 'Failed to fetch user data'))
             .then(user => {
                 // Populate form fields
                 document.getElementById('user-id').value = user._id;
@@ -160,7 +189,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('password').value = '';
                 document.getElementById('password').required = false;
                 
-                userModal.style.display = 'block';
+                userModal.style.display = 'flex';
             })
             .catch(error => {
                 showError('Error loading user data: ' + error.message);
@@ -181,7 +210,7 @@ document.addEventListener('DOMContentLoaded', function() {
             newStatus: newStatus
         };
         
-        confirmModal.style.display = 'block';
+        confirmModal.style.display = 'flex';
     }
     
     // Open confirmation modal for deleting a user
@@ -195,7 +224,7 @@ document.addEventListener('DOMContentLoaded', function() {
             userId: userId
         };
         
-        confirmModal.style.display = 'block';
+        confirmModal.style.display = 'flex';
     }
     
     // Execute the current action (status change or delete)
@@ -297,14 +326,7 @@ document.addEventListener('DOMContentLoaded', function() {
             },
             body: JSON.stringify(userData)
         })
-        .then(response => {
-            if (!response.ok) {
-                return response.json().then(data => {
-                    throw new Error(data.message || 'Failed to add user');
-                });
-            }
-            return response.json();
-        })
+        .then(response => handleFetchResponse(response, 'Failed to add user'))
         .then(user => {
             closeModals();
             showSuccess('User added successfully!');
@@ -328,14 +350,7 @@ document.addEventListener('DOMContentLoaded', function() {
             },
             body: JSON.stringify(userData)
         })
-        .then(response => {
-            if (!response.ok) {
-                return response.json().then(data => {
-                    throw new Error(data.message || 'Failed to update user');
-                });
-            }
-            return response.json();
-        })
+        .then(response => handleFetchResponse(response, 'Failed to update user'))
         .then(user => {
             closeModals();
             showSuccess('User updated successfully!');
@@ -359,14 +374,7 @@ document.addEventListener('DOMContentLoaded', function() {
             },
             body: JSON.stringify({ status: newStatus })
         })
-        .then(response => {
-            if (!response.ok) {
-                return response.json().then(data => {
-                    throw new Error(data.message || 'Failed to update user status');
-                });
-            }
-            return response.json();
-        })
+        .then(response => handleFetchResponse(response, 'Failed to update user status'))
         .then(user => {
             showSuccess(`User ${newStatus === 'Active' ? 'enabled' : 'disabled'} successfully!`);
             // Refresh the table
@@ -379,20 +387,15 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Delete a user
     function deleteUser(userId) {
+        const csrfToken = getCSRFToken();
+        
         fetch(`/api/users/${userId}`, {
             method: 'DELETE',
             headers: {
-                'X-CSRF-Token': getCSRFToken()
+                'X-CSRF-Token': csrfToken
             }
         })
-        .then(response => {
-            if (!response.ok) {
-                return response.json().then(data => {
-                    throw new Error(data.message || 'Failed to delete user');
-                });
-            }
-            return response.json();
-        })
+        .then(response => handleFetchResponse(response, 'Failed to delete user'))
         .then(result => {
             if (result.success) {
                 showSuccess('User deleted successfully!');
@@ -426,7 +429,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Alternatively, fetch users and update the table dynamically
         /* 
         fetch('/api/users')
-            .then(response => response.json())
+            .then(response => handleFetchResponse(response, 'Error refreshing user data'))
             .then(users => {
                 updateTableWithUsers(users);
             })
@@ -472,24 +475,30 @@ document.addEventListener('DOMContentLoaded', function() {
                 <td>${displayName}</td>
                 <td>${user.email || ''}</td>
                 <td>${user.last_login || 'Never'}</td>
-                <td class="status-${status === 'Active' ? 'active' : 'inactive'}">${status}</td>
                 <td>
-                    <button class="action-button edit-button" 
-                            data-user-id="${user._id}"
-                            aria-label="Edit user">
-                        Edit
-                    </button>
-                    <button class="action-button ${status === 'Active' ? 'disable-button' : 'enable-button'}" 
-                            data-user-id="${user._id}"
-                            data-current-status="${status}"
-                            aria-label="${status === 'Active' ? 'Disable' : 'Enable'} user">
-                        ${status === 'Active' ? 'Disable' : 'Enable'}
-                    </button>
-                    <button class="action-button delete-button" 
-                            data-user-id="${user._id}"
-                            aria-label="Delete user">
-                        Delete
-                    </button>
+                    <span class="status-badge ${status === 'Active' ? 'status-active' : 'status-inactive'}">
+                        ${status}
+                    </span>
+                </td>
+                <td>
+                    <div class="action-buttons">
+                        <button class="action-button edit-button" 
+                                data-user-id="${user._id}"
+                                aria-label="Edit user">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="action-button ${status === 'Active' ? 'disable-button' : 'enable-button'}" 
+                                data-user-id="${user._id}"
+                                data-current-status="${status}"
+                                aria-label="${status === 'Active' ? 'Disable' : 'Enable'} user">
+                            <i class="fas ${status === 'Active' ? 'fa-ban' : 'fa-check-circle'}"></i>
+                        </button>
+                        <button class="action-button delete-button" 
+                                data-user-id="${user._id}"
+                                aria-label="Delete user">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </div>
                 </td>
             `;
             
@@ -511,6 +520,8 @@ document.addEventListener('DOMContentLoaded', function() {
     function closeModals() {
         userModal.style.display = 'none';
         confirmModal.style.display = 'none';
+        // Reset confirm action button
+        confirmAction.classList.remove('danger-button');
         resetForm();
     }
     
@@ -559,4 +570,25 @@ document.addEventListener('DOMContentLoaded', function() {
         const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         return re.test(email);
     }
+    
+    // Add temporary debugging code to help identify issues
+    function addDebugLogging() {
+        const originalFetch = window.fetch;
+        window.fetch = function(url, options) {
+            console.log('Fetch request to:', url, options);
+            return originalFetch(url, options)
+                .then(response => {
+                    console.log('Fetch response from:', url, 'Status:', response.status);
+                    console.log('Content-Type:', response.headers.get('content-type'));
+                    return response;
+                })
+                .catch(error => {
+                    console.error('Fetch error for:', url, error);
+                    throw error;
+                });
+        };
+    }
+    
+    // Uncomment this line to enable debug logging
+    // addDebugLogging();
 });
