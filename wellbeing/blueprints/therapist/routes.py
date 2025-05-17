@@ -644,58 +644,72 @@ def students():
         'therapist_id': therapist_id,
         'status': 'active'
     }))
+    
+    # Log the number of assignments found (for debugging)
+    logger.info(f"Found {len(assignments)} active assignments for therapist ID {therapist_id}")
+    
+    # Get user settings
     settings = mongo.db.settings.find_one() or {}
     
     # Get student details for each assignment
     students_data = []
     for assignment in assignments:
-        student = mongo.db.users.find_one({'_id': assignment['student_id']})
-        if student:
-            # Get latest appointment
-            latest_appointment = mongo.db.appointments.find_one({
-                'student_id': student['_id'],
-                'therapist_id': therapist_id
-            }, sort=[('date', -1)])
+        student_id = assignment.get('student_id')
+        if not student_id:
+            logger.warning(f"Assignment {assignment['_id']} has no student_id field")
+            continue
             
-            # Get next upcoming appointment
-            next_appointment = mongo.db.appointments.find_one({
-                'student_id': student['_id'],
-                'therapist_id': therapist_id,
-                'date': {'$gte': datetime.now()},
-                'status': 'scheduled'
-            }, sort=[('date', 1)])
+        student = mongo.db.users.find_one({'_id': student_id})
+        if not student:
+            logger.warning(f"Student with ID {student_id} not found")
+            continue
             
-            # Count total sessions
-            total_sessions = mongo.db.appointments.count_documents({
-                'student_id': student['_id'],
-                'therapist_id': therapist_id,
-                'status': 'completed'
-            })
-            
-            # Get unread messages
-            unread_messages = mongo.db.therapist_chats.count_documents({
-                'student_id': student['_id'],
-                'therapist_id': therapist_id,
-                'sender': 'student',
-                'read': False
-            })
-            
-            students_data.append({
-                'student': student,
-                'assignment': assignment,
-                'latest_appointment': latest_appointment,
-                'next_appointment': next_appointment,
-                'total_sessions': total_sessions,
-                'unread_messages': unread_messages
-            })
-            
-
+        # Get latest appointment
+        latest_appointment = mongo.db.appointments.find_one({
+            'student_id': student_id,
+            'therapist_id': therapist_id
+        }, sort=[('date', -1)])
+        
+        # Get next upcoming appointment
+        next_appointment = mongo.db.appointments.find_one({
+            'student_id': student_id,
+            'therapist_id': therapist_id,
+            'date': {'$gte': datetime.now()},
+            'status': 'scheduled'
+        }, sort=[('date', 1)])
+        
+        # Count total sessions
+        total_sessions = mongo.db.appointments.count_documents({
+            'student_id': student_id,
+            'therapist_id': therapist_id,
+            'status': 'completed'
+        })
+        
+        # Get unread messages
+        unread_messages = mongo.db.therapist_chats.count_documents({
+            'student_id': student_id,
+            'therapist_id': therapist_id,
+            'sender': 'student',
+            'read': False
+        })
+        
+        students_data.append({
+            'student': student,
+            'assignment': assignment,
+            'latest_appointment': latest_appointment,
+            'next_appointment': next_appointment,
+            'total_sessions': total_sessions,
+            'unread_messages': unread_messages,
+            'assigned_at': assignment.get('created_at', datetime.now())
+        })
+    
+    # Sort students by most recently assigned
+    students_data.sort(key=lambda x: x.get('assigned_at', datetime.now()), reverse=True)
     
     return render_template('therapist/students.html',
                          therapist=therapist,
                          students_data=students_data,
                          settings=settings)
-
 @therapist_bp.route('/student-details/<student_id>')
 @therapist_required
 def student_details(student_id):
@@ -1409,143 +1423,430 @@ def schedule_appointment_from_calendar():
         return redirect(url_for('therapist.calendar', date=date, view=view))
     else:
         return redirect(url_for('therapist.calendar', view=view))
-    
 @therapist_bp.route('/profile', methods=['GET', 'POST'])
 @therapist_required
 def profile():
     """Therapist profile and settings."""
-    therapist_id = ObjectId(session['user'])
-    therapist = find_therapist_by_id(therapist_id)
-    
-    if not therapist:
-        flash('Therapist not found. Please log in again.', 'error')
-        return redirect(url_for('auth.login'))
-    
-    if request.method == 'POST':
-        try:
-            form_type = request.form.get('form_type')
-            
-            if form_type == 'profile':
-                # Update profile information
-                specialization = request.form.get('specialization', '').strip()
-                bio = request.form.get('bio', '').strip()
-                office_hours_desc = request.form.get('office_hours', '').strip()
+    try:
+        therapist_id = ObjectId(session['user'])
+        
+        # Get therapist data
+        therapist = find_therapist_by_id(therapist_id)
+        
+        if not therapist:
+            flash('Therapist not found. Please log in again.', 'error')
+            return redirect(url_for('auth.login'))
+        
+        # Convert therapist to dictionary if it's not already
+        if not isinstance(therapist, dict):
+            if hasattr(therapist, '__dict__'):
+                therapist = vars(therapist)
+            elif isinstance(therapist, str):
+                therapist = {'name': therapist, '_id': therapist_id}
+            else:
+                therapist = {'_id': therapist_id}
+        
+        # Get user document for additional info
+        user = mongo.db.users.find_one({'_id': therapist_id})
+        
+        # If not found with ObjectId, try with string ID
+        if not user:
+            string_id = str(therapist_id)
+            user = mongo.db.users.find_one({'_id': string_id})
+        
+        # If still not found, check if there's a user_id field in therapist
+        if not user and isinstance(therapist, dict) and therapist.get('user_id'):
+            user_id = therapist['user_id']
+            if isinstance(user_id, str):
+                try:
+                    user_id = ObjectId(user_id)
+                except:
+                    pass
+            user = mongo.db.users.find_one({'_id': user_id})
+        
+        # NEW: Auto-create user document if it doesn't exist
+        if not user:
+            try:
+                # Create a new user document based on therapist data
+                new_user = {
+                    '_id': therapist_id,
+                    'first_name': therapist.get('first_name', 'Unknown'),
+                    'last_name': therapist.get('last_name', 'User'),
+                    'email': therapist.get('email', 'unknown@example.com'),
+                    'password': therapist.get('password', ''),  # Copy password hash if available
+                    'role': 'therapist',
+                    'created_at': therapist.get('created_at', datetime.now()),
+                    'login_count': therapist.get('login_count', 0),
+                    'last_login': therapist.get('last_login', None)
+                }
                 
-                # Update therapist document
-                mongo.db.therapists.update_one(
-                    {'_id': therapist_id},
-                    {'$set': {
+                # Insert the new user document
+                result = mongo.db.users.insert_one(new_user)
+                if result.inserted_id:
+                    user = new_user
+                    logger.info(f"Created new user account for therapist ID {therapist_id}")
+                else:
+                    raise Exception("Failed to insert new user document")
+            except Exception as e:
+                logger.error(f"Failed to create user account for therapist: {e}")
+                # Continue with placeholder data as before
+                user = {
+                    '_id': therapist_id,
+                    'first_name': therapist.get('first_name', 'Unknown'),
+                    'last_name': therapist.get('last_name', 'User'),
+                    'email': therapist.get('email', 'unknown@example.com'),
+                    'created_at': datetime.now(),
+                    'login_count': 0,
+                    'last_login': 'Never'
+                }
+                logger.warning(f"User account not found for therapist ID {therapist_id}. Using placeholder data.")
+        # Ensure user is a dictionary
+        elif not isinstance(user, dict):
+            if isinstance(user, str):
+                user = {
+                    '_id': therapist_id,
+                    'name': user,
+                    'first_name': user,
+                    'last_name': '',
+                    'email': 'unknown@example.com',
+                    'created_at': datetime.now(),
+                    'login_count': 0,
+                    'last_login': 'Never'
+                }
+            elif hasattr(user, '__dict__'):
+                user = vars(user)
+            else:
+                user = {
+                    '_id': therapist_id,
+                    'first_name': 'Unknown',
+                    'last_name': 'User',
+                    'email': 'unknown@example.com',
+                    'created_at': datetime.now(),
+                    'login_count': 0,
+                    'last_login': 'Never'
+                }
+        
+        if request.method == 'POST':
+            try:
+                form_type = request.form.get('form_type')
+                
+                if form_type == 'profile':
+                    # Update profile information
+                    specialization = request.form.get('specialization', '').strip()
+                    bio = request.form.get('bio', '').strip()
+                    office_hours_desc = request.form.get('office_hours', '').strip()
+                    
+                    # Check if office_hours is a string or object in the database
+                    existing_therapist = mongo.db.therapists.find_one({'_id': therapist_id})
+                    update_dict = {
                         'specialization': specialization,
-                        'bio': bio,
-                        'office_hours.description': office_hours_desc
-                    }}
-                )
-                
-                flash('Profile updated successfully', 'success')
-                
-            elif form_type == 'availability':
-                # Update availability settings
-                available_days = request.form.getlist('available_days[]')
-                max_students = int(request.form.get('max_students', 20))
-                
-                # Convert days from string to int
-                working_days = [int(day) for day in available_days if day.isdigit()]
-                
-                # Get time slots
-                slots = []
-                for hour in range(8, 18):  # 8 AM to 5 PM
-                    slot_key = f'slot_{hour}'
-                    if request.form.get(slot_key) == 'on':
-                        slots.append(f'{hour:02d}:00')
-                
-                # Update therapist document
-                mongo.db.therapists.update_one(
-                    {'_id': therapist_id},
-                    {'$set': {
-                        'office_hours.days': working_days,
-                        'office_hours.slots': slots,
-                        'max_students': max_students
-                    }}
-                )
-                
-                flash('Availability settings updated successfully', 'success')
-                
-            elif form_type == 'password':
-                # Update password
-                current_password = request.form.get('current_password', '')
-                new_password = request.form.get('new_password', '')
-                confirm_password = request.form.get('confirm_password', '')
-                
-                # Validate passwords
-                from werkzeug.security import check_password_hash, generate_password_hash
-                
-                user = mongo.db.users.find_one({'_id': therapist_id})
-                
-                if not user:
-                    flash('User account not found', 'error')
-                    return redirect(url_for('therapist.profile'))
-                
-                if not check_password_hash(user['password'], current_password):
-                    flash('Current password is incorrect', 'error')
-                    return redirect(url_for('therapist.profile'))
-                
-                if new_password != confirm_password:
-                    flash('New passwords do not match', 'error')
-                    return redirect(url_for('therapist.profile'))
-                
-                if len(new_password) < 8:
-                    flash('New password must be at least 8 characters long', 'error')
-                    return redirect(url_for('therapist.profile'))
-                
-                # Update password
-                mongo.db.users.update_one(
-                    {'_id': therapist_id},
-                    {'$set': {'password': generate_password_hash(new_password)}}
-                )
-                
-                flash('Password updated successfully', 'success')
-                
-            elif form_type == 'notifications':
-                # Update notification preferences
-                email_notifications = request.form.get('email_notifications') == 'on'
-                sms_notifications = request.form.get('sms_notifications') == 'on'
-                
-                # Update user preferences
-                update_therapist_settings(therapist_id, {
-                    'notifications': {
-                        'email': email_notifications,
-                        'sms': sms_notifications
+                        'bio': bio
                     }
-                })
+                    
+                    # Handle office_hours update safely
+                    if existing_therapist and 'office_hours' in existing_therapist:
+                        if isinstance(existing_therapist['office_hours'], dict):
+                            # If it's already a dictionary, update the description field
+                            update_dict['office_hours.description'] = office_hours_desc
+                        else:
+                            # If it's a string or other type, replace the entire field
+                            update_dict['office_hours'] = {
+                                'description': office_hours_desc,
+                                'days': [0, 1, 2, 3, 4],  # Default to weekdays
+                                'slots': ['09:00', '10:00', '11:00', '14:00', '15:00', '16:00']  # Default slots
+                            }
+                    else:
+                        # If office_hours doesn't exist yet, create it as a complete object
+                        update_dict['office_hours'] = {
+                            'description': office_hours_desc,
+                            'days': [0, 1, 2, 3, 4],
+                            'slots': ['09:00', '10:00', '11:00', '14:00', '15:00', '16:00']
+                        }
+                    
+                    # Update therapist document
+                    mongo.db.therapists.update_one(
+                        {'_id': therapist_id},
+                        {'$set': update_dict}
+                    )
+                    
+                    # NEW: Also update name fields in the user document if they've changed
+                    user_update = {}
+                    if 'first_name' in therapist and therapist['first_name'] != user.get('first_name'):
+                        user_update['first_name'] = therapist['first_name']
+                    if 'last_name' in therapist and therapist['last_name'] != user.get('last_name'):
+                        user_update['last_name'] = therapist['last_name']
+                    
+                    if user_update:
+                        mongo.db.users.update_one(
+                            {'_id': user['_id']},
+                            {'$set': user_update}
+                        )
+                    
+                    flash('Profile updated successfully', 'success')
+                    
+                    # Refresh therapist data after update
+                    therapist = find_therapist_by_id(therapist_id)
+                    if not isinstance(therapist, dict):
+                        if hasattr(therapist, '__dict__'):
+                            therapist = vars(therapist)
+                        elif isinstance(therapist, str):
+                            therapist = {'name': therapist, '_id': therapist_id}
+                        else:
+                            therapist = {'_id': therapist_id}
+                    
+                elif form_type == 'availability':
+                    # Update availability settings
+                    available_days = request.form.getlist('available_days[]')
+                    max_students = int(request.form.get('max_students', 20))
+                    
+                    # Convert days from string to int
+                    working_days = [int(day) for day in available_days if day.isdigit()]
+                    
+                    # Get time slots
+                    slots = []
+                    for hour in range(8, 18):  # 8 AM to 5 PM
+                        slot_key = f'slot_{hour}'
+                        if request.form.get(slot_key) == 'on':
+                            slots.append(f'{hour:02d}:00')
+                    
+                    # Check if office_hours is a string or object in the database
+                    existing_therapist = mongo.db.therapists.find_one({'_id': therapist_id})
+                    
+                    # Prepare the update operation
+                    update_operations = {'max_students': max_students}
+                    
+                    if existing_therapist and 'office_hours' in existing_therapist and not isinstance(existing_therapist['office_hours'], dict):
+                        # If it's a string or other type, create a new dictionary with all fields
+                        update_operations['office_hours'] = {
+                            'description': str(existing_therapist['office_hours']) if existing_therapist['office_hours'] else '',
+                            'days': working_days,
+                            'slots': slots
+                        }
+                    else:
+                        # If it's already a dictionary or doesn't exist, create or update with a full object
+                        update_operations['office_hours'] = {
+                            'description': existing_therapist.get('office_hours', {}).get('description', '') 
+                                          if isinstance(existing_therapist.get('office_hours'), dict) else '',
+                            'days': working_days,
+                            'slots': slots
+                        }
+                    
+                    # Update therapist document
+                    mongo.db.therapists.update_one(
+                        {'_id': therapist_id},
+                        {'$set': update_operations}
+                    )
+                    
+                    flash('Availability settings updated successfully', 'success')
+                    
+                    # Refresh therapist data after update
+                    therapist = find_therapist_by_id(therapist_id)
+                    if not isinstance(therapist, dict):
+                        if hasattr(therapist, '__dict__'):
+                            therapist = vars(therapist)
+                        elif isinstance(therapist, str):
+                            therapist = {'name': therapist, '_id': therapist_id}
+                        else:
+                            therapist = {'_id': therapist_id}
+                    
+                elif form_type == 'password':
+                    # Update password
+                    current_password = request.form.get('current_password', '')
+                    new_password = request.form.get('new_password', '')
+                    confirm_password = request.form.get('confirm_password', '')
+                    
+                    # Validate passwords
+                    from werkzeug.security import check_password_hash, generate_password_hash
+                    
+                    # NEW: Handle the case where the user might not have a password yet
+                    if not isinstance(user, dict) or 'password' not in user or not user['password']:
+                        # If no password exists yet, allow setting a new one without checking current
+                        if new_password != confirm_password:
+                            flash('New passwords do not match', 'error')
+                            return redirect(url_for('therapist.profile'))
+                        
+                        if len(new_password) < 8:
+                            flash('New password must be at least 8 characters long', 'error')
+                            return redirect(url_for('therapist.profile'))
+                        
+                        # Set password in both collections for consistency
+                        password_hash = generate_password_hash(new_password)
+                        mongo.db.users.update_one(
+                            {'_id': user['_id']},
+                            {'$set': {'password': password_hash}}
+                        )
+                        mongo.db.therapists.update_one(
+                            {'_id': therapist_id},
+                            {'$set': {'password': password_hash}}
+                        )
+                        
+                        flash('Password set successfully', 'success')
+                    else:
+                        # Normal password update flow with current password check
+                        if not check_password_hash(user['password'], current_password):
+                            flash('Current password is incorrect', 'error')
+                            return redirect(url_for('therapist.profile'))
+                        
+                        if new_password != confirm_password:
+                            flash('New passwords do not match', 'error')
+                            return redirect(url_for('therapist.profile'))
+                        
+                        if len(new_password) < 8:
+                            flash('New password must be at least 8 characters long', 'error')
+                            return redirect(url_for('therapist.profile'))
+                        
+                        # Update password in both collections for consistency
+                        password_hash = generate_password_hash(new_password)
+                        mongo.db.users.update_one(
+                            {'_id': user['_id']},
+                            {'$set': {'password': password_hash}}
+                        )
+                        mongo.db.therapists.update_one(
+                            {'_id': therapist_id},
+                            {'$set': {'password': password_hash}}
+                        )
+                        
+                        flash('Password updated successfully', 'success')
+                    
+                    # Refresh user data after update
+                    user = mongo.db.users.find_one({'_id': user['_id']})
+                    if not isinstance(user, dict):
+                        if isinstance(user, str):
+                            user = {'name': user, '_id': therapist_id}
+                        elif hasattr(user, '__dict__'):
+                            user = vars(user)
+                        else:
+                            user = {
+                                '_id': therapist_id,
+                                'first_name': 'Unknown',
+                                'last_name': 'User',
+                                'email': 'unknown@example.com',
+                                'created_at': datetime.now(),
+                                'login_count': 0,
+                                'last_login': 'Never'
+                            }
+                    
+                elif form_type == 'notifications':
+                    # Update notification preferences
+                    email_notifications = request.form.get('email_notifications') == 'on'
+                    sms_notifications = request.form.get('sms_notifications') == 'on'
+                    
+                    # Update user preferences
+                    update_therapist_settings(therapist_id, {
+                        'notifications': {
+                            'email': email_notifications,
+                            'sms': sms_notifications
+                        }
+                    })
+                    
+                    flash('Notification preferences updated successfully', 'success')
+                    
+                    # Refresh therapist data after update
+                    therapist = find_therapist_by_id(therapist_id)
+                    if not isinstance(therapist, dict):
+                        if hasattr(therapist, '__dict__'):
+                            therapist = vars(therapist)
+                        elif isinstance(therapist, str):
+                            therapist = {'name': therapist, '_id': therapist_id}
+                        else:
+                            therapist = {'_id': therapist_id}
                 
-                flash('Notification preferences updated successfully', 'success')
+            except Exception as e:
+                logger.error(f"Profile update error: {e}")
+                flash(f'An error occurred while updating your profile: {str(e)}', 'error')
+        
+        # Get account statistics with safe fallbacks for all fields
+        stats = {}
+        try:
+            # Ensure we have a created_at value that's a datetime
+            created_at = user.get('created_at') if isinstance(user, dict) else None
+            if created_at and hasattr(created_at, 'strftime'):
+                member_since = created_at.strftime('%B %d, %Y')
+            else:
+                member_since = 'N/A'
             
+            # Ensure we have a user login count that's a number
+            login_count = user.get('login_count') if isinstance(user, dict) else None
+            if not isinstance(login_count, (int, float)):
+                login_count = 0
+            
+            # Ensure we have a last login value that's a string
+            last_login = user.get('last_login') if isinstance(user, dict) else None
+            if not isinstance(last_login, str):
+                if hasattr(last_login, 'strftime'):  # If it's a datetime
+                    last_login = last_login.strftime('%B %d, %Y at %I:%M %p')
+                else:
+                    last_login = 'Never'
+            
+            stats = {
+                'member_since': member_since,
+                'total_sessions': mongo.db.appointments.count_documents({
+                    'therapist_id': therapist_id,
+                    'status': 'completed'
+                }),
+                'current_students': mongo.db.therapist_assignments.count_documents({
+                    'therapist_id': therapist_id,
+                    'status': 'active'
+                }),
+                'login_count': login_count,
+                'last_login': last_login
+            }
         except Exception as e:
-            logger.error(f"Profile update error: {e}")
-            flash('An error occurred while updating your profile', 'error')
-    
-    # Get user document for additional info
-    user = mongo.db.users.find_one({'_id': therapist_id})
-    
-    # Get account statistics
-    stats = {
-        'member_since': user.get('created_at', datetime.now()).strftime('%B %d, %Y'),
-        'total_sessions': mongo.db.appointments.count_documents({
-            'therapist_id': therapist_id,
-            'status': 'completed'
-        }),
-        'current_students': mongo.db.therapist_assignments.count_documents({
-            'therapist_id': therapist_id,
-            'status': 'active'
-        }),
-        'login_count': user.get('login_count', 0),
-        'last_login': user.get('last_login', 'Never')
-    }
-    
-    return render_template('therapist/profile.html',
-                         therapist=therapist,
-                         user=user,
-                         stats=stats)
+            logger.error(f"Error generating profile statistics: {e}")
+            stats = {
+                'member_since': 'N/A',
+                'total_sessions': 0,
+                'current_students': 0,
+                'login_count': 0,
+                'last_login': 'Never'
+            }
+        
+        # Final type checking for template variables
+        if not isinstance(therapist, dict):
+            therapist = {'error': 'Invalid therapist data', '_id': therapist_id}
+        
+        if not isinstance(user, dict):
+            user = {'error': 'Invalid user data', '_id': therapist_id}
+        
+        # Ensure each value in therapist is not a dictionary or object to prevent nested .get() calls
+        for key, value in list(therapist.items()):
+            if isinstance(value, dict) or (hasattr(value, '__dict__') and not isinstance(value, (str, int, float, bool, datetime))):
+                # Keep office_hours as a dictionary but convert other nested objects to strings
+                if key != 'office_hours':
+                    therapist[key] = str(value)
+        
+        # Ensure each value in user is not a dictionary or object
+        for key, value in list(user.items()):
+            if isinstance(value, dict) or (hasattr(value, '__dict__') and not isinstance(value, (str, int, float, bool, datetime))):
+                # Convert nested objects to strings to prevent template errors with .get()
+                user[key] = str(value)
+
+        settings = mongo.db.settings.find_one() or {}
+        if not isinstance(settings, dict):
+            settings = {}
+            
+        # Ensure we have default values for critical fields in therapist
+        if 'first_name' not in therapist:
+            therapist['first_name'] = user.get('first_name', 'Unknown')
+        if 'last_name' not in therapist:
+            therapist['last_name'] = user.get('last_name', 'User')
+            
+        # Final safety check - convert to standard Python dictionaries
+        therapist = dict(therapist)
+        user = dict(user)
+        stats = dict(stats)
+        settings = dict(settings)
+        
+        return render_template('therapist/profile.html',
+                            therapist=therapist,
+                            user=user,
+                            stats=stats,
+                            settings=settings)
+                            
+    except Exception as e:
+        logger.error(f"Unexpected error in profile route: {str(e)}")
+        flash(f"An unexpected error occurred: {str(e)}", 'error')
+        return redirect(url_for('therapist.index'))
 
 @therapist_bp.route('/resources')
 @therapist_required
@@ -1576,12 +1877,15 @@ def resources():
         student = mongo.db.users.find_one({'_id': shared['student_id']})
         if student:
             shared['student_name'] = f"{student['first_name']} {student['last_name']}"
+
+    settings = mongo.db.settings.find_one() or {}
     
     return render_template('therapist/resources.html',
                          therapist=therapist,
                          system_resources=system_resources,
                          custom_resources=custom_resources,
-                         recently_shared=recently_shared)
+                         recently_shared=recently_shared,
+                         settings=settings)
 
 @therapist_bp.route('/add-resource', methods=['GET', 'POST'])
 @therapist_required
@@ -1706,7 +2010,7 @@ def delete_resource(resource_id):
     
     return redirect(url_for('therapist.resources'))
 
-@therapist_bp.route('/student-requests')
+@therapist_bp.route('/student_requests')
 @therapist_required
 def student_requests():
     """View pending student assignment requests."""
@@ -1719,9 +2023,33 @@ def student_requests():
     
     # Get pending student assignment requests
     pending_requests = list(mongo.db.therapist_requests.find({
-        'status': 'pending_therapist_approval',
-        'therapist_id': therapist_id
+        '$or': [
+            {'status': 'pending_therapist_approval', 'therapist_id': therapist_id},
+            {'status': 'pending', 'therapist_id': therapist_id}
+        ]
     }).sort('created_at', 1))
+    
+    # IMPORTANT: Also check for new assignments created by admin
+    # that haven't been acknowledged by the therapist yet
+    admin_assignments = list(mongo.db.therapist_assignments.find({
+        'therapist_id': therapist_id,
+        'status': 'active',
+        'acknowledged': {'$exists': False}  # Therapist hasn't acknowledged yet
+    }).sort('created_at', -1))
+    
+    # Combine these admin assignments into the pending_requests list
+    for assignment in admin_assignments:
+        # Convert admin assignment to request format
+        request_data = {
+            '_id': assignment['_id'],
+            'student_id': assignment['student_id'],
+            'therapist_id': therapist_id,
+            'status': 'admin_assigned',  # Special status for admin assignments
+            'created_at': assignment.get('created_at', datetime.now()),
+            'assigned_by': assignment.get('assigned_by', 'Admin'),
+            'source': 'admin_assignment'  # Flag to identify source
+        }
+        pending_requests.append(request_data)
     
     # Get student details for each request
     for request in pending_requests:
@@ -1730,9 +2058,66 @@ def student_requests():
             request['student_name'] = f"{student['first_name']} {student['last_name']}"
             request['student_email'] = student['email']
     
+    # Get settings
+    settings = mongo.db.settings.find_one() or {}
+    
     return render_template('therapist/student_requests.html',
                          therapist=therapist,
-                         pending_requests=pending_requests)
+                         pending_requests=pending_requests,
+                         settings=settings)
+
+@therapist_bp.route('/acknowledge-assignment/<assignment_id>', methods=['POST'])
+@therapist_required
+def acknowledge_assignment(assignment_id):
+    """Acknowledge an assignment made by an admin."""
+    therapist_id = ObjectId(session['user'])
+    
+    try:
+        # Find the assignment
+        assignment = mongo.db.therapist_assignments.find_one({
+            '_id': ObjectId(assignment_id),
+            'therapist_id': therapist_id,
+            'status': 'active'
+        })
+        
+        if not assignment:
+            flash('Assignment not found', 'error')
+            return redirect(url_for('therapist.student_requests'))
+        
+        # Mark the assignment as acknowledged
+        mongo.db.therapist_assignments.update_one(
+            {'_id': ObjectId(assignment_id)},
+            {'$set': {
+                'acknowledged': True,
+                'acknowledged_at': datetime.now()
+            }}
+        )
+        
+        # Get student info
+        student = mongo.db.users.find_one({'_id': assignment['student_id']})
+        student_name = f"{student['first_name']} {student['last_name']}" if student else "Unknown Student"
+        
+        # Send welcome message to student
+        if student:
+            therapist = find_therapist_by_id(therapist_id)
+            welcome_message = f"Hello {student['first_name']}, I'm Dr. {therapist['first_name']} {therapist['last_name']}. I'll be your therapist. Feel free to message me anytime or schedule an appointment when you're ready."
+            
+            mongo.db.therapist_chats.insert_one({
+                'student_id': assignment['student_id'],
+                'therapist_id': therapist_id,
+                'sender': 'therapist',
+                'message': welcome_message,
+                'read': False,
+                'timestamp': datetime.now()
+            })
+        
+        flash(f"You are now assigned to {student_name}. A welcome message has been sent.", 'success')
+        return redirect(url_for('therapist.students'))
+        
+    except Exception as e:
+        logger.error(f"Acknowledge assignment error: {e}")
+        flash('An error occurred while acknowledging the assignment', 'error')
+        return redirect(url_for('therapist.student_requests'))
 
 @therapist_bp.route('/approve-student/<request_id>', methods=['POST'])
 @therapist_required
@@ -1972,6 +2357,7 @@ def reports():
                 'name': f"{student['first_name']} {student['last_name']}",
                 'count': result['count']
             })
+    settings = mongo.db.settings.find_one() or {}
     
     return render_template('therapist/reports.html',
                          therapist=therapist,
@@ -1984,4 +2370,340 @@ def reports():
                              'active_students': active_students
                          },
                          weekly_sessions=weekly_sessions,
-                         top_students=top_students)
+                         top_students=top_students,
+                         settings=settings)
+@therapist_bp.route('/export-session-report/<format>')
+@therapist_required
+def export_session_report(format):
+    """Export session report in CSV or PDF format."""
+    therapist_id = ObjectId(session['user'])
+    from_date_str = request.args.get('from_date')
+    to_date_str = request.args.get('to_date')
+    
+    try:
+        if from_date_str:
+            from_date = datetime.strptime(from_date_str, '%Y-%m-%d')
+        else:
+            # Default to 30 days ago
+            from_date = datetime.now() - timedelta(days=30)
+            
+        if to_date_str:
+            to_date = datetime.strptime(to_date_str, '%Y-%m-%d')
+        else:
+            # Default to today
+            to_date = datetime.now()
+    except ValueError:
+        flash('Invalid date format', 'error')
+        return redirect(url_for('therapist.reports'))
+    
+    # Get sessions data
+    sessions = list(mongo.db.appointments.find({
+        'therapist_id': therapist_id,
+        'date': {'$gte': from_date, '$lte': to_date}
+    }).sort('date', 1))
+    
+    # Get student details for each session
+    for appt in sessions:
+        student = mongo.db.users.find_one({'_id': appt['student_id']})
+        if student:
+            appt['student_name'] = f"{student['first_name']} {student['last_name']}"
+        else:
+            appt['student_name'] = "Unknown"
+    
+    if format.lower() == 'csv':
+        # Create CSV data
+        output = io.StringIO()
+        writer = csv.writer(output)
+        
+        # Write header
+        writer.writerow(['Date', 'Time', 'Student', 'Session Type', 'Status'])
+        
+        # Write data
+        for appt in sessions:
+            writer.writerow([
+                appt['date'].strftime('%Y-%m-%d'),
+                appt['time'],
+                appt.get('student_name', 'Unknown'),
+                appt.get('session_type', 'N/A'),
+                appt.get('status', 'N/A')
+            ])
+        
+        # Create response
+        output.seek(0)
+        response = Response(output.getvalue(), mimetype='text/csv')
+        response.headers['Content-Disposition'] = f'attachment; filename=sessions_report_{datetime.now().strftime("%Y%m%d")}.csv'
+        return response
+    
+    elif format.lower() == 'pdf':
+        # This would need a PDF generation library like ReportLab or WeasyPrint
+        # For simplicity, we'll return a placeholder response
+        flash('PDF export is not yet implemented', 'error')
+        return redirect(url_for('therapist.reports'))
+    
+    else:
+        flash('Invalid export format', 'error')
+        return redirect(url_for('therapist.reports'))
+
+
+@therapist_bp.route('/export-student-report/<format>')
+@therapist_required
+def export_student_report(format):
+    """Export student report in CSV or PDF format."""
+    therapist_id = ObjectId(session['user'])
+    from_date_str = request.args.get('from_date')
+    to_date_str = request.args.get('to_date')
+    
+    try:
+        if from_date_str:
+            from_date = datetime.strptime(from_date_str, '%Y-%m-%d')
+        else:
+            # Default to 30 days ago
+            from_date = datetime.now() - timedelta(days=30)
+            
+        if to_date_str:
+            to_date = datetime.strptime(to_date_str, '%Y-%m-%d')
+        else:
+            # Default to today
+            to_date = datetime.now()
+    except ValueError:
+        flash('Invalid date format', 'error')
+        return redirect(url_for('therapist.reports'))
+    
+    # Get active student assignments
+    assignments = list(mongo.db.therapist_assignments.find({
+        'therapist_id': therapist_id,
+        'status': 'active'
+    }))
+    
+    # Get student details and session statistics
+    students_data = []
+    for assignment in assignments:
+        student = mongo.db.users.find_one({'_id': assignment['student_id']})
+        if student:
+            # Count sessions in the date range
+            total_sessions = mongo.db.appointments.count_documents({
+                'therapist_id': therapist_id,
+                'student_id': assignment['student_id'],
+                'status': 'completed',
+                'date': {'$gte': from_date, '$lte': to_date}
+            })
+            
+            # Get latest appointment
+            latest_appointment = mongo.db.appointments.find_one({
+                'therapist_id': therapist_id,
+                'student_id': assignment['student_id'],
+                'status': 'completed'
+            }, sort=[('date', -1)])
+            
+            # Get next appointment
+            next_appointment = mongo.db.appointments.find_one({
+                'therapist_id': therapist_id,
+                'student_id': assignment['student_id'],
+                'date': {'$gte': datetime.now()},
+                'status': 'scheduled'
+            }, sort=[('date', 1)])
+            
+            students_data.append({
+                'id': str(student['_id']),
+                'name': f"{student['first_name']} {student['last_name']}",
+                'email': student['email'],
+                'total_sessions': total_sessions,
+                'last_session': latest_appointment['date'].strftime('%Y-%m-%d') if latest_appointment else 'None',
+                'next_session': next_appointment['date'].strftime('%Y-%m-%d') if next_appointment else 'None'
+            })
+    
+    if format.lower() == 'csv':
+        # Create CSV data
+        output = io.StringIO()
+        writer = csv.writer(output)
+        
+        # Write header
+        writer.writerow(['ID', 'Name', 'Email', 'Total Sessions', 'Last Session', 'Next Session'])
+        
+        # Write data
+        for student in students_data:
+            writer.writerow([
+                student['id'],
+                student['name'],
+                student['email'],
+                student['total_sessions'],
+                student['last_session'],
+                student['next_session']
+            ])
+        
+        # Create response
+        output.seek(0)
+        response = Response(output.getvalue(), mimetype='text/csv')
+        response.headers['Content-Disposition'] = f'attachment; filename=students_report_{datetime.now().strftime("%Y%m%d")}.csv'
+        return response
+    
+    elif format.lower() == 'pdf':
+        # This would need a PDF generation library like ReportLab or WeasyPrint
+        # For simplicity, we'll return a placeholder response
+        flash('PDF export is not yet implemented', 'error')
+        return redirect(url_for('therapist.reports'))
+    
+    else:
+        flash('Invalid export format', 'error')
+        return redirect(url_for('therapist.reports'))
+
+
+@therapist_bp.route('/export-summary-report/<format>')
+@therapist_required
+def export_summary_report(format):
+    """Export summary report in CSV or PDF format."""
+    therapist_id = ObjectId(session['user'])
+    from_date_str = request.args.get('from_date')
+    to_date_str = request.args.get('to_date')
+    
+    try:
+        if from_date_str:
+            from_date = datetime.strptime(from_date_str, '%Y-%m-%d')
+        else:
+            # Default to 30 days ago
+            from_date = datetime.now() - timedelta(days=30)
+            
+        if to_date_str:
+            to_date = datetime.strptime(to_date_str, '%Y-%m-%d')
+        else:
+            # Default to today
+            to_date = datetime.now()
+    except ValueError:
+        flash('Invalid date format', 'error')
+        return redirect(url_for('therapist.reports'))
+    
+    # Get therapist data
+    therapist = find_therapist_by_id(therapist_id)
+    
+    # Calculate statistics
+    total_sessions = mongo.db.appointments.count_documents({
+        'therapist_id': therapist_id,
+        'status': 'completed',
+        'date': {'$gte': from_date, '$lte': to_date}
+    })
+    
+    cancelled_sessions = mongo.db.appointments.count_documents({
+        'therapist_id': therapist_id,
+        'status': 'cancelled',
+        'date': {'$gte': from_date, '$lte': to_date}
+    })
+    
+    scheduled_sessions = mongo.db.appointments.count_documents({
+        'therapist_id': therapist_id,
+        'status': 'scheduled',
+        'date': {'$gte': datetime.now()}
+    })
+    
+    active_students = mongo.db.therapist_assignments.count_documents({
+        'therapist_id': therapist_id,
+        'status': 'active'
+    })
+    
+    # Top students by session count
+    pipeline = [
+        {'$match': {
+            'therapist_id': therapist_id,
+            'status': 'completed',
+            'date': {'$gte': from_date, '$lte': to_date}
+        }},
+        {'$group': {
+            '_id': '$student_id',
+            'count': {'$sum': 1}
+        }},
+        {'$sort': {'count': -1}},
+        {'$limit': 5}
+    ]
+    
+    top_students_result = list(mongo.db.appointments.aggregate(pipeline))
+    
+    # Get student names
+    top_students = []
+    for result in top_students_result:
+        student = mongo.db.users.find_one({'_id': result['_id']})
+        if student:
+            top_students.append({
+                'id': str(student['_id']),
+                'name': f"{student['first_name']} {student['last_name']}",
+                'count': result['count']
+            })
+    
+    # Get weekly session breakdown
+    weekly_sessions = []
+    current_date = from_date
+    
+    while current_date <= to_date:
+        # Get start and end of week
+        start_of_week = current_date - timedelta(days=current_date.weekday())
+        end_of_week = start_of_week + timedelta(days=6)
+        
+        # Count sessions in this week
+        week_sessions = mongo.db.appointments.count_documents({
+            'therapist_id': therapist_id,
+            'status': 'completed',
+            'date': {'$gte': start_of_week, '$lte': end_of_week}
+        })
+        
+        if week_sessions > 0:
+            weekly_sessions.append({
+                'week': start_of_week.strftime('%b %d') + ' - ' + end_of_week.strftime('%b %d'),
+                'count': week_sessions
+            })
+        
+        # Move to next week
+        current_date = end_of_week + timedelta(days=1)
+    
+    # Compile summary data
+    summary_data = {
+        'therapist_name': f"Dr. {therapist.get('first_name', '')} {therapist.get('last_name', '')}",
+        'period': f"{from_date.strftime('%B %d, %Y')} - {to_date.strftime('%B %d, %Y')}",
+        'total_sessions': total_sessions,
+        'cancelled_sessions': cancelled_sessions,
+        'scheduled_sessions': scheduled_sessions,
+        'active_students': active_students,
+        'top_students': top_students,
+        'weekly_sessions': weekly_sessions
+    }
+    
+    if format.lower() == 'csv':
+        # Create CSV data
+        output = io.StringIO()
+        writer = csv.writer(output)
+        
+        # Write header and summary info
+        writer.writerow(['Summary Report'])
+        writer.writerow(['Therapist', summary_data['therapist_name']])
+        writer.writerow(['Period', summary_data['period']])
+        writer.writerow([])
+        writer.writerow(['Total Sessions', summary_data['total_sessions']])
+        writer.writerow(['Cancelled Sessions', summary_data['cancelled_sessions']])
+        writer.writerow(['Scheduled Sessions', summary_data['scheduled_sessions']])
+        writer.writerow(['Active Students', summary_data['active_students']])
+        writer.writerow([])
+        
+        # Write top students
+        writer.writerow(['Top Students'])
+        writer.writerow(['Name', 'Sessions'])
+        for student in summary_data['top_students']:
+            writer.writerow([student['name'], student['count']])
+        writer.writerow([])
+        
+        # Write weekly sessions
+        writer.writerow(['Weekly Sessions'])
+        writer.writerow(['Week', 'Sessions'])
+        for week in summary_data['weekly_sessions']:
+            writer.writerow([week['week'], week['count']])
+        
+        # Create response
+        output.seek(0)
+        response = Response(output.getvalue(), mimetype='text/csv')
+        response.headers['Content-Disposition'] = f'attachment; filename=summary_report_{datetime.now().strftime("%Y%m%d")}.csv'
+        return response
+    
+    elif format.lower() == 'pdf':
+       
+        flash('PDF export is not yet implemented', 'error')
+        return redirect(url_for('therapist.reports'))
+    
+    else:
+        flash('Invalid export format', 'error')
+        return redirect(url_for('therapist.reports'))

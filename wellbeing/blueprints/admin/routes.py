@@ -1111,7 +1111,6 @@ def therapist_assignments():
         logger.error(f"Therapist assignments error: {e}")
         flash('An error occurred while loading assignment data', 'error')
         return redirect(url_for('admin.dashboard'))
-
 @admin_bp.route('/assignments/create', methods=['POST'])
 @admin_required
 def create_assignment():
@@ -1126,21 +1125,25 @@ def create_assignment():
             flash('Student and therapist are required', 'error')
             return redirect(url_for('admin.therapist_assignments'))
         
+        # Convert string IDs to ObjectId
+        student_id_obj = ObjectId(student_id)
+        therapist_id_obj = ObjectId(therapist_id)
+        
         # Check if student exists
-        student = mongo.db.users.find_one({'_id': ObjectId(student_id)})
+        student = mongo.db.users.find_one({'_id': student_id_obj})
         if not student:
             flash('Selected student not found', 'error')
             return redirect(url_for('admin.therapist_assignments'))
         
         # Check if therapist exists
-        therapist = mongo.db.therapists.find_one({'_id': ObjectId(therapist_id)})
+        therapist = mongo.db.therapists.find_one({'_id': therapist_id_obj})
         if not therapist:
             flash('Selected therapist not found', 'error')
             return redirect(url_for('admin.therapist_assignments'))
         
         # Check if student already has an assignment
-        existing = mongo.db.appointments.find_one({
-            'student_id': ObjectId(student_id),
+        existing = mongo.db.therapist_assignments.find_one({
+            'student_id': student_id_obj,
             'status': 'active'
         })
         
@@ -1150,17 +1153,39 @@ def create_assignment():
         
         # Create assignment
         new_assignment = {
-            'student_id': ObjectId(student_id),
-            'therapist_id': ObjectId(therapist_id),
+            'student_id': student_id_obj,
+            'therapist_id': therapist_id_obj,
             'status': 'active',
             'created_at': datetime.now(),
-            'next_session': None,
-            'session_count': 0
+            'updated_at': datetime.now(),
+            'assigned_by': ObjectId(session['user']),
+            'notes': 'Assigned by admin'
         }
         
-        result = mongo.db.appointments.insert_one(new_assignment)
+        # Important: Insert into therapist_assignments collection
+        result = mongo.db.therapist_assignments.insert_one(new_assignment)
         
         if result.inserted_id:
+            # Update therapist's current student count
+            current_students = therapist.get('current_students', 0)
+            if not isinstance(current_students, int):
+                current_students = 0
+                
+            mongo.db.therapists.update_one(
+                {'_id': therapist_id_obj},
+                {'$set': {'current_students': current_students + 1}}
+            )
+            
+            # Create a notification for the therapist
+            mongo.db.notifications.insert_one({
+                'user_id': therapist_id_obj,
+                'type': 'new_student_assigned',
+                'message': f'A new student ({student["first_name"]} {student["last_name"]}) has been assigned to you.',
+                'related_id': result.inserted_id,
+                'read': false,
+                'created_at': datetime.now()
+            })
+            
             student_name = f"{student['first_name']} {student['last_name']}"
             therapist_name = f"{therapist['first_name']} {therapist['last_name']}"
             flash(f'Successfully assigned {student_name} to Dr. {therapist_name}', 'success')

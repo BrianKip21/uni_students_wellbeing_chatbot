@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile | Wellbeing Assistant</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css"> 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+
+    <style>
+        {% if settings is mapping and settings.get('theme_mode') == 'dark' %}
+        /* Dark mode styles */
+        body {
+            background-color: #121212 !important;
+            color: #e0e0e0 !important;
+        }
+        
+        .bg-white {
+            background-color: #1e1e1e !important;
+        }
+        
+        .text-gray-700, .text-gray-800, .text-gray-900 {
+            color: #e0e0e0 !important;
+        }
+        
+        .text-gray-500, .text-gray-600 {
+            color: #a0a0a0 !important;
+        }
+        
+        .bg-gray-50, .bg-gray-100, .bg-gray-200 {
+            background-color: #2a2a2a !important;
+        }
+        
+        .border-gray-200, .border-gray-300 {
+            border-color: #333 !important;
+        }
+
+        .hover\:bg-gray-100:hover {
+            background-color: #333333 !important;
+        }
+
+        .hover\:bg-gray-200:hover {
+            background-color: #444444 !important;
+        }
+
+        .hover\:bg-green-200:hover {
+            background-color: #0d503c !important;
+        }
+
+        .hover\:bg-blue-200:hover {
+            background-color: #0d365e !important;
+        }
+
+        .bg-green-100 {
+            background-color: #064e3b !important;
+        }
+
+        .bg-blue-100 {
+            background-color: #0c4a6e !important;
+        }
+        {% endif %}
+        
+        {% if settings is mapping and settings.get('contrast') == 'high' %}
+        /* High contrast styles */
+        body {
+            background-color: #ffffff !important;
+            color: #000000 !important;
+        }
+        
+        .text-gray-500, .text-gray-600, .text-gray-700, .text-gray-800, .text-gray-900 {
+            color: #000000 !important;
+        }
+        
+        .bg-gray-800 {
+            background-color: #000000 !important;
+        }
+        
+        .text-gray-200 {
+            color: #ffffff !important;
+        }
+        
+        input, select, button {
+            border: 2px solid #000000 !important;
+        }
+
+        .bg-green-100, .bg-blue-100, .bg-gray-100 {
+            background-color: #ffffff !important;
+            border: 2px solid #000000 !important;
+        }
+
+        .text-green-500, .text-blue-500, .text-purple-500 {
+            color: #000000 !important;
+        }
+        {% endif %}
+        
+        {% if settings is mapping and settings.get('text_size') == 'lg' %}
+        /* Large text */
+        body {
+            font-size: 1.125rem !important;
+        }
+        
+        .text-sm {
+            font-size: 0.9375rem !important;
+        }
+        
+        .text-lg, .text-xl, .text-2xl, .text-3xl {
+            font-size: 1.3125rem !important;
+        }
+        {% elif settings is mapping and settings.get('text_size') == 'xl' %}
+        /* Extra large text */
+        body {
+            font-size: 1.25rem !important;
+        }
+        
+        .text-sm {
+            font-size: 1.0625rem !important;
+        }
+        
+        .text-lg, .text-xl {
+            font-size: 1.5rem !important;
+        }
+
+        .text-2xl, .text-3xl {
+            font-size: 1.75rem !important;
+        }
+        {% endif %}
+
+        /* Custom styles for profile tabs */
+        .tab-btn {
+            position: relative;
+        }
+        
+        .tab-btn.active {
+            color: #3b82f6;
+            font-weight: 600;
+        }
+        
+        .tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -6px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: #3b82f6;
+        }
+
+        {% if settings is mapping and settings.get('theme_mode') == 'dark' %}
+        .tab-btn.active {
+            color: #60a5fa;
+        }
+        
+        .tab-btn.active::after {
+            background-color: #60a5fa;
+        }
+        {% endif %}
+    </style>
+</head>
+
+<body class="bg-gray-200 flex text-gray-900">
+    <!-- Sidebar Navigation -->
+    <aside class="w-64 h-screen bg-gray-800 text-gray-200 p-4 fixed">
+        <h1 class="text-2xl font-bold mb-6">Therapist Portal</h1>
+        <nav>
+            <ul class="space-y-4">
+                <li><a href="{{ url_for('therapist.index') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-chart-line"></i> Dashboard</a></li>
+                <li><a href="{{ url_for('therapist.appointments') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-calendar-alt"></i> Appointments</a></li>
+                <li><a href="{{ url_for('therapist.students') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-user-graduate"></i> My Students</a></li>
+                <li><a href="{{ url_for('therapist.calendar') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-calendar"></i> Calendar</a></li>
+                <li><a href="{{ url_for('therapist.resources') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-book-medical"></i> Resources</a></li>
+                <li><a href="{{ url_for('therapist.profile') }}" class="block p-2 bg-gray-700 rounded"> <i class="fas fa-user"></i> Profile</a></li>
+                <li><a href="{{ url_for('therapist.student_requests') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-user-plus"></i> Student Requests</a></li>
+                <li><a href="{{ url_for('therapist.reports') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-chart-bar"></i> Reports</a></li>
+                <li><a href="{{ url_for('auth.logout') }}" class="block p-2 hover:bg-gray-700 rounded mt-8"> <i class="fas fa-sign-out-alt"></i> Logout</a></li>
+            </ul>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="ml-64 p-8 w-full">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="bg-{% if category == 'error' %}red{% else %}blue{% endif %}-100 border-l-4 border-{% if category == 'error' %}red{% else %}blue{% endif %}-500 text-{% if category == 'error' %}red{% else %}blue{% endif %}-700 p-4 mb-6" role="alert">
+                        <p>{{ message }}</p>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        <h2 class="text-3xl font-bold text-gray-800 mb-6">Your Profile</h2>
+        
+        <!-- Profile Header -->
+        <div class="bg-white p-6 rounded shadow mb-6">
+            <div class="flex flex-wrap md:flex-nowrap">
+                <div class="w-full md:w-1/4 flex flex-col items-center justify-center mb-4 md:mb-0 md:border-r md:border-gray-200 md:pr-6">
+                    <div class="w-32 h-32 rounded-full bg-blue-100 text-blue-500 flex items-center justify-center font-bold text-5xl mb-4">
+                        {% if therapist is mapping %}
+                            {{ therapist.get('first_name', ' ')[0] }}{{ therapist.get('last_name', ' ')[0] }}
+                        {% else %}
+                            T
+                        {% endif %}
+                    </div>
+                    <h3 class="text-xl font-semibold text-center">Dr. 
+                        {% if therapist is mapping %}
+                            {{ therapist.get('first_name', '') }} {{ therapist.get('last_name', '') }}
+                        {% else %}
+                            Therapist
+                        {% endif %}
+                    </h3>
+                    <p class="text-gray-600 text-center">
+                        {% if user is mapping %}
+                            {{ user.get('email', '') }}
+                        {% else %}
+                            unknown@example.com
+                        {% endif %}
+                    </p>
+                </div>
+                
+                <div class="w-full md:w-3/4 md:pl-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div class="bg-gray-50 p-4 rounded">
+                            <p class="text-sm text-gray-600">Member Since</p>
+                            <p class="font-medium">{{ stats.get('member_since', 'N/A') if stats is mapping else 'N/A' }}</p>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded">
+                            <p class="text-sm text-gray-600">Total Sessions</p>
+                            <p class="font-medium">{{ stats.get('total_sessions', 0) if stats is mapping else 0 }}</p>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded">
+                            <p class="text-sm text-gray-600">Current Students</p>
+                            <p class="font-medium">{{ stats.get('current_students', 0) if stats is mapping else 0 }}</p>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded">
+                            <p class="text-sm text-gray-600">Last Login</p>
+                            <p class="font-medium">{{ stats.get('last_login', 'N/A') if stats is mapping else 'N/A' }}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <h4 class="font-semibold mb-1">Specialization</h4>
+                        <p class="text-gray-600">
+                            {% if therapist is mapping %}
+                                {{ therapist.get('specialization', 'Not specified') }}
+                            {% else %}
+                                Not specified
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Profile Tabs -->
+        <div class="bg-white p-4 rounded shadow mb-6">
+            <div class="border-b border-gray-200">
+                <div class="flex overflow-x-auto">
+                    <button type="button" class="tab-btn mr-8 pb-2 {% if request.method != 'POST' or 'profile' in request.form.get('form_type', '') %}active{% endif %}" onclick="switchTab('profile')">
+                        Profile Information
+                    </button>
+                    <button type="button" class="tab-btn mr-8 pb-2 {% if 'availability' in request.form.get('form_type', '') %}active{% endif %}" onclick="switchTab('availability')">
+                        Availability
+                    </button>
+                    <button type="button" class="tab-btn mr-8 pb-2 {% if 'password' in request.form.get('form_type', '') %}active{% endif %}" onclick="switchTab('password')">
+                        Change Password
+                    </button>
+                    <button type="button" class="tab-btn mr-8 pb-2 {% if 'notifications' in request.form.get('form_type', '') %}active{% endif %}" onclick="switchTab('notifications')">
+                        Notification Preferences
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Profile Information Tab -->
+        <div id="profile" class="tab-content {% if request.method == 'POST' and 'profile' not in request.form.get('form_type', '') and request.form.get('form_type') %}hidden{% endif %}">
+            <div class="bg-white p-6 rounded shadow">
+                <!-- View Mode (default after save) -->
+                <div id="profile-view-mode" class="{% if request.args.get('edit') == 'true' %}hidden{% endif %}">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-semibold">Profile Information</h3>
+                        <button type="button" onclick="toggleEditMode('profile', true)" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
+                            <i class="fas fa-edit mr-2"></i> Edit
+                        </button>
+                    </div>
+                    
+                    <div class="mb-6">
+                        <h4 class="font-semibold text-gray-700 mb-1">Name</h4>
+                        <p>Dr. 
+                            {% if user is mapping %}
+                                {{ user.get('first_name', '') }} {{ user.get('last_name', '') }}
+                            {% else %}
+                                Therapist
+                            {% endif %}
+                        </p>
+                    </div>
+                    
+                    <div class="mb-6">
+                        <h4 class="font-semibold text-gray-700 mb-1">Email</h4>
+                        <p>
+                            {% if user is mapping %}
+                                {{ user.get('email', '') }}
+                            {% else %}
+                                unknown@example.com
+                            {% endif %}
+                        </p>
+                    </div>
+                    
+                    <div class="mb-6">
+                        <h4 class="font-semibold text-gray-700 mb-1">Specialization</h4>
+                        <p>
+                            {% if therapist is mapping %}
+                                {{ therapist.get('specialization', 'Not specified') }}
+                            {% else %}
+                                Not specified
+                            {% endif %}
+                        </p>
+                    </div>
+                    
+                    <div class="mb-6">
+                        <h4 class="font-semibold text-gray-700 mb-1">Professional Bio</h4>
+                        <p class="whitespace-pre-line">
+                            {% if therapist is mapping %}
+                                {{ therapist.get('bio', 'No biography provided.') }}
+                            {% else %}
+                                No biography provided.
+                            {% endif %}
+                        </p>
+                    </div>
+                    
+                    <div class="mb-6">
+                        <h4 class="font-semibold text-gray-700 mb-1">Office Hours</h4>
+                        <p>
+                            {% if therapist is mapping and therapist.get('office_hours') is mapping %}
+                                {{ therapist.get('office_hours', {}).get('description', 'Not specified') }}
+                            {% else %}
+                                Not specified
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+                
+                <!-- Edit Mode -->
+                <div id="profile-edit-mode" class="{% if request.args.get('edit') != 'true' %}hidden{% endif %}">
+                    <h3 class="text-xl font-semibold mb-4">Edit Profile Information</h3>
+                    
+                    <form action="{{ url_for('therapist.profile') }}" method="POST">
+                        <input type="hidden" name="form_type" value="profile">
+                        
+                        <div class="mb-4">
+                            <div class="flex flex-wrap -mx-3">
+                                <div class="w-full md:w-1/2 px-3 mb-4 md:mb-0">
+                                    <label for="first_name" class="block text-gray-700 font-medium mb-2">First Name</label>
+                                    <input type="text" id="first_name" name="first_name" value="{{ user.get('first_name', '') if user is mapping else '' }}" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500" readonly>
+                                    <p class="text-sm text-gray-500 mt-1">Contact admin to change your name</p>
+                                </div>
+                                <div class="w-full md:w-1/2 px-3">
+                                    <label for="last_name" class="block text-gray-700 font-medium mb-2">Last Name</label>
+                                    <input type="text" id="last_name" name="last_name" value="{{ user.get('last_name', '') if user is mapping else '' }}" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500" readonly>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="email" class="block text-gray-700 font-medium mb-2">Email</label>
+                            <input type="email" id="email" name="email" value="{{ user.get('email', '') if user is mapping else '' }}" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500" readonly>
+                            <p class="text-sm text-gray-500 mt-1">Contact admin to change your email</p>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="specialization" class="block text-gray-700 font-medium mb-2">Specialization</label>
+                            <input type="text" id="specialization" name="specialization" value="{{ therapist.get('specialization', '') if therapist is mapping else '' }}" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500">
+                            <p class="text-sm text-gray-500 mt-1">Your areas of specialization (e.g., Anxiety, Depression, PTSD)</p>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="bio" class="block text-gray-700 font-medium mb-2">Professional Bio</label>
+                            <textarea id="bio" name="bio" rows="4" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500">{{ therapist.get('bio', '') if therapist is mapping else '' }}</textarea>
+                            <p class="text-sm text-gray-500 mt-1">Short professional biography to introduce yourself to students</p>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="office_hours" class="block text-gray-700 font-medium mb-2">Office Hours Description</label>
+                            <textarea id="office_hours" name="office_hours" rows="2" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500">{% if therapist is mapping and therapist.get('office_hours') is mapping %}{{ therapist.get('office_hours', {}).get('description', '') }}{% endif %}</textarea>
+                            <p class="text-sm text-gray-500 mt-1">General description of your availability (e.g., "Available Mon-Fri, 9am-5pm")</p>
+                        </div>
+                        
+                        <div class="flex justify-end">
+                            <button type="button" onclick="toggleEditMode('profile', false)" class="bg-gray-300 hover:bg-gray-400 text-gray-800 mr-2 px-4 py-2 rounded">
+                                Cancel
+                            </button>
+                            <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
+                                Save Changes
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Availability Tab -->
+        <div id="availability" class="tab-content {% if request.method != 'POST' or 'availability' not in request.form.get('form_type', '') %}hidden{% endif %}">
+            <div class="bg-white p-6 rounded shadow">
+                <!-- View Mode (default after save) -->
+                <div id="availability-view-mode" class="{% if request.args.get('edit') == 'true' %}hidden{% endif %}">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-semibold">Availability Settings</h3>
+                        <button type="button" onclick="toggleEditMode('availability', true)" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
+                            <i class="fas fa-edit mr-2"></i> Edit
+                        </button>
+                    </div>
+                    
+                    <div class="mb-6">
+                        <h4 class="font-semibold text-gray-700 mb-1">Available Days</h4>
+                        <p>
+                            {% set working_days = therapist.get('office_hours', {}).get('days', [0, 1, 2, 3, 4]) if therapist is mapping and therapist.get('office_hours') is mapping else [0, 1, 2, 3, 4] %}
+                            {% set day_names = {0: 'Monday', 1: 'Tuesday', 2: 'Wednesday', 3: 'Thursday', 4: 'Friday', 5: 'Saturday', 6: 'Sunday'} %}
+                            {% for day in working_days %}
+                                {{ day_names[day] }}{% if not loop.last %}, {% endif %}
+                            {% endfor %}
+                        </p>
+                    </div>
+                    
+                    <div class="mb-6">
+                        <h4 class="font-semibold text-gray-700 mb-1">Available Time Slots</h4>
+                        <p>
+                            {% set slots = therapist.get('office_hours', {}).get('slots', ['09:00', '10:00', '11:00', '14:00', '15:00', '16:00']) if therapist is mapping and therapist.get('office_hours') is mapping else ['09:00', '10:00', '11:00', '14:00', '15:00', '16:00'] %}
+                            {% for slot in slots %}
+                                {{ slot }}{% if not loop.last %}, {% endif %}
+                            {% endfor %}
+                        </p>
+                    </div>
+                    
+                    <div class="mb-6">
+                        <h4 class="font-semibold text-gray-700 mb-1">Maximum Number of Students</h4>
+                        <p>{{ therapist.get('max_students', 20) if therapist is mapping else 20 }}</p>
+                    </div>
+                </div>
+                
+                <!-- Edit Mode -->
+                <div id="availability-edit-mode" class="{% if request.args.get('edit') != 'true' %}hidden{% endif %}">
+                    <h3 class="text-xl font-semibold mb-4">Update Availability</h3>
+                    
+                    <form action="{{ url_for('therapist.profile') }}" method="POST">
+                        <input type="hidden" name="form_type" value="availability">
+                        
+                        <div class="mb-4">
+                            <label class="block text-gray-700 font-medium mb-2">Available Days</label>
+                            <div class="flex flex-wrap">
+                                {% set working_days = therapist.get('office_hours', {}).get('days', [0, 1, 2, 3, 4]) if therapist is mapping and therapist.get('office_hours') is mapping else [0, 1, 2, 3, 4] %}
+                                <label class="flex items-center mr-4 mb-2">
+                                    <input type="checkbox" name="available_days[]" value="0" class="mr-2" {% if 0 in working_days %}checked{% endif %}>
+                                    Monday
+                                </label>
+                                <label class="flex items-center mr-4 mb-2">
+                                    <input type="checkbox" name="available_days[]" value="1" class="mr-2" {% if 1 in working_days %}checked{% endif %}>
+                                    Tuesday
+                                </label>
+                                <label class="flex items-center mr-4 mb-2">
+                                    <input type="checkbox" name="available_days[]" value="2" class="mr-2" {% if 2 in working_days %}checked{% endif %}>
+                                    Wednesday
+                                </label>
+                                <label class="flex items-center mr-4 mb-2">
+                                    <input type="checkbox" name="available_days[]" value="3" class="mr-2" {% if 3 in working_days %}checked{% endif %}>
+                                    Thursday
+                                </label>
+                                <label class="flex items-center mr-4 mb-2">
+                                    <input type="checkbox" name="available_days[]" value="4" class="mr-2" {% if 4 in working_days %}checked{% endif %}>
+                                    Friday
+                                </label>
+                                <label class="flex items-center mr-4 mb-2">
+                                    <input type="checkbox" name="available_days[]" value="5" class="mr-2" {% if 5 in working_days %}checked{% endif %}>
+                                    Saturday
+                                </label>
+                                <label class="flex items-center mb-2">
+                                    <input type="checkbox" name="available_days[]" value="6" class="mr-2" {% if 6 in working_days %}checked{% endif %}>
+                                    Sunday
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="block text-gray-700 font-medium mb-2">Available Time Slots</label>
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                {% set slots = therapist.get('office_hours', {}).get('slots', ['09:00', '10:00', '11:00', '14:00', '15:00', '16:00']) if therapist is mapping and therapist.get('office_hours') is mapping else ['09:00', '10:00', '11:00', '14:00', '15:00', '16:00'] %}
+                                {% for hour in range(8, 18) %}
+                                    <label class="flex items-center">
+                                        <input type="checkbox" name="slot_{{ hour }}" class="mr-2" {% if '%02d:00'|format(hour) in slots %}checked{% endif %}>
+                                        {{ '%02d'|format(hour) }}:00
+                                    </label>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="max_students" class="block text-gray-700 font-medium mb-2">Maximum Number of Students</label>
+                            <input type="number" id="max_students" name="max_students" value="{{ therapist.get('max_students', 20) if therapist is mapping else 20 }}" min="1" max="50" class="w-full md:w-1/3 border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500">
+                            <p class="text-sm text-gray-500 mt-1">Maximum number of students you can handle at once</p>
+                        </div>
+                        
+                        <div class="flex justify-end">
+                            <button type="button" onclick="toggleEditMode('availability', false)" class="bg-gray-300 hover:bg-gray-400 text-gray-800 mr-2 px-4 py-2 rounded">
+                                Cancel
+                            </button>
+                            <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
+                                Save Changes
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Change Password Tab -->
+        <div id="password" class="tab-content {% if request.method != 'POST' or 'password' not in request.form.get('form_type', '') %}hidden{% endif %}">
+            <div class="bg-white p-6 rounded shadow">
+                <h3 class="text-xl font-semibold mb-4">Change Password</h3>
+                
+                <form action="{{ url_for('therapist.profile') }}" method="POST">
+                    <input type="hidden" name="form_type" value="password">
+                    
+                    <div class="mb-4">
+                        <label for="current_password" class="block text-gray-700 font-medium mb-2">Current Password</label>
+                        <input type="password" id="current_password" name="current_password" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500" required>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="new_password" class="block text-gray-700 font-medium mb-2">New Password</label>
+                        <input type="password" id="new_password" name="new_password" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500" required>
+                        <p class="text-sm text-gray-500 mt-1">Must be at least 8 characters long</p>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="confirm_password" class="block text-gray-700 font-medium mb-2">Confirm New Password</label>
+                        <input type="password" id="confirm_password" name="confirm_password" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500" required>
+                    </div>
+                    
+                    <div class="flex justify-end">
+                        <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
+                            Change Password
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Notification Preferences Tab -->
+        <div id="notifications" class="tab-content {% if request.method != 'POST' or 'notifications' not in request.form.get('form_type', '') %}hidden{% endif %}">
+            <div class="bg-white p-6 rounded shadow">
+                <!-- View Mode (default after save) -->
+                <div id="notifications-view-mode" class="{% if request.args.get('edit') == 'true' %}hidden{% endif %}">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-semibold">Notification Preferences</h3>
+                        <button type="button" onclick="toggleEditMode('notifications', true)" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
+                            <i class="fas fa-edit mr-2"></i> Edit
+                        </button>
+                    </div>
+                    
+                    <div class="mb-6">
+                        <h4 class="font-semibold text-gray-700 mb-1">Email Notifications</h4>
+                        <p>
+                            {% if therapist is mapping and therapist.get('notifications') is mapping and therapist.get('notifications', {}).get('email', True) %}
+                                Enabled
+                            {% else %}
+                                Disabled
+                            {% endif %}
+                        </p>
+                        <p class="text-sm text-gray-500">For new appointments, requests, and messages</p>
+                    </div>
+                    
+                    <div class="mb-6">
+                        <h4 class="font-semibold text-gray-700 mb-1">SMS Notifications</h4>
+                        <p>
+                            {% if therapist is mapping and therapist.get('notifications') is mapping and therapist.get('notifications', {}).get('sms', False) %}
+                                Enabled
+                            {% else %}
+                                Disabled
+                            {% endif %}
+                        </p>
+                        <p class="text-sm text-gray-500">For important updates</p>
+                    </div>
+                </div>
+                
+                <!-- Edit Mode -->
+                <div id="notifications-edit-mode" class="{% if request.args.get('edit') != 'true' %}hidden{% endif %}">
+                    <h3 class="text-xl font-semibold mb-4">Edit Notification Preferences</h3>
+                    
+                    <form action="{{ url_for('therapist.profile') }}" method="POST">
+                        <input type="hidden" name="form_type" value="notifications">
+                        
+                        <div class="mb-4">
+                            <label class="flex items-center">
+                                <input type="checkbox" name="email_notifications" class="mr-2" {% if therapist is mapping and therapist.get('notifications') is mapping and therapist.get('notifications', {}).get('email', True) %}checked{% endif %}>
+                                <span class="text-gray-700">Email Notifications</span>
+                            </label>
+                            <p class="text-sm text-gray-500 mt-1 ml-6">Receive email notifications for new appointments, requests, and messages</p>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="flex items-center">
+                                <input type="checkbox" name="sms_notifications" class="mr-2" {% if therapist is mapping and therapist.get('notifications') is mapping and therapist.get('notifications', {}).get('sms', False) %}checked{% endif %}>
+                                <span class="text-gray-700">SMS Notifications</span>
+                            </label>
+                            <p class="text-sm text-gray-500 mt-1 ml-6">Receive text message notifications for important updates</p>
+                        </div>
+                        
+                        <div class="flex justify-end">
+                            <button type="button" onclick="toggleEditMode('notifications', false)" class="bg-gray-300 hover:bg-gray-400 text-gray-800 mr-2 px-4 py-2 rounded">
+                                Cancel
+                            </button>
+                            <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
+                                Save Preferences
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- JavaScript for tabs and edit/view modes -->
+    <script>
+        // Tab switching
+        function switchTab(tabId) {
+            // Hide all tab contents
+            const tabContents = document.querySelectorAll('.tab-content');
+            tabContents.forEach(content => {
+                content.classList.add('hidden');
+            });
+            
+            // Show selected tab content
+            document.getElementById(tabId).classList.remove('hidden');
+            
+            // Update active tab button
+            const tabButtons = document.querySelectorAll('.tab-btn');
+            tabButtons.forEach(button => {
+                button.classList.remove('active');
+            });
+            
+            // Activate current tab button
+            event.currentTarget.classList.add('active');
+        }
+        
+        // Toggle between edit and view modes
+        function toggleEditMode(section, editMode) {
+            const viewMode = document.getElementById(section + '-view-mode');
+            const editModeElement = document.getElementById(section + '-edit-mode');
+            
+            if (editMode) {
+                viewMode.classList.add('hidden');
+                editModeElement.classList.remove('hidden');
+            } else {
+                viewMode.classList.remove('hidden');
+                editModeElement.classList.add('hidden');
+            }
+        }
+        
+        // Password validation
+        document.getElementById('password')?.addEventListener('submit', function(e) {
+            const newPassword = document.getElementById('new_password').value;
+            const confirmPassword = document.getElementById('confirm_password').value;
+            
+            if (newPassword !== confirmPassword) {
+                e.preventDefault();
+                alert('Passwords do not match');
+            }
+        });
+        
+        // On page load, keep the right tab active and make sure view mode is shown after form submission
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check URL parameters for edit mode
+            const urlParams = new URLSearchParams(window.location.search);
+            const editMode = urlParams.get('edit') === 'true';
+            
+            {% if request.method == 'POST' %}
+                {% if 'profile' in request.form.get('form_type', '') %}
+                    switchTab('profile');
+                {% elif 'availability' in request.form.get('form_type', '') %}
+                    switchTab('availability');
+                {% elif 'password' in request.form.get('form_type', '') %}
+                    switchTab('password');
+                {% elif 'notifications' in request.form.get('form_type', '') %}
+                    switchTab('notifications');
+                {% endif %}
+            {% endif %}
+        });
+    </script>
+</body>
+</html>

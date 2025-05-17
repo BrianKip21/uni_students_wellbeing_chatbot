@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Requests | Wellbeing Assistant</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css"> 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+
+    <style>
+        {% if settings.theme_mode == 'dark' %}
+        /* Dark mode styles */
+        body {
+            background-color: #121212 !important;
+            color: #e0e0e0 !important;
+        }
+        
+        .bg-white {
+            background-color: #1e1e1e !important;
+        }
+        
+        .text-gray-700, .text-gray-800, .text-gray-900 {
+            color: #e0e0e0 !important;
+        }
+        
+        .text-gray-500, .text-gray-600 {
+            color: #a0a0a0 !important;
+        }
+        
+        .bg-gray-50, .bg-gray-100, .bg-gray-200 {
+            background-color: #2a2a2a !important;
+        }
+        
+        .border-gray-200, .border-gray-300 {
+            border-color: #333 !important;
+        }
+
+        .hover\:bg-gray-100:hover {
+            background-color: #333333 !important;
+        }
+
+        .hover\:bg-gray-200:hover {
+            background-color: #444444 !important;
+        }
+
+        .hover\:bg-green-200:hover {
+            background-color: #0d503c !important;
+        }
+
+        .hover\:bg-blue-200:hover {
+            background-color: #0d365e !important;
+        }
+
+        .bg-green-100 {
+            background-color: #064e3b !important;
+        }
+
+        .bg-blue-100 {
+            background-color: #0c4a6e !important;
+        }
+
+        .bg-purple-100 {
+            background-color: #4c1d95 !important;
+        }
+
+        .bg-amber-100 {
+            background-color: #78350f !important;
+        }
+        {% endif %}
+        
+        {% if settings.contrast == 'high' %}
+        /* High contrast styles */
+        body {
+            background-color: #ffffff !important;
+            color: #000000 !important;
+        }
+        
+        .text-gray-500, .text-gray-600, .text-gray-700, .text-gray-800, .text-gray-900 {
+            color: #000000 !important;
+        }
+        
+        .bg-gray-800 {
+            background-color: #000000 !important;
+        }
+        
+        .text-gray-200 {
+            color: #ffffff !important;
+        }
+        
+        input, select, button {
+            border: 2px solid #000000 !important;
+        }
+
+        .bg-green-100, .bg-blue-100, .bg-gray-100, .bg-purple-100, .bg-amber-100 {
+            background-color: #ffffff !important;
+            border: 2px solid #000000 !important;
+        }
+
+        .text-green-500, .text-blue-500, .text-purple-500, .text-amber-500 {
+            color: #000000 !important;
+        }
+        {% endif %}
+        
+        {% if settings.text_size == 'lg' %}
+        /* Large text */
+        body {
+            font-size: 1.125rem !important;
+        }
+        
+        .text-sm {
+            font-size: 0.9375rem !important;
+        }
+        
+        .text-lg, .text-xl, .text-2xl, .text-3xl {
+            font-size: 1.3125rem !important;
+        }
+        {% elif settings.text_size == 'xl' %}
+        /* Extra large text */
+        body {
+            font-size: 1.25rem !important;
+        }
+        
+        .text-sm {
+            font-size: 1.0625rem !important;
+        }
+        
+        .text-lg, .text-xl {
+            font-size: 1.5rem !important;
+        }
+
+        .text-2xl, .text-3xl {
+            font-size: 1.75rem !important;
+        }
+        {% endif %}
+
+        /* Custom styles for request cards */
+        .request-card {
+            transition: transform 0.2s;
+        }
+        
+        .request-card:hover {
+            transform: translateY(-4px);
+        }
+
+        /* Badge styles */
+        .admin-badge {
+            background-color: #3b82f6;
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .student-badge {
+            background-color: #10b981;
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-200 flex text-gray-900">
+    <!-- Sidebar Navigation -->
+    <aside class="w-64 h-screen bg-gray-800 text-gray-200 p-4 fixed">
+        <h1 class="text-2xl font-bold mb-6">Therapist Portal</h1>
+        <nav>
+            <ul class="space-y-4">
+                <li><a href="{{ url_for('therapist.index') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-chart-line"></i> Dashboard</a></li>
+                <li><a href="{{ url_for('therapist.appointments') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-calendar-alt"></i> Appointments</a></li>
+                <li><a href="{{ url_for('therapist.students') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-user-graduate"></i> My Students</a></li>
+                <li><a href="{{ url_for('therapist.calendar') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-calendar"></i> Calendar</a></li>
+                <li><a href="{{ url_for('therapist.resources') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-book-medical"></i> Resources</a></li>
+                <li><a href="{{ url_for('therapist.profile') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-user"></i> Profile</a></li>
+                <li><a href="{{ url_for('therapist.student_requests') }}" class="block p-2 bg-gray-700 rounded"> <i class="fas fa-user-plus"></i> Student Requests</a></li>
+                <li><a href="{{ url_for('therapist.reports') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-chart-bar"></i> Reports</a></li>
+                <li><a href="{{ url_for('auth.logout') }}" class="block p-2 hover:bg-gray-700 rounded mt-8"> <i class="fas fa-sign-out-alt"></i> Logout</a></li>
+            </ul>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="ml-64 p-8 w-full">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="bg-{% if category == 'error' %}red{% else %}blue{% endif %}-100 border-l-4 border-{% if category == 'error' %}red{% else %}blue{% endif %}-500 text-{% if category == 'error' %}red{% else %}blue{% endif %}-700 p-4 mb-6" role="alert">
+                        <p>{{ message }}</p>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        <h2 class="text-3xl font-bold text-gray-800 mb-6">Student Assignment Requests</h2>
+        
+        <!-- Current Status -->
+        <div class="bg-white p-4 rounded shadow mb-6">
+            <div class="flex flex-wrap justify-between items-center">
+                <div class="flex items-center space-x-4 mb-4 md:mb-0">
+                    <div class="bg-blue-100 text-blue-500 p-3 rounded-full">
+                        <i class="fas fa-user-plus text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600">Current Students</p>
+                        <p class="text-lg font-semibold">
+                            {% set current = therapist.get('current_students', 0) %}
+                            {% set maximum = therapist.get('max_students', 20) %}
+                            {{ current }} / {{ maximum }}
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-4 mb-4 md:mb-0">
+                    <div class="bg-green-100 text-green-500 p-3 rounded-full">
+                        <i class="fas fa-tasks text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600">Pending Requests</p>
+                        <p class="text-lg font-semibold">{{ pending_requests|length }}</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <div class="bg-purple-100 text-purple-500 p-3 rounded-full">
+                        <i class="fas fa-calendar-check text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600">Available Slots</p>
+                        <p class="text-lg font-semibold">
+                            {% set current = therapist.get('current_students', 0) %}
+                            {% set maximum = therapist.get('max_students', 20) %}
+                            {% set available = maximum - current %}
+                            {{ available }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pending Requests -->
+        <div class="bg-white p-6 rounded shadow">
+            <h3 class="text-xl font-semibold mb-4">Pending Student Requests</h3>
+            
+            {% if pending_requests %}
+                <div class="space-y-4">
+                    {% for request in pending_requests %}
+                        <div class="border border-gray-200 p-4 rounded request-card">
+                            <div class="md:flex md:justify-between md:items-start">
+                                <div class="mb-4 md:mb-0">
+                                    <div class="flex items-center mb-2">
+                                        <div class="w-10 h-10 rounded-full bg-blue-100 text-blue-500 flex items-center justify-center font-bold text-lg mr-3">
+                                            {{ request.get('student_name', 'U')[0] }}
+                                        </div>
+                                        <div>
+                                            <div class="flex items-center">
+                                                <h4 class="font-semibold text-lg">{{ request.get('student_name', 'Unknown Student') }}</h4>
+                                                
+                                                {% if request.get('source') == 'admin_assignment' %}
+                                                    <span class="ml-2 admin-badge">
+                                                        <i class="fas fa-user-shield mr-1"></i> Admin Assigned
+                                                    </span>
+                                                {% else %}
+                                                    <span class="ml-2 student-badge">
+                                                        <i class="fas fa-hand-paper mr-1"></i> Student Request
+                                                    </span>
+                                                {% endif %}
+                                            </div>
+                                            <p class="text-sm text-gray-600">{{ request.get('student_email', 'No email provided') }}</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="ml-13 pl-3">
+                                        <p class="text-sm text-gray-600 mb-2">
+                                            <i class="fas fa-calendar-day text-gray-500 mr-2"></i> 
+                                            {% if request.get('created_at') %}
+                                                Requested: {{ request.get('created_at').strftime('%B %d, %Y') }}
+                                            {% else %}
+                                                Date: Unknown
+                                            {% endif %}
+                                        </p>
+                                        
+                                        {% if request.get('source') == 'admin_assignment' %}
+                                            <div class="mt-2 mb-3 bg-blue-50 p-3 rounded border border-blue-100">
+                                                <p class="font-medium text-blue-800">
+                                                    <i class="fas fa-info-circle mr-1"></i> Admin Message:
+                                                </p>
+                                                <p class="text-blue-700">
+                                                    This student has been pre-assigned to you by an administrator. 
+                                                    Please review and accept the assignment to begin working with this student.
+                                                </p>
+                                            </div>
+                                        {% else %}
+                                            {% if request.get('issue_description') %}
+                                                <div class="mb-3">
+                                                    <p class="font-medium">Issue Description:</p>
+                                                    <p class="text-gray-600">{{ request.get('issue_description') }}</p>
+                                                </div>
+                                            {% endif %}
+                                            
+                                            {% if request.get('concerns') %}
+                                                <div class="mb-3">
+                                                    <p class="font-medium">Concerns:</p>
+                                                    <ul class="list-disc ml-5 text-gray-600">
+                                                        {% for concern in request.get('concerns', []) %}
+                                                            <li>{{ concern }}</li>
+                                                        {% endfor %}
+                                                    </ul>
+                                                </div>
+                                            {% endif %}
+
+                                            {% if request.get('initial_concerns') %}
+                                                <div class="mb-3">
+                                                    <p class="font-medium">Initial Concerns:</p>
+                                                    <p class="text-gray-600">{{ request.get('initial_concerns') }}</p>
+                                                </div>
+                                            {% endif %}
+                                            
+                                            {% if request.get('previous_therapy') %}
+                                                <div class="mb-3">
+                                                    <p class="font-medium">Previous Therapy Experience:</p>
+                                                    <p class="text-gray-600">{{ request.get('previous_therapy') }}</p>
+                                                </div>
+                                            {% endif %}
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                <div class="flex md:flex-col space-x-2 md:space-x-0 md:space-y-2">
+                                    {% if request.get('source') == 'admin_assignment' %}
+                                        <form method="POST" action="{{ url_for('therapist.acknowledge_assignment', assignment_id=request._id) }}">
+                                            <button type="submit" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded w-full">
+                                                <i class="fas fa-check mr-2"></i> Accept Assignment
+                                            </button>
+                                        </form>
+                                    {% else %}
+                                        <form method="POST" action="{{ url_for('therapist.approve_student', request_id=request._id) }}">
+                                            <button type="submit" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded w-full">
+                                                <i class="fas fa-check mr-2"></i> Accept
+                                            </button>
+                                        </form>
+                                        
+                                        <button type="button" onclick="openRejectModal('{{ request._id }}')" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded w-full">
+                                            <i class="fas fa-times mr-2"></i> Decline
+                                        </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-8">
+                    <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 text-blue-500 mb-4">
+                        <i class="fas fa-clipboard-check text-2xl"></i>
+                    </div>
+                    <h4 class="text-lg font-medium mb-2">No Pending Requests</h4>
+                    <p class="text-gray-600">You don't have any student assignment requests at this time.</p>
+                </div>
+            {% endif %}
+        </div>
+    </main>
+
+    <!-- Reject Request Modal -->
+    <div id="rejectModal" class="fixed inset-0 bg-gray-500 bg-opacity-75 hidden flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-6 max-w-md w-full">
+            <h3 class="text-xl font-semibold mb-4">Decline Student Request</h3>
+            
+            <form id="rejectForm" method="POST" action="">
+                <div class="mb-4">
+                    <label for="reason" class="block text-gray-700 mb-2">Reason for Declining (Optional)</label>
+                    <textarea id="reason" name="reason" rows="3" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500"></textarea>
+                    <p class="text-sm text-gray-500 mt-1">This message will be shared with administrators only, not with the student.</p>
+                </div>
+                <div class="flex justify-end space-x-2">
+                    <button type="button" onclick="closeRejectModal()" class="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300">Cancel</button>
+                    <button type="submit" class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600">Decline Request</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- JavaScript for modals and functionality -->
+    <script>
+        function openRejectModal(requestId) {
+            document.getElementById('rejectForm').action = "{{ url_for('therapist.reject_student', request_id='REPLACE') }}".replace('REPLACE', requestId);
+            document.getElementById('rejectModal').classList.remove('hidden');
+        }
+        
+        function closeRejectModal() {
+            document.getElementById('rejectModal').classList.add('hidden');
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('rejectModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeRejectModal();
+            }
+        });
+
+        // Initialize tooltips if browser supports it
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof tippy !== 'undefined') {
+                tippy('[data-tippy-content]');
+            }
+        });
+    </script>
+</body>
+</html>

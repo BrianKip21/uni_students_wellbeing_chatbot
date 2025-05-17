@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Resource | Wellbeing Assistant</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css"> 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+
+    <style>
+        {% if settings is mapping and settings.get('theme_mode') == 'dark' %}
+        /* Dark mode styles */
+        body {
+            background-color: #121212 !important;
+            color: #e0e0e0 !important;
+        }
+        
+        .bg-white {
+            background-color: #1e1e1e !important;
+        }
+        
+        .text-gray-700, .text-gray-800, .text-gray-900 {
+            color: #e0e0e0 !important;
+        }
+        
+        .text-gray-500, .text-gray-600 {
+            color: #a0a0a0 !important;
+        }
+        
+        .bg-gray-50, .bg-gray-100, .bg-gray-200 {
+            background-color: #2a2a2a !important;
+        }
+        
+        .border-gray-200, .border-gray-300 {
+            border-color: #333 !important;
+        }
+
+        .hover\:bg-gray-100:hover {
+            background-color: #333333 !important;
+        }
+
+        .hover\:bg-gray-200:hover {
+            background-color: #444444 !important;
+        }
+
+        .hover\:bg-green-200:hover {
+            background-color: #0d503c !important;
+        }
+
+        .hover\:bg-blue-200:hover {
+            background-color: #0d365e !important;
+        }
+
+        .bg-green-100 {
+            background-color: #064e3b !important;
+        }
+
+        .bg-blue-100 {
+            background-color: #0c4a6e !important;
+        }
+        {% endif %}
+        
+        {% if settings is mapping and settings.get('contrast') == 'high' %}
+        /* High contrast styles */
+        body {
+            background-color: #ffffff !important;
+            color: #000000 !important;
+        }
+        
+        .text-gray-500, .text-gray-600, .text-gray-700, .text-gray-800, .text-gray-900 {
+            color: #000000 !important;
+        }
+        
+        .bg-gray-800 {
+            background-color: #000000 !important;
+        }
+        
+        .text-gray-200 {
+            color: #ffffff !important;
+        }
+        
+        input, select, button {
+            border: 2px solid #000000 !important;
+        }
+
+        .bg-green-100, .bg-blue-100, .bg-gray-100 {
+            background-color: #ffffff !important;
+            border: 2px solid #000000 !important;
+        }
+
+        .text-green-500, .text-blue-500, .text-purple-500 {
+            color: #000000 !important;
+        }
+        {% endif %}
+        
+        {% if settings is mapping and settings.get('text_size') == 'lg' %}
+        /* Large text */
+        body {
+            font-size: 1.125rem !important;
+        }
+        
+        .text-sm {
+            font-size: 0.9375rem !important;
+        }
+        
+        .text-lg, .text-xl, .text-2xl, .text-3xl {
+            font-size: 1.3125rem !important;
+        }
+        {% elif settings is mapping and settings.get('text_size') == 'xl' %}
+        /* Extra large text */
+        body {
+            font-size: 1.25rem !important;
+        }
+        
+        .text-sm {
+            font-size: 1.0625rem !important;
+        }
+        
+        .text-lg, .text-xl {
+            font-size: 1.5rem !important;
+        }
+
+        .text-2xl, .text-3xl {
+            font-size: 1.75rem !important;
+        }
+        {% endif %}
+    </style>
+</head>
+
+<body class="bg-gray-200 flex text-gray-900">
+    <!-- Sidebar Navigation -->
+    <aside class="w-64 h-screen bg-gray-800 text-gray-200 p-4 fixed">
+        <h1 class="text-2xl font-bold mb-6">Therapist Portal</h1>
+        <nav>
+            <ul class="space-y-4">
+                <li><a href="{{ url_for('therapist.index') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-chart-line"></i> Dashboard</a></li>
+                <li><a href="{{ url_for('therapist.appointments') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-calendar-alt"></i> Appointments</a></li>
+                <li><a href="{{ url_for('therapist.students') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-user-graduate"></i> My Students</a></li>
+                <li><a href="{{ url_for('therapist.calendar') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-calendar"></i> Calendar</a></li>
+                <li><a href="{{ url_for('therapist.resources') }}" class="block p-2 bg-gray-700 rounded"> <i class="fas fa-book-medical"></i> Resources</a></li>
+                <li><a href="{{ url_for('therapist.profile') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-user"></i> Profile</a></li>
+                <li><a href="{{ url_for('therapist.student_requests') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-user-plus"></i> Student Requests</a></li>
+                <li><a href="{{ url_for('therapist.reports') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-chart-bar"></i> Reports</a></li>
+                <li><a href="{{ url_for('auth.logout') }}" class="block p-2 hover:bg-gray-700 rounded mt-8"> <i class="fas fa-sign-out-alt"></i> Logout</a></li>
+            </ul>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="ml-64 p-8 w-full">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="bg-{% if category == 'error' %}red{% else %}blue{% endif %}-100 border-l-4 border-{% if category == 'error' %}red{% else %}blue{% endif %}-500 text-{% if category == 'error' %}red{% else %}blue{% endif %}-700 p-4 mb-6" role="alert">
+                        <p>{{ message }}</p>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-3xl font-bold text-gray-800">Add New Resource</h2>
+            <a href="{{ url_for('therapist.resources') }}" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded inline-flex items-center">
+                <i class="fas fa-arrow-left mr-2"></i> Back to Resources
+            </a>
+        </div>
+        
+        <div class="bg-white p-6 rounded shadow">
+            <form action="{{ url_for('therapist.add_resource') }}" method="POST">
+                <div class="mb-4">
+                    <label for="title" class="block text-gray-700 font-medium mb-2">Resource Title <span class="text-red-500">*</span></label>
+                    <input type="text" id="title" name="title" required class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500">
+                    <p class="text-sm text-gray-500 mt-1">A clear, descriptive title for the resource</p>
+                </div>
+                
+                <div class="mb-4">
+                    <label for="type" class="block text-gray-700 font-medium mb-2">Resource Type <span class="text-red-500">*</span></label>
+                    <select id="type" name="type" required class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500">
+                        <option value="">Select a resource type</option>
+                        <option value="article">Article</option>
+                        <option value="video">Video</option>
+                        <option value="pdf">PDF Document</option>
+                        <option value="worksheet">Worksheet</option>
+                        <option value="exercise">Exercise</option>
+                        <option value="tool">Interactive Tool</option>
+                        <option value="app">Application</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                
+                <div class="mb-4">
+                    <label for="url" class="block text-gray-700 font-medium mb-2">Resource URL <span class="text-red-500">*</span></label>
+                    <input type="url" id="url" name="url" required class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500" placeholder="https://">
+                    <p class="text-sm text-gray-500 mt-1">Direct link to the resource (must include https:// or http://)</p>
+                </div>
+                
+                <div class="mb-6">
+                    <label for="description" class="block text-gray-700 font-medium mb-2">Description <span class="text-red-500">*</span></label>
+                    <textarea id="description" name="description" rows="4" required class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500"></textarea>
+                    <p class="text-sm text-gray-500 mt-1">Explain what this resource is about and how it can benefit students</p>
+                </div>
+                
+                <div class="flex justify-end">
+                    <button type="reset" class="bg-gray-300 hover:bg-gray-400 text-gray-800 mr-4 px-4 py-2 rounded">
+                        Reset Form
+                    </button>
+                    <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded">
+                        Add Resource
+                    </button>
+                </div>
+            </form>
+        </div>
+        
+        <div class="mt-6 bg-yellow-50 border-l-4 border-yellow-400 p-4 text-yellow-800">
+            <h3 class="font-medium mb-2">Resource Guidelines:</h3>
+            <ul class="list-disc pl-5 space-y-1">
+                <li>Ensure all resources are appropriate for your students</li>
+                <li>Check that links are working before adding them</li>
+                <li>Be descriptive in your resource titles and descriptions</li>
+                <li>Consider adding resources that address common challenges your students face</li>
+                <li>Regularly review and update your resources to ensure they remain relevant</li>
+            </ul>
+        </div>
+    </main>
+
+    <script>
+        // Form validation
+        document.querySelector('form').addEventListener('submit', function(event) {
+            const title = document.getElementById('title').value.trim();
+            const type = document.getElementById('type').value;
+            const url = document.getElementById('url').value.trim();
+            const description = document.getElementById('description').value.trim();
+            
+            if (!title || !type || !url || !description) {
+                event.preventDefault();
+                alert('Please fill in all required fields');
+            }
+            
+            // Basic URL validation
+            if (url && !url.match(/^https?:\/\/.+\..+/)) {
+                event.preventDefault();
+                alert('Please enter a valid URL (starting with http:// or https://)');
+            }
+        });
+    </script>
+</body>
+</html>

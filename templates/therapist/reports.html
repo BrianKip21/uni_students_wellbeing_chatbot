@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports | Wellbeing Assistant</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css"> 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+
+    <style>
+        {% if settings.theme_mode == 'dark' %}
+        /* Dark mode styles */
+        body {
+            background-color: #121212 !important;
+            color: #e0e0e0 !important;
+        }
+        
+        .bg-white {
+            background-color: #1e1e1e !important;
+        }
+        
+        .text-gray-700, .text-gray-800, .text-gray-900 {
+            color: #e0e0e0 !important;
+        }
+        
+        .text-gray-500, .text-gray-600 {
+            color: #a0a0a0 !important;
+        }
+        
+        .bg-gray-50, .bg-gray-100, .bg-gray-200 {
+            background-color: #2a2a2a !important;
+        }
+        
+        .border-gray-200, .border-gray-300 {
+            border-color: #333 !important;
+        }
+
+        .hover\:bg-gray-100:hover {
+            background-color: #333333 !important;
+        }
+
+        .hover\:bg-gray-200:hover {
+            background-color: #444444 !important;
+        }
+
+        .hover\:bg-green-200:hover {
+            background-color: #0d503c !important;
+        }
+
+        .hover\:bg-blue-200:hover {
+            background-color: #0d365e !important;
+        }
+
+        .bg-green-100 {
+            background-color: #064e3b !important;
+        }
+
+        .bg-blue-100 {
+            background-color: #0c4a6e !important;
+        }
+        {% endif %}
+        
+        {% if settings.contrast == 'high' %}
+        /* High contrast styles */
+        body {
+            background-color: #ffffff !important;
+            color: #000000 !important;
+        }
+        
+        .text-gray-500, .text-gray-600, .text-gray-700, .text-gray-800, .text-gray-900 {
+            color: #000000 !important;
+        }
+        
+        .bg-gray-800 {
+            background-color: #000000 !important;
+        }
+        
+        .text-gray-200 {
+            color: #ffffff !important;
+        }
+        
+        input, select, button {
+            border: 2px solid #000000 !important;
+        }
+
+        .bg-green-100, .bg-blue-100, .bg-gray-100 {
+            background-color: #ffffff !important;
+            border: 2px solid #000000 !important;
+        }
+
+        .text-green-500, .text-blue-500, .text-purple-500 {
+            color: #000000 !important;
+        }
+        {% endif %}
+        
+        {% if settings.text_size == 'lg' %}
+        /* Large text */
+        body {
+            font-size: 1.125rem !important;
+        }
+        
+        .text-sm {
+            font-size: 0.9375rem !important;
+        }
+        
+        .text-lg, .text-xl, .text-2xl, .text-3xl {
+            font-size: 1.3125rem !important;
+        }
+        {% elif settings.text_size == 'xl' %}
+        /* Extra large text */
+        body {
+            font-size: 1.25rem !important;
+        }
+        
+        .text-sm {
+            font-size: 1.0625rem !important;
+        }
+        
+        .text-lg, .text-xl {
+            font-size: 1.5rem !important;
+        }
+
+        .text-2xl, .text-3xl {
+            font-size: 1.75rem !important;
+        }
+        {% endif %}
+
+        /* Chart styles */
+        .chart-container {
+            width: 100%;
+            height: 300px;
+        }
+        
+        .chart-bar {
+            transition: all 0.3s ease;
+        }
+        
+        .chart-bar:hover {
+            filter: brightness(1.2);
+        }
+    </style>
+</head>
+
+<body class="bg-gray-200 flex text-gray-900">
+    <!-- Sidebar Navigation -->
+    <aside class="w-64 h-screen bg-gray-800 text-gray-200 p-4 fixed">
+        <h1 class="text-2xl font-bold mb-6">Therapist Portal</h1>
+        <nav>
+            <ul class="space-y-4">
+                <li><a href="{{ url_for('therapist.index') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-chart-line"></i> Dashboard</a></li>
+                <li><a href="{{ url_for('therapist.appointments') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-calendar-alt"></i> Appointments</a></li>
+                <li><a href="{{ url_for('therapist.students') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-user-graduate"></i> My Students</a></li>
+                <li><a href="{{ url_for('therapist.calendar') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-calendar"></i> Calendar</a></li>
+                <li><a href="{{ url_for('therapist.resources') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-book-medical"></i> Resources</a></li>
+                <li><a href="{{ url_for('therapist.profile') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-user"></i> Profile</a></li>
+                <li><a href="{{ url_for('therapist.student_requests') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-user-plus"></i> Student Requests</a></li>
+                <li><a href="{{ url_for('therapist.reports') }}" class="block p-2 bg-gray-700 rounded"> <i class="fas fa-chart-bar"></i> Reports</a></li>
+                <li><a href="{{ url_for('auth.logout') }}" class="block p-2 hover:bg-gray-700 rounded mt-8"> <i class="fas fa-sign-out-alt"></i> Logout</a></li>
+            </ul>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="ml-64 p-8 w-full">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="bg-{% if category == 'error' %}red{% else %}blue{% endif %}-100 border-l-4 border-{% if category == 'error' %}red{% else %}blue{% endif %}-500 text-{% if category == 'error' %}red{% else %}blue{% endif %}-700 p-4 mb-6" role="alert">
+                        <p>{{ message }}</p>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        <h2 class="text-3xl font-bold text-gray-800 mb-6">Reports</h2>
+        
+        <!-- Date Range Filter -->
+        <div class="bg-white p-4 rounded shadow mb-6">
+            <form action="{{ url_for('therapist.reports') }}" method="GET" class="flex flex-wrap items-end">
+                <div class="mr-4 mb-2">
+                    <label for="from_date" class="block text-gray-700 text-sm font-medium mb-1">From Date</label>
+                    <input type="date" id="from_date" name="from_date" value="{{ from_date.strftime('%Y-%m-%d') }}" class="border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500">
+                </div>
+                
+                <div class="mr-4 mb-2">
+                    <label for="to_date" class="block text-gray-700 text-sm font-medium mb-1">To Date</label>
+                    <input type="date" id="to_date" name="to_date" value="{{ to_date.strftime('%Y-%m-%d') }}" class="border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500">
+                </div>
+                
+                <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded mb-2">
+                    Apply Filter
+                </button>
+            </form>
+        </div>
+        
+        <!-- Overview Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div class="bg-white p-4 rounded shadow">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-blue-100 text-blue-500 mr-4">
+                        <i class="fas fa-calendar-check text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-gray-500 text-sm">Total Sessions</p>
+                        <h3 class="text-2xl font-bold">{{ stats.get('total_sessions', 0) }}</h3>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white p-4 rounded shadow">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-red-100 text-red-500 mr-4">
+                        <i class="fas fa-calendar-times text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-gray-500 text-sm">Cancelled Sessions</p>
+                        <h3 class="text-2xl font-bold">{{ stats.get('cancelled_sessions', 0) }}</h3>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white p-4 rounded shadow">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-green-100 text-green-500 mr-4">
+                        <i class="fas fa-calendar-day text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-gray-500 text-sm">Scheduled Sessions</p>
+                        <h3 class="text-2xl font-bold">{{ stats.get('scheduled_sessions', 0) }}</h3>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white p-4 rounded shadow">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-purple-100 text-purple-500 mr-4">
+                        <i class="fas fa-users text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-gray-500 text-sm">Active Students</p>
+                        <h3 class="text-2xl font-bold">{{ stats.get('active_students', 0) }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sessions by Week Chart -->
+        <div class="bg-white p-6 rounded shadow mb-6">
+            <h3 class="text-xl font-semibold mb-4">Sessions by Week</h3>
+            
+            {% if weekly_sessions %}
+                <div class="chart-container">
+                    <div class="flex h-full items-end">
+                        {% for week in weekly_sessions %}
+                            <div class="flex-1 flex flex-col items-center">
+                                {% set height = (week.count / weekly_sessions|map(attribute='count')|max * 200)|int %}
+                                <div class="chart-bar bg-blue-500 w-full mx-1" style="height: {{ height }}px;" title="{{ week.week }}: {{ week.count }} sessions"></div>
+                                <div class="text-xs mt-2 text-center">{{ week.week }}</div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% else %}
+                <p class="text-gray-600">No session data available for the selected date range.</p>
+            {% endif %}
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <!-- Top Students -->
+            <div class="bg-white p-6 rounded shadow">
+                <h3 class="text-xl font-semibold mb-4">Top Students by Sessions</h3>
+                
+                {% if top_students %}
+                    <div class="space-y-4">
+                        {% for student in top_students %}
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 rounded-full bg-blue-100 text-blue-500 flex items-center justify-center font-bold text-lg mr-3">
+                                    {{ student.name[0] }}
+                                </div>
+                                <div class="flex-1">
+                                    <div class="font-medium">{{ student.name }}</div>
+                                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                        {% set width = (student.count / top_students[0].count * 100)|int %}
+                                        <div class="bg-blue-500 h-2.5 rounded-full" style="width: {{ width }}%"></div>
+                                    </div>
+                                </div>
+                                <div class="ml-3 font-medium">{{ student.count }}</div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-gray-600">No student data available for the selected date range.</p>
+                {% endif %}
+            </div>
+            
+            <!-- Sessions by Status -->
+            <div class="bg-white p-6 rounded shadow">
+                <h3 class="text-xl font-semibold mb-4">Session Status Distribution</h3>
+                
+                {% if stats.get('total_sessions', 0) > 0 or stats.get('cancelled_sessions', 0) > 0 or stats.get('scheduled_sessions', 0) > 0 %}
+                    <div class="flex items-center justify-center h-64">
+                        <div class="w-48 h-48 rounded-full relative">
+                            <!-- Calculate percentages -->
+                            {% set total = stats.get('total_sessions', 0) + stats.get('cancelled_sessions', 0) + stats.get('scheduled_sessions', 0) %}
+                            {% set completed_pct = (stats.get('total_sessions', 0) / total * 100)|int %}
+                            {% set cancelled_pct = (stats.get('cancelled_sessions', 0) / total * 100)|int %}
+                            {% set scheduled_pct = (stats.get('scheduled_sessions', 0) / total * 100)|int %}
+                            
+                            <!-- SVG donut chart -->
+                            <svg width="100%" height="100%" viewBox="0 0 42 42" class="rounded-full">
+                                <circle cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="#dbeafe" stroke-width="3"></circle>
+                                
+                                <!-- Completed slice -->
+                                <circle cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="#3b82f6" stroke-width="3"
+                                       stroke-dasharray="{{ completed_pct }} {{ 100 - completed_pct }}"
+                                       stroke-dashoffset="25"></circle>
+                                
+                                <!-- Cancelled slice -->
+                                <circle cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="#ef4444" stroke-width="3"
+                                       stroke-dasharray="{{ cancelled_pct }} {{ 100 - cancelled_pct }}"
+                                       stroke-dashoffset="{{ 100 - completed_pct + 25 }}"></circle>
+                                
+                                <!-- Scheduled slice -->
+                                <circle cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="#10b981" stroke-width="3"
+                                       stroke-dasharray="{{ scheduled_pct }} {{ 100 - scheduled_pct }}"
+                                       stroke-dashoffset="{{ 100 - completed_pct - cancelled_pct + 25 }}"></circle>
+                            </svg>
+                            
+                            <!-- Center text -->
+                            <div class="absolute inset-0 flex items-center justify-center">
+                                <span class="text-xl font-bold">{{ total }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-center space-x-4 mt-4">
+                        <div class="flex items-center">
+                            <div class="w-3 h-3 bg-blue-500 rounded-full mr-2"></div>
+                            <span class="text-sm">Completed ({{ completed_pct }}%)</span>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-3 h-3 bg-red-500 rounded-full mr-2"></div>
+                            <span class="text-sm">Cancelled ({{ cancelled_pct }}%)</span>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
+                            <span class="text-sm">Scheduled ({{ scheduled_pct }}%)</span>
+                        </div>
+                    </div>
+                {% else %}
+                    <p class="text-gray-600">No session data available for the selected date range.</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Export Reports -->
+        <div class="bg-white p-6 rounded shadow mb-6">
+            <h3 class="text-xl font-semibold mb-4">Export Reports</h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <a href="{{ url_for('therapist.export_session_report', format='csv', from_date=from_date.strftime('%Y-%m-%d'), to_date=to_date.strftime('%Y-%m-%d')) }}" class="border border-gray-200 rounded p-4 flex items-center hover:bg-gray-50">
+                    <div class="p-3 rounded-full bg-blue-100 text-blue-500 mr-4">
+                        <i class="fas fa-file-csv text-xl"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-medium">Sessions Report (CSV)</h4>
+                        <p class="text-sm text-gray-600">Export session data as CSV</p>
+                    </div>
+                </a>
+                
+                <a href="{{ url_for('therapist.export_student_report', format='csv', from_date=from_date.strftime('%Y-%m-%d'), to_date=to_date.strftime('%Y-%m-%d')) }}" class="border border-gray-200 rounded p-4 flex items-center hover:bg-gray-50">
+                    <div class="p-3 rounded-full bg-green-100 text-green-500 mr-4">
+                        <i class="fas fa-file-csv text-xl"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-medium">Students Report (CSV)</h4>
+                        <p class="text-sm text-gray-600">Export student data as CSV</p>
+                    </div>
+                </a>
+                
+                <a href="{{ url_for('therapist.export_summary_report', format='pdf', from_date=from_date.strftime('%Y-%m-%d'), to_date=to_date.strftime('%Y-%m-%d')) }}" class="border border-gray-200 rounded p-4 flex items-center hover:bg-gray-50">
+                    <div class="p-3 rounded-full bg-red-100 text-red-500 mr-4">
+                        <i class="fas fa-file-pdf text-xl"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-medium">Summary Report (PDF)</h4>
+                        <p class="text-sm text-gray-600">Export summary report as PDF</p>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </main>
+
+    <!-- JavaScript for charts interaction -->
+    <script>
+        // Interactive tooltip for chart bars
+        document.querySelectorAll('.chart-bar').forEach(bar => {
+            bar.addEventListener('mouseover', function() {
+                const tooltip = document.createElement('div');
+                tooltip.className = 'bg-gray-800 text-white p-2 rounded text-xs absolute';
+                tooltip.style.top = (event.pageY - 30) + 'px';
+                tooltip.style.left = (event.pageX - 50) + 'px';
+                tooltip.textContent = this.title;
+                tooltip.id = 'chart-tooltip';
+                document.body.appendChild(tooltip);
+            });
+            
+            bar.addEventListener('mouseout', function() {
+                document.getElementById('chart-tooltip')?.remove();
+            });
+        });
+        
+        // Date range validation
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const fromDate = new Date(document.getElementById('from_date').value);
+            const toDate = new Date(document.getElementById('to_date').value);
+            
+            if (fromDate > toDate) {
+                e.preventDefault();
+                alert('From date cannot be later than To date');
+            }
+        });
+    </script>
+</body>
+</html>

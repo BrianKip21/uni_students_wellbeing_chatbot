@@ -381,7 +381,6 @@ def download_data_json():
         logger.error(f"JSON data download error: {e}")
         flash('An error occurred while generating your data download.', 'error')
         return redirect(url_for('dashboard.settings'))
-    
 @dashboard_bp.route('/student_resources')
 @login_required
 def student_resources():
@@ -427,9 +426,9 @@ def student_resources():
         mongo.db.user_activity.insert_one({
             'user_id': str(user_id),
             'activity_type': 'resource_page_view',
-            'timestamp': datetime.datetime.now()
+            'timestamp': datetime.now()  # Fixed: removed the extra datetime
         })
-        
+    
     except Exception as e:
         logger.error(f"Error fetching student resources: {e}")
         flash('An error occurred while loading resources.', 'error')
@@ -486,7 +485,7 @@ def student_resource_detail(resource_id):
             'user_id': str(user_id),
             'activity_type': 'resource_view',
             'resource_id': resource_id,
-            'timestamp': datetime.datetime.now()
+            'timestamp': datetime.now()  # Fixed: removed the extra datetime
         })
         
     except Exception as e:
@@ -754,6 +753,8 @@ def send_therapist_message():
 @login_required
 def therapist_appointments():
     """View and schedule therapist appointments"""
+    from datetime import datetime, timedelta
+    
     try:
         student_id = ObjectId(session.get('user'))
         
@@ -763,8 +764,11 @@ def therapist_appointments():
             flash('User not found. Please log in again.', 'error')
             return redirect(url_for('auth.login'))
             
-        # Get user settings
-        settings = user.get('settings', {})
+        # Get user settings - handle if user is not a dict
+        if not isinstance(user, dict):
+            settings = {}
+        else:
+            settings = user.get('settings', {})
         
         # Check if student has an assigned therapist
         assignment = mongo.db.therapist_assignments.find_one({
@@ -776,7 +780,16 @@ def therapist_appointments():
             flash('You do not have an assigned therapist yet', 'info')
             return redirect(url_for('dashboard.request_therapist'))
         
-        therapist_id = assignment['therapist_id']
+        # Safely extract therapist_id
+        if not isinstance(assignment, dict):
+            flash('Invalid assignment data. Please contact support.', 'error')
+            return redirect(url_for('dashboard.index'))
+            
+        therapist_id = assignment.get('therapist_id')
+        if not therapist_id:
+            flash('There was an error finding your therapist', 'error')
+            return redirect(url_for('dashboard.index'))
+            
         therapist = mongo.db.therapists.find_one({'_id': therapist_id})
         
         if not therapist:
@@ -808,11 +821,38 @@ def therapist_appointments():
             ]
         }).sort('date', -1).limit(5))
         
+        # Ensure therapist is a dict
+        if not isinstance(therapist, dict):
+            therapist = {"_id": therapist_id}
+            
+        # Create a safe version of the therapist data
+        safe_therapist = {}
+        for key, value in therapist.items():
+            if key == 'office_hours' and not isinstance(value, dict):
+                # Convert office_hours to a dict if it's not already
+                safe_therapist['office_hours'] = {
+                    'description': str(value),
+                    'days': [0, 1, 2, 3, 4],
+                    'slots': ['09:00', '10:00', '11:00', '14:00', '15:00', '16:00']
+                }
+            else:
+                safe_therapist[key] = value
+        
         # Get available time slots from therapist's schedule
         available_slots = []
         
-        # Parse therapist's working days and hours
-        office_hours = therapist.get('office_hours', {})
+        # Get office_hours from safe_therapist
+        office_hours = safe_therapist.get('office_hours', {})
+        
+        # Ensure office_hours is a dict
+        if not isinstance(office_hours, dict):
+            office_hours = {
+                'description': str(office_hours) if office_hours else "",
+                'days': [0, 1, 2, 3, 4],  # Default: Monday-Friday
+                'slots': ['09:00', '10:00', '11:00', '14:00', '15:00', '16:00']  # Default slots
+            }
+        
+        # Now safely get working days
         working_days = office_hours.get('days', [0, 1, 2, 3, 4])  # Default: Monday-Friday
         
         # Generate slots for the next 14 days
@@ -834,18 +874,29 @@ def therapist_appointments():
             })
         
         # Remove already booked slots
-        booked_appointments = mongo.db.appointments.find({
+        booked_appointments = list(mongo.db.appointments.find({
             'therapist_id': therapist_id,
             'date': {'$gte': datetime.now()},
             'status': {'$in': ['scheduled', 'pending']}
-        })
+        }))
         
         booked_slots = {}
         for appt in booked_appointments:
-            date_str = appt['date'].strftime('%Y-%m-%d')
-            if date_str not in booked_slots:
-                booked_slots[date_str] = []
-            booked_slots[date_str].append(appt['time'])
+            if not isinstance(appt, dict):
+                continue
+                
+            appt_date = appt.get('date')
+            appt_time = appt.get('time')
+            
+            if appt_date and appt_time:
+                try:
+                    date_str = appt_date.strftime('%Y-%m-%d')
+                    if date_str not in booked_slots:
+                        booked_slots[date_str] = []
+                    booked_slots[date_str].append(appt_time)
+                except (AttributeError, TypeError):
+                    # Skip if date is not a datetime object or has issues
+                    continue
         
         # Filter out booked slots
         for day in available_slots:
@@ -856,15 +907,32 @@ def therapist_appointments():
         # Get session notes for past appointments
         session_notes = {}
         for appt in past_appointments:
+            if not isinstance(appt, dict) or '_id' not in appt:
+                continue
+                
             note = mongo.db.session_notes.find_one({
                 'appointment_id': appt['_id']
             })
             if note:
                 session_notes[str(appt['_id'])] = note
         
+        # Ensure all template variables are safe
+        for idx, appt in enumerate(upcoming_appointments):
+            if not isinstance(appt, dict):
+                upcoming_appointments[idx] = {'error': 'Invalid appointment data'}
+                
+        for idx, appt in enumerate(pending_appointments):
+            if not isinstance(appt, dict):
+                pending_appointments[idx] = {'error': 'Invalid appointment data'}
+                
+        for idx, appt in enumerate(past_appointments):
+            if not isinstance(appt, dict):
+                past_appointments[idx] = {'error': 'Invalid appointment data'}
+        
+        # Return the template with safe data
         return render_template(
             'therapist_appointments.html',
-            therapist=therapist,
+            therapist=safe_therapist,
             upcoming_appointments=upcoming_appointments,
             pending_appointments=pending_appointments,
             past_appointments=past_appointments,
