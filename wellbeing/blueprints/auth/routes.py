@@ -11,7 +11,7 @@ from wellbeing.utils.validators import validate_email, validate_password
 
 @auth_bp.route('/')
 def index():
-    return redirect(url_for('auth.login'))
+    return redirect(url_for('auth.landing'))
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
@@ -77,6 +77,10 @@ def login():
     except Exception as e:
         logger.error(f"Login error: {e}")
         return jsonify({'error': 'An unexpected error occurred'}), 500
+    
+@auth_bp.route('/landing')
+def landing():
+    return render_template('landing.html')
 
 @auth_bp.route('/register', methods=['GET', 'POST'])
 def register():

@@ -22,7 +22,7 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            background: #f3f4f6;
+            background: #111827;
         }
 
         .login-box {
@@ -31,9 +31,10 @@
             flex-direction: column;
             width: 440px;
             padding: 30px;
-            background: white;
+            background: #1f2937;
             border-radius: 10px;
-            box-shadow: 0px 5px 15px rgba(0,0,0,0.1);
+            box-shadow: 0px 5px 15px rgba(0,0,0,0.2);
+            color: #e0e0e0;
         }
 
         .login-header {
@@ -42,7 +43,7 @@
         }
 
         .login-header header {
-            color: #1e3a8a;
+            color: #e0e0e0;
             font-size: 28px;
             font-weight: 600;
         }
@@ -58,19 +59,21 @@
             font-size: 16px;
             padding: 0 20px;
             border-radius: 25px;
-            border: 1px solid #d1d5db;
+            border: 1px solid #4b5563;
+            background-color: #374151;
+            color: #e0e0e0;
             outline: none;
             transition: .3s;
         }
 
         .input-field:focus {
-            border-color: #3b82f6;
+            border-color: #60a5fa;
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
         }
 
         .input-box select {
             appearance: none;
-            background: white;
+            background: #374151;
             cursor: pointer;
             background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236B7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
             background-position: right 1rem center;
@@ -81,13 +84,13 @@
 
         ::placeholder {
             font-weight: 500;
-            color: #6b7280;
+            color: #9ca3af;
         }
 
         .submit-btn {
             width: 100%;
             height: 50px;
-            background: #3b82f6;
+            background: #4b5563;
             border: none;
             border-radius: 25px;
             cursor: pointer;
@@ -98,12 +101,12 @@
         }
 
         .submit-btn:hover {
-            background: #2563eb;
+            background: #6b7280;
             transform: translateY(-2px);
         }
 
         .submit-btn:disabled {
-            background: #93c5fd;
+            background: #374151;
             cursor: not-allowed;
             transform: none;
         }
@@ -112,11 +115,11 @@
             text-align: center;
             font-size: 15px;
             margin-top: 20px;
-            color: #4b5563;
+            color: #9ca3af;
         }
 
         .sign-up-link a {
-            color: #1e3a8a;
+            color: #60a5fa;
             font-weight: 600;
             text-decoration: none;
         }
@@ -126,9 +129,9 @@
         }
 
         #error-message {
-            background-color: #fee2e2;
+            background-color: #991b1b;
             border-left: 4px solid #ef4444;
-            color: #b91c1c;
+            color: #fee2e2;
             padding: 12px;
             margin-bottom: 20px;
             font-size: 14px;
@@ -141,7 +144,7 @@
     <div class="login-box">
         <div class="login-header">
             <header>University Students' Wellbeing Assistant</header>
-            <p class="text-gray-600 text-center mt-2">Log in to your account</p>
+            <p class="text-gray-400 text-center mt-2">Log in to your account</p>
         </div>
         
         <div id="error-message"></div>
@@ -235,12 +238,12 @@
         const inputs = document.querySelectorAll('.input-field');
         inputs.forEach(input => {
             input.addEventListener('focus', () => {
-                input.style.borderColor = '#3b82f6';
+                input.style.borderColor = '#60a5fa';
                 input.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.25)';
             });
             
             input.addEventListener('blur', () => {
-                input.style.borderColor = '#d1d5db';
+                input.style.borderColor = '#4b5563';
                 input.style.boxShadow = 'none';
             });
         });
