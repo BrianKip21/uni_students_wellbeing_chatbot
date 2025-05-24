@@ -125,6 +125,26 @@
             font-size: 1.75rem !important;
         }
         {% endif %}
+        
+        /* New intake system styles */
+        .intake-status-card {
+            animation: fadeInSlide 0.6s ease-out;
+        }
+        
+        .next-session-card {
+            background: linear-gradient(135deg, #10b981, #059669);
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes fadeInSlide {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+            50% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+        }
     </style>
 </head>
 
@@ -137,7 +157,14 @@
                 <li><a href="{{ url_for('dashboard.index') }}" class="block p-2 bg-gray-700 rounded"> <i class="fas fa-chart-line"></i> Dashboard</a></li>
                 <li><a href="{{ url_for('tracking.index') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-chart-bar"></i> Wellness Tracker</a></li>
                 <li><a href="{{ url_for('chatbot.chatbot_page') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-comments"></i> Chat</a></li>
-                <li><a href="{{ url_for('dashboard.therapist_appointments') }}" class="block p-2 bg-hover:gray-700 rounded"> <i class="fas fa-calendar-alt"></i> Therapist</a></li>
+                
+                <!-- Updated Therapist Link -->
+                {% if intake_status.has_therapist %}
+                <li><a href="{{ url_for('dashboard.student_therapist') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-user-md"></i> Your Therapist</a></li>
+                {% else %}
+                <li><a href="{{ url_for('dashboard.student_intake') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-clipboard-check"></i> Get Therapist</a></li>
+                {% endif %}
+                
                 <li><a href="{{ url_for('dashboard.profile') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-user"></i> Profile</a></li>
                 <li><a href="{{ url_for('dashboard.student_resources') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-book"></i> Resources</a></li>
                 <li><a href="{{ url_for('dashboard.settings') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-cog"></i> Settings</a></li>
@@ -161,14 +188,98 @@
         <h2 class="text-3xl font-bold text-gray-800">Welcome back, {{ user.first_name }}!</h2>
         <p class="text-gray-700 mb-6">How are you feeling today?</p>
         
-        <!-- Widget Grid -->
+        <!-- NEW INTAKE STATUS SECTION -->
+        {% if not intake_status.has_therapist %}
+        <div class="intake-status-card bg-yellow-900 bg-opacity-50 border-l-4 border-yellow-500 p-6 mb-6 rounded-lg">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <i class="fas fa-magic text-yellow-400 mr-4 text-2xl"></i>
+                    <div>
+                        <h4 class="font-bold text-yellow-300 text-lg">✨ Get Instant Therapist Matching</h4>
+                        <p class="text-sm text-yellow-200">Complete our 5-minute assessment and get matched with a specialized therapist automatically</p>
+                        {% if intake_completed %}
+                        <p class="text-xs text-yellow-300 mt-1"><i class="fas fa-clock mr-1"></i>Assessment completed - finding your match...</p>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="text-right">
+                    <a href="{{ url_for('dashboard.student_intake') }}" class="bg-yellow-600 hover:bg-yellow-700 text-white px-6 py-3 rounded-lg font-semibold transition duration-300 inline-block">
+                        {% if intake_completed %}
+                            <i class="fas fa-search mr-2"></i>Check Status
+                        {% else %}
+                            <i class="fas fa-rocket mr-2"></i>Start Now
+                        {% endif %}
+                    </a>
+                    <div class="text-xs text-yellow-300 mt-1">Usually takes 3-5 minutes</div>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="intake-status-card bg-green-900 bg-opacity-50 border-l-4 border-green-500 p-6 mb-6 rounded-lg">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <i class="fas fa-check-circle text-green-400 mr-4 text-2xl"></i>
+                    <div>
+                        <h4 class="font-bold text-green-300 text-lg">🎉 Therapist Assigned!</h4>
+                        <p class="text-sm text-green-200">You're connected with {{ assigned_therapist.therapist_name }}</p>
+                        {% if next_appointment %}
+                        <p class="text-xs text-green-300 mt-1">
+                            <i class="fas fa-calendar mr-1"></i>
+                            Next session: {{ next_appointment.formatted_time or next_appointment.datetime.strftime('%B %d at %I:%M %p') }}
+                        </p>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="text-right">
+                    <a href="{{ url_for('dashboard.student_therapist') }}" class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold transition duration-300 inline-block">
+                        <i class="fas fa-user-md mr-2"></i>View Therapist
+                    </a>
+                    {% if next_appointment and next_appointment.meeting_info %}
+                    <div class="mt-2">
+                        <a href="{{ next_appointment.meeting_info.meet_link }}" target="_blank" class="text-green-300 hover:text-green-200 text-sm">
+                            <i class="fas fa-video mr-1"></i>Join Session
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Next Session Quick Access (if session is soon) -->
+        {% if next_appointment %}
+            {% set time_diff = (next_appointment.datetime - datetime.now()).total_seconds() / 60 %}
+            {% if time_diff <= 60 and time_diff > -30 %}
+            <div class="next-session-card p-4 mb-6 rounded-lg text-white">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h4 class="font-bold">🔴 Session Starting Soon!</h4>
+                        <p class="text-sm opacity-90">{{ assigned_therapist.therapist_name }} - 
+                            {% if time_diff > 0 %}
+                                in {{ time_diff|int }} minutes
+                            {% else %}
+                                happening now
+                            {% endif %}
+                        </p>
+                    </div>
+                    {% if next_appointment.meeting_info %}
+                    <a href="{{ next_appointment.meeting_info.meet_link }}" target="_blank" 
+                       class="bg-white text-green-600 px-6 py-2 rounded-lg font-semibold hover:bg-gray-100 transition">
+                        <i class="fas fa-video mr-2"></i>Join Now
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        {% endif %}
+        
+        <!-- Widget Grid (Your Existing Widgets) -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
             <!-- Mood Tracker -->
             {% if not settings.widgets or 'mood_tracker' in settings.widgets %}
             <div class="bg-white p-6 rounded shadow dashboard-card">
                 <h3 class="text-xl font-semibold mb-4">Mood Tracker</h3>
                 <form action="{{ url_for('tracking.track_mood_route') }}" method="post" class="flex space-x-4">
-                    <!-- CSRF is handled via your request verification middleware -->
                     <button type="submit" name="mood" value="happy" class="p-2 bg-green-100 hover:bg-green-200 rounded mood-button">
                         <i class="far fa-smile text-2xl text-green-500"></i>
                         <span class="block">Happy</span>
@@ -185,16 +296,24 @@
             </div>
             {% endif %}
             
-            <!-- Quick Actions -->
+            <!-- Quick Actions (Updated) -->
             {% if not settings.widgets or 'quick_actions' in settings.widgets %}
             <div class="bg-white p-6 rounded shadow dashboard-card">
                 <h3 class="text-xl font-semibold mb-4">Quick Actions</h3>
                 <a href="{{ url_for('chatbot.chatbot_page') }}" class="block w-full text-left p-2 hover:bg-gray-100 rounded mb-2 action-link">
                     <i class="fas fa-comments text-blue-500"></i> Chat with Assistant
                 </a>
-                <a href="#" class="block w-full text-left p-2 hover:bg-gray-100 rounded mb-2 action-link">
-                    <i class="fas fa-calendar-alt text-green-500"></i> Schedule Appointment
+                
+                {% if intake_status.has_therapist %}
+                <a href="{{ url_for('dashboard.student_therapist') }}" class="block w-full text-left p-2 hover:bg-gray-100 rounded mb-2 action-link">
+                    <i class="fas fa-user-md text-green-500"></i> Message Therapist
                 </a>
+                {% else %}
+                <a href="{{ url_for('dashboard.student_intake') }}" class="block w-full text-left p-2 hover:bg-gray-100 rounded mb-2 action-link">
+                    <i class="fas fa-magic text-purple-500"></i> Get Matched with Therapist
+                </a>
+                {% endif %}
+                
                 <a href="#" onclick="startMeditation(); return false;" class="block w-full text-left p-2 hover:bg-gray-100 rounded action-link">
                     <i class="fas fa-meditation text-purple-500"></i> Start Meditation
                 </a>
@@ -228,7 +347,6 @@
                         </div>
                     {% endfor %}
                 {% else %}
-                    <!-- Fallback content when no resources from the database -->
                     <div class="flex items-center space-x-4 mb-4">
                         <img src="/static/img/placeholder.jpg" alt="Stress Guide" class="w-12 h-12 rounded">
                         <div>
@@ -277,7 +395,6 @@
         <div class="bg-white p-6 rounded shadow dashboard-card">
             <h3 class="text-xl font-semibold mb-4">Weekly Progress</h3>
             
-            <!-- Default to 0 if not available -->
             {% set meditation_progress = user.progress.meditation|default(0) %}
             {% set exercise_progress = user.progress.exercise|default(0) %}
             
@@ -299,7 +416,43 @@
         {% endif %}
     </main>
 
-    <!-- Optional JavaScript -->
+    <!-- Enhanced JavaScript -->
     <script src="{{ url_for('static', filename='dashboard.js') }}"></script>
+    <script>
+        // Auto-refresh intake status every 30 seconds
+        setInterval(function() {
+            if (!{{ intake_status.has_therapist|tojson }}) {
+                fetch('/api/student-status')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.has_therapist) {
+                            location.reload(); // Refresh to show therapist assignment
+                        }
+                    })
+                    .catch(error => console.log('Status check failed'));
+            }
+        }, 30000);
+        
+        // Session countdown for upcoming appointments
+        {% if next_appointment %}
+        function updateSessionCountdown() {
+            const sessionTime = new Date('{{ next_appointment.datetime.isoformat() }}');
+            const now = new Date();
+            const timeDiff = (sessionTime - now) / (1000 * 60); // minutes
+            
+            if (timeDiff <= 15 && timeDiff > -30) {
+                const countdownEl = document.querySelector('.next-session-card p');
+                if (countdownEl && timeDiff > 0) {
+                    countdownEl.innerHTML = `{{ assigned_therapist.therapist_name }} - in ${Math.ceil(timeDiff)} minutes`;
+                } else if (countdownEl && timeDiff <= 0) {
+                    countdownEl.innerHTML = `{{ assigned_therapist.therapist_name }} - happening now!`;
+                }
+            }
+        }
+        
+        // Update countdown every minute
+        setInterval(updateSessionCountdown, 60000);
+        {% endif %}
+    </script>
 </body>
 </html>

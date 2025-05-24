@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Therapist | Wellbeing Assistant</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css"> 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            background-color: #121212;
+            color: #e0e0e0;
+        }
+        
+        .therapist-card {
+            background-color: #1e1e1e;
+            border: 1px solid #333;
+        }
+        
+        .appointment-card {
+            background-color: #2a2a2a;
+            border: 1px solid #444;
+        }
+        
+        .status-active {
+            background-color: #065f46;
+            color: #d1fae5;
+        }
+        
+        .status-suggested {
+            background-color: #7c2d12;
+            color: #fed7aa;
+        }
+        
+        .btn-primary {
+            background-color: #3b82f6;
+            border-color: #3b82f6;
+        }
+        
+        .btn-primary:hover {
+            background-color: #2563eb;
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <!-- Sidebar Navigation (same as dashboard) -->
+    <aside class="w-64 h-screen bg-gray-800 text-gray-200 p-4 fixed">
+        <h1 class="text-2xl font-bold mb-6">Wellbeing Assistant</h1>
+        <nav>
+            <ul class="space-y-4">
+                <li><a href="{{ url_for('dashboard.index') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-chart-line"></i> Dashboard</a></li>
+                <li><a href="{{ url_for('tracking.index') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-chart-bar"></i> Wellness Tracker</a></li>
+                <li><a href="{{ url_for('chatbot.chatbot_page') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-comments"></i> Chat</a></li>
+                <li><a href="{{ url_for('dashboard.therapist_info') }}" class="block p-2 bg-gray-700 rounded"> <i class="fas fa-calendar-alt"></i> Therapist</a></li>
+                <li><a href="{{ url_for('dashboard.profile') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-user"></i> Profile</a></li>
+                <li><a href="{{ url_for('dashboard.student_resources') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-book"></i> Resources</a></li>
+                <li><a href="{{ url_for('dashboard.settings') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-cog"></i> Settings</a></li>
+                <li><a href="{{ url_for('auth.logout') }}" class="block p-2 hover:bg-gray-700 rounded mt-8"> <i class="fas fa-sign-out-alt"></i> Logout</a></li>
+            </ul>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="ml-64 p-8 w-full">
+        <div class="max-w-6xl mx-auto">
+            <!-- Header -->
+            <div class="mb-8">
+                <h1 class="text-3xl font-bold mb-2">Your Therapist</h1>
+                <p class="text-gray-400">Connect with your assigned mental health professional</p>
+            </div>
+
+            {% if therapist %}
+            <!-- Therapist Information Card -->
+            <div class="therapist-card p-6 rounded-lg shadow-lg mb-8">
+                <div class="flex items-start space-x-6">
+                    <!-- Therapist Photo -->
+                    <div class="flex-shrink-0">
+                        <div class="w-32 h-32 bg-gray-600 rounded-full flex items-center justify-center">
+                            {% if therapist.photo %}
+                                <img src="{{ therapist.photo }}" alt="{{ therapist.name }}" class="w-32 h-32 rounded-full object-cover">
+                            {% else %}
+                                <i class="fas fa-user-md text-4xl text-gray-400"></i>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Therapist Details -->
+                    <div class="flex-grow">
+                        <div class="flex items-center mb-3">
+                            <h2 class="text-2xl font-bold mr-4">{{ therapist.name }}</h2>
+                            <span class="status-active px-3 py-1 rounded-full text-sm font-medium">
+                                <i class="fas fa-circle text-xs mr-1"></i>
+                                Active
+                            </span>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <p class="text-gray-400 text-sm">License Number</p>
+                                <p class="font-medium">{{ therapist.license_number }}</p>
+                            </div>
+                            <div>
+                                <p class="text-gray-400 text-sm">Experience</p>
+                                <p class="font-medium">{{ therapist.total_sessions or 0 }} Sessions</p>
+                            </div>
+                            <div>
+                                <p class="text-gray-400 text-sm">Rating</p>
+                                <div class="flex items-center">
+                                    <div class="flex text-yellow-400">
+                                        {% for i in range(5) %}
+                                            {% if i < (therapist.rating|round|int) %}
+                                                <i class="fas fa-star"></i>
+                                            {% else %}
+                                                <i class="far fa-star"></i>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                    <span class="ml-2 text-gray-400">({{ therapist.rating or 'New' }})</span>
+                                </div>
+                            </div>
+                            <div>
+                                <p class="text-gray-400 text-sm">Appointment Type</p>
+                                <p class="font-medium">
+                                    <i class="fas fa-video mr-1"></i>
+                                    Virtual & In-Person
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <!-- Specializations -->
+                        <div class="mb-4">
+                            <p class="text-gray-400 text-sm mb-2">Specializations</p>
+                            <div class="flex flex-wrap gap-2">
+                                {% for spec in therapist.specializations %}
+                                <span class="bg-blue-900 bg-opacity-50 text-blue-400 px-3 py-1 rounded-full text-sm">
+                                    {{ spec.replace('_', ' ').title() }}
+                                </span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        
+                        <!-- Bio -->
+                        {% if therapist.bio %}
+                        <div>
+                            <p class="text-gray-400 text-sm mb-2">About</p>
+                            <p class="text-gray-300">{{ therapist.bio }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Contact Actions -->
+                <div class="mt-6 pt-6 border-t border-gray-600">
+                    <div class="flex flex-wrap gap-4">
+                        <button class="btn-primary text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition duration-300">
+                            <i class="fas fa-message mr-2"></i>
+                            Send Message
+                        </button>
+                        <button class="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700 transition duration-300">
+                            <i class="fas fa-phone mr-2"></i>
+                            Request Call
+                        </button>
+                        <button class="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700 transition duration-300">
+                            <i class="fas fa-calendar-plus mr-2"></i>
+                            Schedule Session
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Appointments Section -->
+            <div class="therapist-card p-6 rounded-lg shadow-lg mb-8">
+                <h3 class="text-xl font-bold mb-4">Appointments</h3>
+                
+                {% if appointments and appointments|length > 0 %}
+                <div class="space-y-4">
+                    {% for appointment in appointments %}
+                    <div class="appointment-card p-4 rounded-lg">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <div class="flex items-center space-x-4">
+                                    <div>
+                                        <p class="font-medium">
+                                            {% if appointment.date %}
+                                                {{ appointment.date.strftime('%B %d, %Y') }}
+                                            {% else %}
+                                                Date to be confirmed
+                                            {% endif %}
+                                        </p>
+                                        <p class="text-sm text-gray-400">
+                                            {% if appointment.time %}
+                                                {{ appointment.time }}
+                                            {% else %}
+                                                Time to be confirmed
+                                            {% endif %}
+                                        </p>
+                                    </div>
+                                    <div>
+                                        {% if appointment.status == 'scheduled' %}
+                                            <span class="status-active px-3 py-1 rounded-full text-sm">Confirmed</span>
+                                        {% elif appointment.status == 'suggested' %}
+                                            <span class="status-suggested px-3 py-1 rounded-full text-sm">Pending</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% if appointment.notes %}
+                                <p class="text-sm text-gray-400 mt-2">{{ appointment.notes }}</p>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="flex space-x-2">
+                                {% if appointment.status == 'suggested' %}
+                                <button class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition">
+                                    Accept
+                                </button>
+                                <button class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 transition">
+                                    Reschedule
+                                </button>
+                                {% else %}
+                                <button class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
+                                    Join Session
+                                </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-8">
+                    <i class="fas fa-calendar-times text-4xl text-gray-500 mb-4"></i>
+                    <p class="text-gray-400 mb-4">No appointments scheduled yet</p>
+                    <button class="btn-primary text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition duration-300">
+                        <i class="fas fa-plus mr-2"></i>
+                        Schedule Your First Session
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Quick Resources -->
+            <div class="therapist-card p-6 rounded-lg shadow-lg">
+                <h3 class="text-xl font-bold mb-4">Before Your Session</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="text-center p-4">
+                        <i class="fas fa-clipboard-list text-3xl text-blue-400 mb-2"></i>
+                        <h4 class="font-medium mb-2">Prepare Questions</h4>
+                        <p class="text-sm text-gray-400">Think about what you'd like to discuss</p>
+                    </div>
+                    <div class="text-center p-4">
+                        <i class="fas fa-heart text-3xl text-red-400 mb-2"></i>
+                        <h4 class="font-medium mb-2">Track Your Mood</h4>
+                        <p class="text-sm text-gray-400">Use our mood tracker daily</p>
+                    </div>
+                    <div class="text-center p-4">
+                        <i class="fas fa-book-open text-3xl text-green-400 mb-2"></i>
+                        <h4 class="font-medium mb-2">Read Resources</h4>
+                        <p class="text-sm text-gray-400">Check out recommended materials</p>
+                    </div>
+                </div>
+            </div>
+
+            {% else %}
+            <!-- No Therapist Assigned -->
+            <div class="text-center py-12">
+                <i class="fas fa-user-md text-6xl text-gray-500 mb-6"></i>
+                <h2 class="text-2xl font-bold mb-4">No Therapist Assigned Yet</h2>
+                <p class="text-gray-400 mb-6">Complete your mental health assessment to be matched with a therapist</p>
+                <a href="{{ url_for('dashboard.intake_assessment') }}" class="btn-primary text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition duration-300 inline-block">
+                    <i class="fas fa-clipboard-check mr-2"></i>
+                    Start Assessment
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </main>
+
+    <!-- Emergency Support Modal (Hidden by default) -->
+    <div id="emergency-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="therapist-card p-6 rounded-lg max-w-md w-full">
+                <h3 class="text-xl font-bold mb-4 text-red-400">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>
+                    Need Immediate Help?
+                </h3>
+                <p class="text-gray-300 mb-4">If you're having thoughts of suicide or self-harm, please reach out immediately:</p>
+                <div class="space-y-2 mb-6">
+                    <p><strong>National Suicide Prevention Lifeline:</strong> 988</p>
+                    <p><strong>Crisis Text Line:</strong> Text HOME to 741741</p>
+                    <p><strong>Emergency Services:</strong> 911</p>
+                </div>
+                <div class="flex space-x-4">
+                    <button class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition">
+                        Call 988 Now
+                    </button>
+                    <button onclick="closeEmergencyModal()" class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 transition">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showEmergencyModal() {
+            document.getElementById('emergency-modal').classList.remove('hidden');
+        }
+        
+        function closeEmergencyModal() {
+            document.getElementById('emergency-modal').classList.add('hidden');
+        }
+        
+        // Add emergency button to therapist actions if needed
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add emergency support option
+            const contactActions = document.querySelector('.border-t .flex');
+            if (contactActions) {
+                const emergencyBtn = document.createElement('button');
+                emergencyBtn.className = 'bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition duration-300';
+                emergencyBtn.innerHTML = '<i class="fas fa-exclamation-triangle mr-2"></i>Emergency Support';
+                emergencyBtn.onclick = showEmergencyModal;
+                contactActions.appendChild(emergencyBtn);
+            }
+        });
+    </script>
+</body>
+</html>

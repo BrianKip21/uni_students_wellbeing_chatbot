@@ -9,10 +9,291 @@ from wellbeing.utils.decorators import login_required
 from wellbeing import mongo, logger
 from wellbeing.models.user import find_user_by_id, update_user_settings
 
-@dashboard_bp.route('/dashboard')
+from wellbeing.utils.mental_health import (
+    detect_crisis_level,
+    assign_therapist_immediately,
+    validate_intake_form
+)
+from wellbeing.utils.scheduling import (
+    get_therapist_available_slots,
+    auto_schedule_best_time,
+    create_google_meet_link,
+    schedule_appointment_automatically
+)
+
+@dashboard_bp.route('/student/intake', methods=['GET', 'POST'])
+def student_intake():
+    """Enhanced intake with immediate scheduling"""
+    
+    if 'user' not in session or session.get('role') != 'student':
+        return redirect(url_for('auth.login'))
+    
+    if request.method == 'POST':
+        # Step 1: Get and validate form data
+        form_data = {
+            'primary_concern': request.form.get('primary_concern'),
+            'description': request.form.get('description'),
+            'severity': request.form.get('severity'),
+            'duration': request.form.get('duration'),
+            'previous_therapy': request.form.get('previous_therapy'),
+            'therapist_gender': request.form.get('therapist_gender'),
+            'appointment_type': request.form.get('appointment_type', 'virtual'),
+            'crisis_indicators': request.form.getlist('crisis_indicators'),
+            'emergency_contact_name': request.form.get('emergency_contact_name'),
+            'emergency_contact_phone': request.form.get('emergency_contact_phone'),
+            'emergency_contact_relationship': request.form.get('emergency_contact_relationship')
+        }
+        
+        is_valid, errors = validate_intake_form(form_data)
+        if not is_valid:
+            for error in errors:
+                flash(f'Please fix: {error}', 'error')
+            return render_template('student/intake.html')
+        
+        # Step 2: Prepare intake data
+        intake_data = {
+            'student_id': ObjectId(session['user']),  # Changed from session['user_id']
+            **form_data,
+            'severity': int(form_data['severity']),
+            'created_at': datetime.now()
+        }
+        
+        # Step 3: Crisis detection
+        crisis_result = detect_crisis_level(intake_data)
+        crisis_level = crisis_result['level']
+        
+        # Step 4: Find therapist immediately
+        therapist = assign_therapist_immediately(intake_data)
+        
+        if therapist:
+            # Step 5: AUTO-SCHEDULE THE APPOINTMENT! 🚀
+            appointment_id, appointment = auto_schedule_best_time(
+                session['user'], 
+                therapist, 
+                form_data['appointment_type'], 
+                crisis_level
+            )
+            
+            if appointment_id:
+                # Step 6: Save everything to database
+                intake_data['assigned_therapist_id'] = therapist['_id']
+                intake_data['crisis_level'] = crisis_level
+                intake_data['appointment_id'] = appointment_id
+                intake_data['auto_scheduled'] = True
+                mongo.db.intake_assessments.insert_one(intake_data)
+                
+                # Update student record
+                mongo.db.students.update_one(
+                    {'_id': ObjectId(session['user'])},
+                    {
+                        '$set': {
+                            'assigned_therapist_id': therapist['_id'],
+                            'assignment_date': datetime.now(),
+                            'status': 'crisis' if crisis_level == 'high' else 'active',
+                            'intake_completed': True,
+                            'next_appointment_id': appointment_id
+                        }
+                    }
+                )
+                
+                # Update therapist caseload
+                mongo.db.therapists.update_one(
+                    {'_id': therapist['_id']},
+                    {'$inc': {'current_students': 1}}
+                )
+                
+                # Step 7: Show AMAZING results with scheduled appointment!
+                return redirect(url_for('dashboard.appointment_confirmed', 
+                                      appointment_id=str(appointment_id),
+                                      crisis_level=crisis_level))
+            else:
+                # Couldn't auto-schedule, but therapist is assigned
+                flash(f'Matched with {therapist["name"]}! They\'ll contact you to schedule.', 'success')
+                return redirect(url_for('dashboard.match_results', 
+                                      therapist_id=str(therapist['_id']),
+                                      crisis_level=crisis_level))
+        else:
+            # No therapist available
+            mongo.db.intake_assessments.insert_one(intake_data)
+            flash('Assessment completed! We\'ll find you a therapist soon.', 'info')
+            return redirect(url_for('dashboard.index'))
+    
+    return render_template('student/intake.html')
+
+@dashboard_bp.route('/student/appointment-confirmed/<appointment_id>')
+def appointment_confirmed(appointment_id):
+    """Show confirmed appointment with all details"""
+    
+    if 'user' not in session:
+        return redirect(url_for('auth.login'))
+    
+    # Get appointment details
+    appointment = mongo.db.appointments.find_one({'_id': ObjectId(appointment_id)})
+    if not appointment:
+        flash('Appointment not found', 'error')
+        return redirect(url_for('dashboard.index'))
+    
+    # Get therapist details
+    therapist = mongo.db.therapists.find_one({'_id': appointment['therapist_id']})
+    
+    # Get crisis level
+    crisis_level = request.args.get('crisis_level', 'normal')
+    
+    return render_template('student/appointment_confirmed.html',
+                         appointment=appointment,
+                         therapist=therapist,
+                         crisis_level=crisis_level)
+
+@dashboard_bp.route('/api/therapist-availability/<therapist_id>')
+def get_therapist_availability(therapist_id):
+    """API endpoint to get real-time therapist availability"""
+    
+    if 'user_id' not in session:
+        return {'error': 'Not authenticated'}, 401
+    
+    therapist = mongo.db.therapists.find_one({'_id': ObjectId(therapist_id)})
+    if not therapist:
+        return {'error': 'Therapist not found'}, 404
+    
+    crisis_level = request.args.get('crisis_level', 'normal')
+    available_slots = get_therapist_available_slots(therapist, crisis_level=crisis_level)
+    
+    # Format for JSON response
+    slots_data = []
+    for slot in available_slots:
+        slots_data.append({
+            'date': slot['date'],
+            'time': slot['time'],
+            'formatted': slot['formatted'],
+            'day_name': slot['day_name']
+        })
+    
+    return {
+        'therapist_name': therapist['name'],
+        'available_slots': slots_data,
+        'total_slots': len(slots_data)
+    }
+
+@dashboard_bp.route('/student/book-specific-slot', methods=['POST'])
+def book_specific_slot():
+    """Book a specific time slot with Google Meet link"""
+    
+    if 'user_id' not in session:
+        return redirect(url_for('auth.login'))
+    
+    # Get form data
+    therapist_id = request.form.get('therapist_id')
+    selected_date = request.form.get('selected_date')
+    selected_time = request.form.get('selected_time')
+    appointment_type = request.form.get('appointment_type', 'virtual')
+    
+    if not all([therapist_id, selected_date, selected_time]):
+        flash('Please select a valid time slot', 'error')
+        return redirect(url_for('dashboard.student_therapist'))
+    
+    # Get therapist
+    therapist = mongo.db.therapists.find_one({'_id': ObjectId(therapist_id)})
+    if not therapist:
+        flash('Therapist not found', 'error')
+        return redirect(url_for('dashboard.index'))
+    
+    # Create slot object
+    selected_datetime = datetime.strptime(f"{selected_date} {selected_time}", "%Y-%m-%d %I:%M %p")
+    selected_slot = {
+        'datetime': selected_datetime,
+        'date': selected_date,
+        'time': selected_time,
+        'formatted': selected_datetime.strftime('%A, %B %d at %I:%M %p')
+    }
+    
+    # Schedule the appointment
+    appointment_id, appointment = schedule_appointment_automatically(
+        session['user_id'], therapist, selected_slot, appointment_type
+    )
+    
+    if appointment_id:
+        flash('Appointment scheduled successfully!', 'success')
+        return redirect(url_for('dashboard.appointment_confirmed', 
+                              appointment_id=str(appointment_id)))
+    else:
+        flash('Failed to schedule appointment. Please try again.', 'error')
+        return redirect(url_for('dashboard.student_therapist'))
+
+@dashboard_bp.route('/student/join-session/<appointment_id>')
+def join_session(appointment_id):
+    """Join a virtual therapy session"""
+    
+    if 'user' not in session:
+        return redirect(url_for('auth.login'))
+    
+    appointment = mongo.db.appointments.find_one({'_id': ObjectId(appointment_id)})
+    if not appointment:
+        flash('Session not found', 'error')
+        return redirect(url_for('dashboard.student_therapist'))
+    
+    # Check if it's time for the session (within 15 minutes)
+    session_time = appointment['datetime']
+    now = datetime.now()
+    time_diff = (session_time - now).total_seconds() / 60  # minutes
+    
+    if time_diff > 15:
+        flash(f'Session starts in {int(time_diff)} minutes. Please wait.', 'info')
+        return redirect(url_for('dashboard.student_therapist'))
+    elif time_diff < -60:  # More than 1 hour past
+        flash('This session has ended.', 'warning')
+        return redirect(url_for('dashboard.student_therapist'))
+    
+    # Get meeting info
+    meeting_info = appointment.get('meeting_info', {})
+    if not meeting_info:
+        flash('No meeting link available. Contact your therapist.', 'error')
+        return redirect(url_for('dashboard.student_therapist'))
+    
+    # Update appointment status
+    mongo.db.appointments.update_one(
+        {'_id': ObjectId(appointment_id)},
+        {'$set': {'last_joined': datetime.now()}}
+    )
+    
+    # Redirect to Google Meet
+    return redirect(meeting_info['meet_link'])
+
+@dashboard_bp.route('/api/upcoming-session')
+def get_upcoming_session():
+    """Get student's next upcoming session"""
+    
+    if 'user' not in session:
+        return {'error': 'Not authenticated'}, 401
+    
+    # Find next appointment
+    next_appointment = mongo.db.appointments.find_one({
+        'student_id': ObjectId(session['user']),
+        'datetime': {'$gte': datetime.now()},
+        'status': 'confirmed'
+    }, sort=[('datetime', 1)])
+    
+    if next_appointment:
+        therapist = mongo.db.therapists.find_one({'_id': next_appointment['therapist_id']})
+        
+        return {
+            'has_upcoming': True,
+            'appointment': {
+                'id': str(next_appointment['_id']),
+                'datetime': next_appointment['datetime'].isoformat(),
+                'formatted_time': next_appointment['formatted_time'],
+                'therapist_name': therapist['name'] if therapist else 'N/A',
+                'type': next_appointment['type'],
+                'meeting_link': next_appointment.get('meeting_info', {}).get('meet_link')
+            }
+        }
+    
+    return {'has_upcoming': False}
+
+@dashboard_bp.route('/dashboard') 
 @login_required
 def index():
-    """Dashboard index page with user's overview."""
+    """Dashboard index page with user's overview and intake status."""
+    
     # Fetch user data
     user_id = ObjectId(session['user'])
     user = find_user_by_id(user_id)
@@ -32,14 +313,12 @@ def index():
         elif default_view == 'list':
             return redirect(url_for('tracking.list_view'))
     
-    # If progress field doesn't exist, initialize it
+    # Initialize progress if it doesn't exist
     if 'progress' not in user:
         user['progress'] = {
             'meditation': 0,
             'exercise': 0
         }
-        
-        # Save this default structure to the database
         mongo.db.users.update_one(
             {'_id': user_id},
             {'$set': {'progress': user['progress']}}
@@ -54,23 +333,39 @@ def index():
     # Get latest mood data
     latest_mood = mongo.db.moods.find_one({"user_id": str(user_id)}, sort=[("timestamp", -1)])
     
-    # Check if student has a pending therapist request
-    pending_request = mongo.db.therapist_requests.find_one({
-        'student_id': user_id,
-        'status': 'pending'
+    # === NEW INTAKE SYSTEM ===
+    
+    # Check if student has completed intake assessment
+    intake_completed = mongo.db.intake_assessments.find_one({
+        'student_id': user_id
     })
     
-    # Check if student has an assigned therapist
-    assigned_therapist = mongo.db.therapist_assignments.find_one({
-        'student_id': user_id,
-        'status': 'active'
-    })
+    # Check for assigned therapist
+    assigned_therapist = None
+    if user.get('assigned_therapist_id'):
+        therapist = mongo.db.therapists.find_one({'_id': user['assigned_therapist_id']})
+        if therapist:
+            assigned_therapist = {
+                'therapist_id': therapist['_id'],
+                'therapist_name': therapist['name'],
+                'therapist': therapist,
+                'status': 'active'
+            }
     
+    # Get next upcoming appointment
+    next_appointment = None
     if assigned_therapist:
-        therapist = mongo.db.therapists.find_one({'_id': assigned_therapist['therapist_id']})
-        assigned_therapist['therapist_name'] = f"Dr. {therapist['first_name']} {therapist['last_name']}"
-    else:
-        assigned_therapist = None
+        next_appointment = mongo.db.appointments.find_one({
+            'student_id': user_id,
+            'status': {'$in': ['confirmed', 'suggested']},
+            'datetime': {'$gte': datetime.now()}
+        }, sort=[('datetime', 1)])
+    
+    # Intake status for dashboard display
+    intake_status = {
+        'completed': bool(intake_completed),
+        'has_therapist': bool(assigned_therapist)
+    }
     
     return render_template('dashboard.html',
                          user=user,
@@ -78,8 +373,69 @@ def index():
                          recent_chats=recent_chats,
                          resources=recommended_resources,
                          latest_mood=latest_mood,
-                         pending_request=pending_request,
-                         assigned_therapist=assigned_therapist)
+                         assigned_therapist=assigned_therapist,
+                         intake_status=intake_status,
+                         intake_completed=intake_completed,
+                         next_appointment=next_appointment)
+
+@dashboard_bp.route('/student/therapist-info')
+@login_required
+def therapist_info():
+    """Therapist profile page - renders Template 3"""
+    
+    # Fix: Use consistent session key
+    if 'user' not in session or session.get('role') != 'student':
+        return redirect(url_for('auth.login'))
+    
+    user_id = ObjectId(session['user'])  # Changed from session['user_id'] 
+    user = mongo.db.students.find_one({'_id': user_id})
+    
+    # Get assigned therapist
+    therapist = None
+    if user and user.get('assigned_therapist_id'):
+        therapist = mongo.db.therapists.find_one({'_id': user['assigned_therapist_id']})
+    
+    # Get appointments for this student
+    appointments = []
+    if therapist:
+        appointments = list(mongo.db.appointments.find({
+            'student_id': user_id,
+            'therapist_id': therapist['_id']
+        }).sort('datetime', 1))
+    
+    return render_template('student/therapist_info.html',
+                         therapist=therapist,
+                         appointments=appointments)
+
+@dashboard_bp.route('/student/intake-assessment') 
+@login_required
+def intake_assessment():
+    """Alternative route for intake assessment"""
+    return redirect(url_for('dashboard.student_intake'))
+
+@dashboard_bp.route('/student/match-results/<therapist_id>')
+@login_required  
+def match_results(therapist_id):
+    """Show therapist matching results after intake - redirect to therapist info"""
+    
+    # Fix: Use consistent session key
+    if 'user' not in session:
+        return redirect(url_for('auth.login'))
+    
+    therapist = mongo.db.therapists.find_one({'_id': ObjectId(therapist_id)})
+    crisis_level = request.args.get('crisis_level', 'normal')
+    
+    if not therapist:
+        flash('Therapist not found', 'error')
+        return redirect(url_for('dashboard.index'))
+    
+    # Flash success message and redirect to therapist info page
+    if crisis_level == 'high':
+        flash(f'✅ Priority match found! You\'ve been assigned to {therapist["name"]} for immediate support.', 'success')
+    else:
+        flash(f'✅ Perfect match! You\'ve been assigned to {therapist["name"]} who specializes in your areas of concern.', 'success')
+    
+    return redirect(url_for('dashboard.therapist_info'))
 
 @dashboard_bp.route('/profile', methods=['GET', 'POST'])
 @login_required
@@ -501,826 +857,3 @@ def student_resource_detail(resource_id):
         related_resources=related_resources
     )
 
-@dashboard_bp.route('/request-therapist')
-@login_required
-def request_therapist():
-    """Request to be assigned to a therapist"""
-    try:
-        student_id = ObjectId(session.get('user'))
-        
-        # Get user for settings
-        user = find_user_by_id(student_id)
-        if not user:
-            flash('User not found. Please log in again.', 'error')
-            return redirect(url_for('auth.login'))
-            
-        # Get user settings
-        settings = user.get('settings', {})
-        
-        # Check if student already has an assigned therapist
-        existing_assignment = mongo.db.therapist_assignments.find_one({
-            'student_id': student_id,
-            'status': 'active'
-        })
-        
-        if existing_assignment:
-            flash('You already have an assigned therapist', 'info')
-            return redirect(url_for('dashboard.therapist_chat'))
-        
-        # Check if student already has a pending request
-        existing_request = mongo.db.therapist_requests.find_one({
-            'student_id': student_id,
-            'status': 'pending'
-        })
-        
-        if existing_request:
-            flash('Your therapist request is still being processed', 'info')
-            return redirect(url_for('dashboard.request_status'))
-        
-        # Add settings to template context
-        return render_template(
-            'request_therapist.html',
-            settings=settings
-        )
-        
-    except Exception as e:
-        logger.error(f"Request therapist error: {e}")
-        flash('An error occurred while loading therapist request page', 'error')
-        return redirect(url_for('dashboard.index'))
-
-@dashboard_bp.route('/submit-therapist-request', methods=['POST'])
-@login_required
-def submit_therapist_request():
-    """Submit request for therapist assignment"""
-    try:
-        student_id = ObjectId(session.get('user'))
-        
-        # Get form data
-        issue_description = request.form.get('issue_description', '').strip()
-        concerns = request.form.getlist('concerns')
-        preferred_session_type = request.form.get('preferred_session_type', 'both')
-        urgency_level = request.form.get('urgency_level', 'normal')
-        
-        # Validate input
-        if not issue_description:
-            flash('Please describe your issue or concern', 'error')
-            return redirect(url_for('dashboard.request_therapist'))
-        
-        # Create therapist request
-        request_data = {
-            'student_id': student_id,
-            'issue_description': issue_description,
-            'concerns': concerns,
-            'preferred_session_type': preferred_session_type,
-            'urgency_level': urgency_level,
-            'status': 'pending',
-            'created_at': datetime.now(timezone.utc),
-            'updated_at': datetime.now(timezone.utc)
-        }
-        
-        result = mongo.db.therapist_requests.insert_one(request_data)
-        
-        if result.inserted_id:
-            flash('Your therapist request has been submitted successfully. You will be notified when a therapist is assigned to you.', 'success')
-            return redirect(url_for('dashboard.request_status'))
-        else:
-            flash('Failed to submit therapist request', 'error')
-            return redirect(url_for('dashboard.request_therapist'))
-        
-    except Exception as e:
-        logger.error(f"Submit therapist request error: {e}")
-        flash('An error occurred while submitting your request', 'error')
-        return redirect(url_for('dashboard.request_therapist'))
-
-@dashboard_bp.route('/request-status')
-@login_required
-def request_status():
-    """Check the status of a therapist request"""
-    try:
-        student_id = ObjectId(session.get('user'))
-        
-        # Get user for settings
-        user = find_user_by_id(student_id)
-        if not user:
-            flash('User not found. Please log in again.', 'error')
-            return redirect(url_for('auth.login'))
-            
-        # Get user settings
-        settings = user.get('settings', {})
-        
-        # Get the request status
-        request_data = mongo.db.therapist_requests.find_one({
-            'student_id': student_id
-        }, sort=[('created_at', -1)])
-        
-        # Check if there's an assignment
-        assignment = None
-        if request_data and request_data.get('status') == 'approved':
-            assignment = mongo.db.therapist_assignments.find_one({
-                'student_id': student_id,
-                'status': 'active'
-            })
-            
-            if assignment:
-                therapist = mongo.db.therapists.find_one({'_id': assignment['therapist_id']})
-                if therapist:
-                    assignment['therapist_name'] = f"Dr. {therapist['first_name']} {therapist['last_name']}"
-        
-        return render_template(
-            'request_status.html',
-            request=request_data,
-            assignment=assignment,
-            settings=settings
-        )
-        
-    except Exception as e:
-        logger.error(f"Request status error: {e}")
-        flash('An error occurred while checking your request status', 'error')
-        return redirect(url_for('dashboard.index'))
-
-@dashboard_bp.route('/therapist-chat')
-@login_required
-def therapist_chat():
-    """Chat with assigned therapist"""
-    try:
-        student_id = ObjectId(session.get('user'))
-        
-        # Get user for settings
-        user = find_user_by_id(student_id)
-        if not user:
-            flash('User not found. Please log in again.', 'error')
-            return redirect(url_for('auth.login'))
-            
-        # Get user settings
-        settings = user.get('settings', {})
-        
-        # Check if student has an assigned therapist
-        assignment = mongo.db.therapist_assignments.find_one({
-            'student_id': student_id,
-            'status': 'active'
-        })
-        
-        if not assignment:
-            flash('You do not have an assigned therapist yet', 'info')
-            return redirect(url_for('dashboard.request_therapist'))
-        
-        therapist_id = assignment['therapist_id']
-        therapist = mongo.db.therapists.find_one({'_id': therapist_id})
-        
-        if not therapist:
-            flash('There was an error finding your therapist', 'error')
-            return redirect(url_for('dashboard.index'))
-        
-        # Get chat history
-        chat_history = list(mongo.db.therapist_chats.find({
-            'student_id': student_id,
-            'therapist_id': therapist_id
-        }).sort('timestamp', 1))
-        
-        # Get shared resources from therapist
-        shared_resources = list(mongo.db.shared_resources.find({
-            'student_id': student_id,
-            'therapist_id': therapist_id
-        }).sort('shared_at', -1))
-        
-        return render_template(
-            'therapist_chat.html',
-            therapist=therapist,
-            chat_history=chat_history,
-            assignment=assignment,
-            shared_resources=shared_resources,
-            settings=settings
-        )
-        
-    except Exception as e:
-        logger.error(f"Therapist chat error: {e}")
-        flash('An error occurred while loading the chat', 'error')
-        return redirect(url_for('dashboard.index'))
-
-@dashboard_bp.route('/send-therapist-message', methods=['POST'])
-@login_required
-def send_therapist_message():
-    """Send message to therapist"""
-    try:
-        student_id = ObjectId(session.get('user'))
-        
-        # Get form data
-        message = request.form.get('message', '').strip()
-        
-        if not message:
-            return jsonify({'success': False, 'error': 'Message cannot be empty'})
-        
-        # Check if student has an assigned therapist
-        assignment = mongo.db.therapist_assignments.find_one({
-            'student_id': student_id,
-            'status': 'active'
-        })
-        
-        if not assignment:
-            return jsonify({'success': False, 'error': 'No assigned therapist'})
-        
-        therapist_id = assignment['therapist_id']
-        
-        # Save message
-        new_message = {
-            'student_id': student_id,
-            'therapist_id': therapist_id,
-            'sender': 'student',
-            'message': message,
-            'read': False,
-            'timestamp': datetime.now(timezone.utc)
-        }
-        
-        result = mongo.db.therapist_chats.insert_one(new_message)
-        
-        if result.inserted_id:
-            # Format message for immediate display
-            formatted_message = {
-                'id': str(result.inserted_id),
-                'message': message,
-                'sender': 'student',
-                'timestamp': datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M')
-            }
-            return jsonify({'success': True, 'message': formatted_message})
-        else:
-            return jsonify({'success': False, 'error': 'Failed to send message'})
-        
-    except Exception as e:
-        logger.error(f"Send therapist message error: {e}")
-        return jsonify({'success': False, 'error': 'An error occurred'})
-    
-@dashboard_bp.route('/get-new-messages')
-@login_required
-def get_new_messages():
-    """Poll for new therapist messages"""
-    try:
-        student_id = ObjectId(session.get('user'))
-        last_id = request.args.get('last_id')
-        
-        # Check if student has an assigned therapist
-        assignment = mongo.db.therapist_assignments.find_one({
-            'student_id': student_id,
-            'status': 'active'
-        })
-        
-        if not assignment:
-            return jsonify({'success': False, 'error': 'No assigned therapist'})
-        
-        therapist_id = assignment['therapist_id']
-        
-        # Build query for new messages
-        query = {
-            'student_id': student_id,
-            'therapist_id': therapist_id,
-            'sender': 'therapist',  # Only fetch therapist messages
-            'read': False  # Only unread messages
-        }
-        
-        # If last_id is provided, only get messages newer than that
-        if last_id:
-            try:
-                query['_id'] = {'$gt': ObjectId(last_id)}
-            except:
-                # Invalid ID format, ignore this condition
-                pass
-        
-        # Get new messages
-        messages = list(mongo.db.therapist_chats.find(query).sort('timestamp', 1))
-        
-        # Format messages for response
-        formatted_messages = []
-        for msg in messages:
-            formatted_messages.append({
-                'id': str(msg['_id']),
-                'message': msg['message'],
-                'sender': msg['sender'],
-                'timestamp': msg['timestamp'].strftime('%I:%M %p | %b %d')
-            })
-            
-            # Mark as read
-            mongo.db.therapist_chats.update_one(
-                {'_id': msg['_id']},
-                {'$set': {'read': True}}
-            )
-        
-        return jsonify({
-            'success': True,
-            'messages': formatted_messages
-        })
-        
-    except Exception as e:
-        logger.error(f"Get new messages error: {e}")
-        return jsonify({'success': False, 'error': 'An error occurred'})
-
-@dashboard_bp.route('/therapist-appointments')
-@login_required
-def therapist_appointments():
-    """View and schedule therapist appointments"""
-    from datetime import datetime, timedelta
-    
-    try:
-        student_id = ObjectId(session.get('user'))
-        
-        # Get user for settings
-        user = find_user_by_id(student_id)
-        if not user:
-            flash('User not found. Please log in again.', 'error')
-            return redirect(url_for('auth.login'))
-            
-        # Get user settings - handle if user is not a dict
-        if not isinstance(user, dict):
-            settings = {}
-        else:
-            settings = user.get('settings', {})
-        
-        # Check if student has an assigned therapist
-        assignment = mongo.db.therapist_assignments.find_one({
-            'student_id': student_id,
-            'status': 'active'
-        })
-        
-        if not assignment:
-            flash('You do not have an assigned therapist yet', 'info')
-            return redirect(url_for('dashboard.request_therapist'))
-        
-        # Safely extract therapist_id
-        if not isinstance(assignment, dict):
-            flash('Invalid assignment data. Please contact support.', 'error')
-            return redirect(url_for('dashboard.index'))
-            
-        therapist_id = assignment.get('therapist_id')
-        if not therapist_id:
-            flash('There was an error finding your therapist', 'error')
-            return redirect(url_for('dashboard.index'))
-            
-        therapist = mongo.db.therapists.find_one({'_id': therapist_id})
-        
-        if not therapist:
-            flash('There was an error finding your therapist', 'error')
-            return redirect(url_for('dashboard.index'))
-        
-        # Get upcoming appointments
-        upcoming_appointments = list(mongo.db.appointments.find({
-            'student_id': student_id,
-            'therapist_id': therapist_id,
-            'date': {'$gte': datetime.now()},
-            'status': 'scheduled'
-        }).sort('date', 1))
-        
-        # Get pending appointment requests
-        pending_appointments = list(mongo.db.appointments.find({
-            'student_id': student_id,
-            'therapist_id': therapist_id,
-            'status': 'pending'
-        }).sort('date', 1))
-        
-        # Get past appointments
-        past_appointments = list(mongo.db.appointments.find({
-            'student_id': student_id,
-            'therapist_id': therapist_id,
-            '$or': [
-                {'date': {'$lt': datetime.now()}, 'status': 'completed'},
-                {'status': 'cancelled'}
-            ]
-        }).sort('date', -1).limit(5))
-        
-        # Ensure therapist is a dict
-        if not isinstance(therapist, dict):
-            therapist = {"_id": therapist_id}
-            
-        # Create a safe version of the therapist data
-        safe_therapist = {}
-        for key, value in therapist.items():
-            if key == 'office_hours' and not isinstance(value, dict):
-                # Convert office_hours to a dict if it's not already
-                safe_therapist['office_hours'] = {
-                    'description': str(value),
-                    'days': [0, 1, 2, 3, 4],
-                    'slots': ['09:00', '10:00', '11:00', '14:00', '15:00', '16:00']
-                }
-            else:
-                safe_therapist[key] = value
-        
-        # Get available time slots from therapist's schedule
-        available_slots = []
-        
-        # Get office_hours from safe_therapist
-        office_hours = safe_therapist.get('office_hours', {})
-        
-        # Ensure office_hours is a dict
-        if not isinstance(office_hours, dict):
-            office_hours = {
-                'description': str(office_hours) if office_hours else "",
-                'days': [0, 1, 2, 3, 4],  # Default: Monday-Friday
-                'slots': ['09:00', '10:00', '11:00', '14:00', '15:00', '16:00']  # Default slots
-            }
-        
-        # Now safely get working days
-        working_days = office_hours.get('days', [0, 1, 2, 3, 4])  # Default: Monday-Friday
-        
-        # Generate slots for the next 14 days
-        for i in range(14):
-            slot_date = datetime.now() + timedelta(days=i+1)
-            
-            # Skip non-working days
-            if slot_date.weekday() not in working_days:
-                continue
-                
-            # Add standard slots based on therapist's hours
-            day_slots = office_hours.get('slots', ['09:00', '10:00', '11:00', '14:00', '15:00', '16:00'])
-            
-            available_slots.append({
-                'date': slot_date,
-                'date_str': slot_date.strftime('%Y-%m-%d'),
-                'day': slot_date.strftime('%A, %B %d'),
-                'slots': day_slots
-            })
-        
-        # Remove already booked slots
-        booked_appointments = list(mongo.db.appointments.find({
-            'therapist_id': therapist_id,
-            'date': {'$gte': datetime.now()},
-            'status': {'$in': ['scheduled', 'pending']}
-        }))
-        
-        booked_slots = {}
-        for appt in booked_appointments:
-            if not isinstance(appt, dict):
-                continue
-                
-            appt_date = appt.get('date')
-            appt_time = appt.get('time')
-            
-            if appt_date and appt_time:
-                try:
-                    date_str = appt_date.strftime('%Y-%m-%d')
-                    if date_str not in booked_slots:
-                        booked_slots[date_str] = []
-                    booked_slots[date_str].append(appt_time)
-                except (AttributeError, TypeError):
-                    # Skip if date is not a datetime object or has issues
-                    continue
-        
-        # Filter out booked slots
-        for day in available_slots:
-            date_str = day['date_str']
-            if date_str in booked_slots:
-                day['slots'] = [slot for slot in day['slots'] if slot not in booked_slots[date_str]]
-        
-        # Get session notes for past appointments
-        session_notes = {}
-        for appt in past_appointments:
-            if not isinstance(appt, dict) or '_id' not in appt:
-                continue
-                
-            note = mongo.db.session_notes.find_one({
-                'appointment_id': appt['_id']
-            })
-            if note:
-                session_notes[str(appt['_id'])] = note
-        
-        # Ensure all template variables are safe
-        for idx, appt in enumerate(upcoming_appointments):
-            if not isinstance(appt, dict):
-                upcoming_appointments[idx] = {'error': 'Invalid appointment data'}
-                
-        for idx, appt in enumerate(pending_appointments):
-            if not isinstance(appt, dict):
-                pending_appointments[idx] = {'error': 'Invalid appointment data'}
-                
-        for idx, appt in enumerate(past_appointments):
-            if not isinstance(appt, dict):
-                past_appointments[idx] = {'error': 'Invalid appointment data'}
-        
-        # Return the template with safe data
-        return render_template(
-            'therapist_appointments.html',
-            therapist=safe_therapist,
-            upcoming_appointments=upcoming_appointments,
-            pending_appointments=pending_appointments,
-            past_appointments=past_appointments,
-            available_slots=available_slots,
-            session_notes=session_notes,
-            settings=settings,
-            now=datetime.now()
-        )
-        
-    except Exception as e:
-        logger.error(f"Therapist appointments error: {e}")
-        flash('An error occurred while loading appointment data', 'error')
-        return redirect(url_for('dashboard.index'))
-
-@dashboard_bp.route('/schedule-appointment', methods=['POST'])
-@login_required
-def schedule_appointment():
-    """Request a new appointment with therapist"""
-    try:
-        student_id = ObjectId(session.get('user'))
-        
-        # Get form data
-        date_str = request.form.get('date')
-        time_str = request.form.get('time')
-        session_type = request.form.get('session_type', 'online')
-        reason = request.form.get('reason', '')
-        
-        # Validate input
-        if not date_str or not time_str:
-            flash('Date and time are required', 'error')
-            return redirect(url_for('dashboard.therapist_appointments'))
-        
-        # Parse date
-        try:
-            appointment_date = datetime.strptime(date_str, '%Y-%m-%d')
-        except ValueError:
-            flash('Invalid date format', 'error')
-            return redirect(url_for('dashboard.therapist_appointments'))
-        
-        # Check if student has an assigned therapist
-        assignment = mongo.db.therapist_assignments.find_one({
-            'student_id': student_id,
-            'status': 'active'
-        })
-        
-        if not assignment:
-            flash('You do not have an assigned therapist yet', 'error')
-            return redirect(url_for('dashboard.request_therapist'))
-        
-        therapist_id = assignment['therapist_id']
-        
-        # Check if slot is available
-        existing = mongo.db.appointments.find_one({
-            'therapist_id': therapist_id,
-            'date': appointment_date,
-            'time': time_str,
-            'status': {'$in': ['scheduled', 'pending']}
-        })
-        
-        if existing:
-            flash('This time slot is no longer available. Please select another time.', 'error')
-            return redirect(url_for('dashboard.therapist_appointments'))
-        
-        # Create new appointment request
-        new_appointment = {
-            'student_id': student_id,
-            'therapist_id': therapist_id,
-            'date': appointment_date,
-            'time': time_str,
-            'session_type': session_type,
-            'reason': reason,
-            'status': 'pending',  # Pending therapist approval
-            'created_at': datetime.now(timezone.utc),
-            'updated_at': datetime.now(timezone.utc)
-        }
-        
-        result = mongo.db.appointments.insert_one(new_appointment)
-        
-        if result.inserted_id:
-            flash('Appointment request submitted successfully. Awaiting therapist approval.', 'success')
-        else:
-            flash('Failed to submit appointment request', 'error')
-            
-        return redirect(url_for('dashboard.therapist_appointments'))
-        
-    except Exception as e:
-        logger.error(f"Schedule appointment error: {e}")
-        flash('An error occurred while scheduling the appointment', 'error')
-        return redirect(url_for('dashboard.therapist_appointments'))
-
-@dashboard_bp.route('/request-reschedule/<appointment_id>', methods=['POST'])
-@login_required
-def request_reschedule(appointment_id):
-    """Request to reschedule an appointment"""
-    try:
-        student_id = ObjectId(session.get('user'))
-        
-        # Get form data
-        date_str = request.form.get('date')
-        time_str = request.form.get('time')
-        reason = request.form.get('reason', '')
-        
-        # Validate input
-        if not date_str or not time_str:
-            flash('Date and time are required', 'error')
-            return redirect(url_for('dashboard.therapist_appointments'))
-        
-        # Parse date
-        try:
-            new_date = datetime.strptime(date_str, '%Y-%m-%d')
-        except ValueError:
-            flash('Invalid date format', 'error')
-            return redirect(url_for('dashboard.therapist_appointments'))
-        
-        # Find original appointment
-        appointment = mongo.db.appointments.find_one({
-            '_id': ObjectId(appointment_id),
-            'student_id': student_id,
-            'status': 'scheduled'
-        })
-        
-        if not appointment:
-            flash('Appointment not found or cannot be rescheduled', 'error')
-            return redirect(url_for('dashboard.therapist_appointments'))
-        
-        # Check if new slot is available
-        existing = mongo.db.appointments.find_one({
-            'therapist_id': appointment['therapist_id'],
-            'date': new_date,
-            'time': time_str,
-            'status': {'$in': ['scheduled', 'pending']},
-            '_id': {'$ne': ObjectId(appointment_id)}  # Exclude this appointment
-        })
-        
-        if existing:
-            flash('The requested time slot is not available', 'error')
-            return redirect(url_for('dashboard.therapist_appointments'))
-        
-        # Create reschedule request
-        reschedule_request = {
-            'appointment_id': ObjectId(appointment_id),
-            'student_id': student_id,
-            'therapist_id': appointment['therapist_id'],
-            'original_date': appointment['date'],
-            'original_time': appointment['time'],
-            'requested_date': new_date,
-            'requested_time': time_str,
-            'reason': reason,
-            'status': 'pending',
-            'created_at': datetime.now(timezone.utc)
-        }
-        
-        result = mongo.db.reschedule_requests.insert_one(reschedule_request)
-        
-        if result.inserted_id:
-            # Update appointment status to "reschedule pending"
-            mongo.db.appointments.update_one(
-                {'_id': ObjectId(appointment_id)},
-                {'$set': {
-                    'reschedule_requested': True,
-                    'updated_at': datetime.now(timezone.utc)
-                }}
-            )
-            flash('Reschedule request submitted successfully. Awaiting therapist approval.', 'success')
-        else:
-            flash('Failed to submit reschedule request', 'error')
-            
-        return redirect(url_for('dashboard.therapist_appointments'))
-        
-    except Exception as e:
-        logger.error(f"Request reschedule error: {e}")
-        flash('An error occurred while requesting to reschedule', 'error')
-        return redirect(url_for('dashboard.therapist_appointments'))
-
-@dashboard_bp.route('/request-cancellation/<appointment_id>', methods=['POST'])
-@login_required
-def request_cancellation(appointment_id):
-    """Request to cancel an appointment"""
-    try:
-        student_id = ObjectId(session.get('user'))
-        
-        # Get form data
-        reason = request.form.get('reason', '')
-        
-        # Find appointment
-        appointment = mongo.db.appointments.find_one({
-            '_id': ObjectId(appointment_id),
-            'student_id': student_id,
-            'status': 'scheduled'
-        })
-        
-        if not appointment:
-            flash('Appointment not found or cannot be cancelled', 'error')
-            return redirect(url_for('dashboard.therapist_appointments'))
-        
-        # Create cancellation request
-        cancellation_request = {
-            'appointment_id': ObjectId(appointment_id),
-            'student_id': student_id,
-            'therapist_id': appointment['therapist_id'],
-            'appointment_date': appointment['date'],
-            'appointment_time': appointment['time'],
-            'reason': reason,
-            'status': 'pending',
-            'created_at': datetime.now(timezone.utc)
-        }
-        
-        result = mongo.db.cancellation_requests.insert_one(cancellation_request)
-        
-        if result.inserted_id:
-            # Update appointment status to "cancellation pending"
-            mongo.db.appointments.update_one(
-                {'_id': ObjectId(appointment_id)},
-                {'$set': {
-                    'cancellation_requested': True,
-                    'updated_at': datetime.now(timezone.utc)
-                }}
-            )
-            flash('Cancellation request submitted successfully. Awaiting therapist approval.', 'success')
-        else:
-            flash('Failed to submit cancellation request', 'error')
-            
-        return redirect(url_for('dashboard.therapist_appointments'))
-        
-    except Exception as e:
-        logger.error(f"Request cancellation error: {e}")
-        flash('An error occurred while requesting cancellation', 'error')
-        return redirect(url_for('dashboard.therapist_appointments'))
-
-@dashboard_bp.route('/session-notes/<appointment_id>')
-@login_required
-def view_session_notes(appointment_id):
-    """View session notes for a specific appointment"""
-    try:
-        student_id = ObjectId(session.get('user'))
-        
-        # Get user for settings
-        user = find_user_by_id(student_id)
-        if not user:
-            flash('User not found. Please log in again.', 'error')
-            return redirect(url_for('auth.login'))
-            
-        # Get user settings
-        settings = user.get('settings', {})
-        
-        # Find appointment
-        appointment = mongo.db.appointments.find_one({
-            '_id': ObjectId(appointment_id),
-            'student_id': student_id,
-            'status': 'completed'
-        })
-        
-        if not appointment:
-            flash('Appointment not found or notes are not available', 'error')
-            return redirect(url_for('dashboard.therapist_appointments'))
-        
-        # Get session notes
-        notes = mongo.db.session_notes.find_one({
-            'appointment_id': ObjectId(appointment_id)
-        })
-        
-        if not notes:
-            flash('No session notes are available for this appointment', 'info')
-            return redirect(url_for('dashboard.therapist_appointments'))
-        
-        # Get therapist info
-        therapist = mongo.db.therapists.find_one({'_id': appointment['therapist_id']})
-        
-        return render_template(
-            'session_notes.html',
-            notes=notes,
-            appointment=appointment,
-            therapist=therapist,
-            settings=settings
-        )
-        
-    except Exception as e:
-        logger.error(f"View session notes error: {e}")
-        flash('An error occurred while loading session notes', 'error')
-        return redirect(url_for('dashboard.therapist_appointments'))
-
-@dashboard_bp.route('/shared-resources')
-@login_required
-def shared_resources():
-    """View resources shared by therapist"""
-    try:
-        student_id = ObjectId(session.get('user'))
-        
-        # Get user for settings
-        user = find_user_by_id(student_id)
-        if not user:
-            flash('User not found. Please log in again.', 'error')
-            return redirect(url_for('auth.login'))
-            
-        # Get user settings
-        settings = user.get('settings', {})
-        
-        # Check if student has an assigned therapist
-        assignment = mongo.db.therapist_assignments.find_one({
-            'student_id': student_id,
-            'status': 'active'
-        })
-        
-        if not assignment:
-            flash('You do not have an assigned therapist yet', 'info')
-            return redirect(url_for('dashboard.request_therapist'))
-        
-        therapist_id = assignment['therapist_id']
-        therapist = mongo.db.therapists.find_one({'_id': therapist_id})
-        
-        # Get shared resources
-        resources = list(mongo.db.shared_resources.find({
-            'student_id': student_id,
-            'therapist_id': therapist_id
-        }).sort('shared_at', -1))
-        
-        return render_template(
-            'shared_resources.html',
-            resources=resources,
-            therapist=therapist,
-            settings=settings
-        )
-        
-    except Exception as e:
-        logger.error(f"Shared resources error: {e}")
-        flash('An error occurred while loading shared resources', 'error')
-        return redirect(url_for('dashboard.index'))
-    

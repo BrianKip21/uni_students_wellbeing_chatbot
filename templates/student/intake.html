@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mental Health Assessment | Wellbeing Assistant</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css"> 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            background-color: #121212;
+            color: #e0e0e0;
+        }
+        
+        .assessment-container {
+            background-color: #1e1e1e;
+            border: 1px solid #333;
+        }
+        
+        .form-input {
+            background-color: #2a2a2a;
+            border: 1px solid #444;
+            color: #e0e0e0;
+        }
+        
+        .form-input:focus {
+            border-color: #60a5fa;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+        }
+        
+        .severity-btn {
+            transition: all 0.3s ease;
+            border: 2px solid #444;
+        }
+        
+        .severity-btn.active {
+            background-color: #3b82f6;
+            border-color: #3b82f6;
+            color: white;
+        }
+        
+        .crisis-warning {
+            background-color: #7f1d1d;
+            border-left: 4px solid #ef4444;
+            color: #fecaca;
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <div class="container mx-auto px-4 py-8 max-w-4xl">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold mb-2">Mental Health Assessment</h1>
+            <p class="text-gray-400">Help us understand your needs so we can provide the best support</p>
+        </div>
+
+        <!-- Assessment Form -->
+        <div class="assessment-container p-8 rounded-lg shadow-lg">
+            <form id="intake-form" action="{{ url_for('dashboard.student_intake') }}" method="POST">
+                <!-- Primary Concern -->
+                <div class="mb-6">
+                    <label class="block text-lg font-semibold mb-3">What's your primary concern today?</label>
+                    <select name="primary_concern" class="form-input w-full p-3 rounded-lg" required>
+                        <option value="">Select your main concern...</option>
+                        <option value="anxiety">Anxiety & Worry</option>
+                        <option value="depression">Depression & Low Mood</option>
+                        <option value="academic_stress">Academic Stress</option>
+                        <option value="relationships">Relationship Issues</option>
+                        <option value="sleep">Sleep Problems</option>
+                        <option value="eating">Eating Concerns</option>
+                        <option value="substance">Substance Use</option>
+                        <option value="trauma">Trauma/PTSD</option>
+                        <option value="grief">Grief & Loss</option>
+                        <option value="identity">Identity & Self-esteem</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+
+                <!-- Detailed Description -->
+                <div class="mb-6">
+                    <label class="block text-lg font-semibold mb-3">Tell us more about what you're experiencing</label>
+                    <textarea name="description" rows="4" class="form-input w-full p-3 rounded-lg" 
+                              placeholder="Describe your feelings, symptoms, or situations that brought you here..." required></textarea>
+                </div>
+
+                <!-- Severity Rating -->
+                <div class="mb-6">
+                    <label class="block text-lg font-semibold mb-3">How would you rate the severity of your concerns? (1-10)</label>
+                    <div class="flex space-x-2" id="severity-scale">
+                        <script>
+                            for(let i = 1; i <= 10; i++) {
+                                document.write(`
+                                    <button type="button" class="severity-btn w-12 h-12 rounded-full" data-value="${i}" onclick="setSeverity(${i})">
+                                        ${i}
+                                    </button>
+                                `);
+                            }
+                        </script>
+                    </div>
+                    <input type="hidden" name="severity" id="severity-input" required>
+                    <div class="mt-2 text-sm text-gray-400">
+                        <span>1 = Mild discomfort</span>
+                        <span class="float-right">10 = Severe, urgent need for help</span>
+                    </div>
+                </div>
+
+                <!-- Duration -->
+                <div class="mb-6">
+                    <label class="block text-lg font-semibold mb-3">How long have you been experiencing these concerns?</label>
+                    <select name="duration" class="form-input w-full p-3 rounded-lg" required>
+                        <option value="">Select duration...</option>
+                        <option value="less_than_week">Less than a week</option>
+                        <option value="1-2_weeks">1-2 weeks</option>
+                        <option value="1_month">About a month</option>
+                        <option value="2-3_months">2-3 months</option>
+                        <option value="6_months">About 6 months</option>
+                        <option value="1_year">About a year</option>
+                        <option value="more_than_year">More than a year</option>
+                    </select>
+                </div>
+
+                <!-- Previous Therapy -->
+                <div class="mb-6">
+                    <label class="block text-lg font-semibold mb-3">Have you received mental health treatment before?</label>
+                    <div class="space-y-2">
+                        <label class="flex items-center">
+                            <input type="radio" name="previous_therapy" value="never" class="mr-2">
+                            <span>Never received treatment</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="radio" name="previous_therapy" value="counseling" class="mr-2">
+                            <span>Counseling/Therapy only</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="radio" name="previous_therapy" value="medication" class="mr-2">
+                            <span>Medication only</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="radio" name="previous_therapy" value="both" class="mr-2">
+                            <span>Both counseling and medication</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Therapist Preferences -->
+                <div class="mb-6">
+                    <label class="block text-lg font-semibold mb-3">Do you have any preferences for your therapist?</label>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Gender Preference</label>
+                            <select name="therapist_gender" class="form-input w-full p-3 rounded-lg">
+                                <option value="no_preference">No preference</option>
+                                <option value="female">Female</option>
+                                <option value="male">Male</option>
+                                <option value="non_binary">Non-binary</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Appointment Preference</label>
+                            <select name="appointment_type" class="form-input w-full p-3 rounded-lg">
+                                <option value="in_person">In-person</option>
+                                <option value="virtual">Virtual/Online</option>
+                                <option value="either">Either is fine</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Crisis Assessment -->
+                <div class="mb-6">
+                    <label class="block text-lg font-semibold mb-3">Safety Assessment</label>
+                    <div class="space-y-3">
+                        <label class="flex items-start">
+                            <input type="checkbox" name="crisis_indicators" value="suicidal_thoughts" class="mr-3 mt-1">
+                            <span>I have thoughts of hurting myself or ending my life</span>
+                        </label>
+                        <label class="flex items-start">
+                            <input type="checkbox" name="crisis_indicators" value="harm_others" class="mr-3 mt-1">
+                            <span>I have thoughts of hurting someone else</span>
+                        </label>
+                        <label class="flex items-start">
+                            <input type="checkbox" name="crisis_indicators" value="substance_crisis" class="mr-3 mt-1">
+                            <span>I'm struggling with substance use that feels out of control</span>
+                        </label>
+                        <label class="flex items-start">
+                            <input type="checkbox" name="crisis_indicators" value="eating_crisis" class="mr-3 mt-1">
+                            <span>I'm having severe problems with eating that are affecting my health</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Crisis Warning (Hidden by default) -->
+                <div id="crisis-warning" class="crisis-warning p-4 rounded-lg mb-6" style="display: none;">
+                    <div class="flex items-start">
+                        <i class="fas fa-exclamation-triangle text-red-400 mr-3 mt-1"></i>
+                        <div>
+                            <h4 class="font-bold mb-2">Immediate Support Available</h4>
+                            <p class="mb-2">If you're having thoughts of suicide or self-harm, please reach out for immediate help:</p>
+                            <ul class="list-disc list-inside space-y-1 text-sm">
+                                <li>National Suicide Prevention Lifeline: 988</li>
+                                <li>Crisis Text Line: Text HOME to 741741</li>
+                                <li>Emergency Services: 911</li>
+                                <li>Campus Counseling Center: [Your Campus Number]</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Emergency Contact -->
+                <div class="mb-8">
+                    <label class="block text-lg font-semibold mb-3">Emergency Contact Information</label>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <input type="text" name="emergency_contact_name" placeholder="Contact Name" 
+                                   class="form-input w-full p-3 rounded-lg" required>
+                        </div>
+                        <div>
+                            <input type="tel" name="emergency_contact_phone" placeholder="Phone Number" 
+                                   class="form-input w-full p-3 rounded-lg" required>
+                        </div>
+                        <div>
+                            <input type="text" name="emergency_contact_relationship" placeholder="Relationship (e.g., Parent, Sibling)" 
+                                   class="form-input w-full p-3 rounded-lg" required>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="text-center">
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg text-lg font-semibold transition duration-300">
+                        <i class="fas fa-paper-plane mr-2"></i>
+                        Complete Assessment
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Severity Scale Selection
+        function setSeverity(value) {
+            document.getElementById('severity-input').value = value;
+            
+            // Update button styles
+            document.querySelectorAll('.severity-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector(`[data-value="${value}"]`).classList.add('active');
+        }
+
+        // Crisis Detection
+        document.querySelectorAll('input[name="crisis_indicators"]').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                const warningDiv = document.getElementById('crisis-warning');
+                const checkedBoxes = document.querySelectorAll('input[name="crisis_indicators"]:checked');
+                
+                if (checkedBoxes.length > 0) {
+                    warningDiv.style.display = 'block';
+                } else {
+                    warningDiv.style.display = 'none';
+                }
+            });
+        });
+
+        // Form Submission with Crisis Handling
+        document.getElementById('intake-form').addEventListener('submit', function(e) {
+            const checkedCrisis = document.querySelectorAll('input[name="crisis_indicators"]:checked');
+            const severity = document.getElementById('severity-input').value;
+            
+            // High severity or crisis indicators
+            if (severity >= 8 || checkedCrisis.length > 0) {
+                if (!confirm('Based on your responses, we recommend immediate support. Would you like to proceed with priority assignment to a counselor?')) {
+                    e.preventDefault();
+                    return;
+                }
+            }
+        });
+
+        // Keyword Detection in Description
+        const crisisKeywords = ['suicide', 'kill myself', 'end my life', 'want to die', 'hopeless', 'worthless', 'hurt myself', 'self-harm', 'cutting'];
+        
+        document.querySelector('textarea[name="description"]').addEventListener('blur', function() {
+            const text = this.value.toLowerCase();
+            const warningDiv = document.getElementById('crisis-warning');
+            
+            for (let keyword of crisisKeywords) {
+                if (text.includes(keyword)) {
+                    warningDiv.style.display = 'block';
+                    break;
+                }
+            }
+        });
+    </script>
+</body>
+</html>
