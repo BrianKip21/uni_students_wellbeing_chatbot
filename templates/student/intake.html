@@ -3,152 +3,282 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mental Health Assessment | Wellbeing Assistant</title>
+    <title>Wellbeing Assessment | AI-Powered Mental Health Support</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css"> 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
         body {
-            background-color: #121212;
-            color: #e0e0e0;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 50%, #2d1b69 100%);
+            color: #e0e7ff;
+            min-height: 100vh;
         }
         
-        .assessment-container {
-            background-color: #1e1e1e;
-            border: 1px solid #333;
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
         }
         
-        .form-input {
-            background-color: #2a2a2a;
-            border: 1px solid #444;
-            color: #e0e0e0;
+        .form-input, .form-select, .form-textarea {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #e0e7ff;
+            border-radius: 12px;
+            padding: 1rem;
+            transition: all 0.3s ease;
+            font-size: 1rem;
         }
         
-        .form-input:focus {
-            border-color: #60a5fa;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            border-color: #8b5cf6;
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.25);
+            background: rgba(255, 255, 255, 0.12);
+            outline: none;
         }
         
         .severity-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.05);
+            color: #a78bfa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            cursor: pointer;
             transition: all 0.3s ease;
-            border: 2px solid #444;
+        }
+        
+        .severity-btn:hover {
+            transform: scale(1.1);
+            border-color: #8b5cf6;
+            background: rgba(139, 92, 246, 0.2);
         }
         
         .severity-btn.active {
-            background-color: #3b82f6;
-            border-color: #3b82f6;
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            border-color: #8b5cf6;
             color: white;
+            transform: scale(1.15);
+        }
+        
+        .radio-option, .checkbox-option {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+        }
+        
+        .radio-option:hover, .checkbox-option:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: #8b5cf6;
+        }
+        
+        .radio-option.selected, .checkbox-option.selected {
+            background: rgba(139, 92, 246, 0.2);
+            border-color: #8b5cf6;
         }
         
         .crisis-warning {
-            background-color: #7f1d1d;
-            border-left: 4px solid #ef4444;
-            color: #fecaca;
+            background: linear-gradient(135deg, #7f1d1d, #991b1b);
+            border: 1px solid #ef4444;
+            border-radius: 16px;
+            padding: 1.5rem;
+            animation: pulseWarning 2s infinite;
+        }
+        
+        @keyframes pulseWarning {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            50% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+        }
+        
+        .submit-btn {
+            background: linear-gradient(135deg, #10b981, #059669);
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            color: white;
+            font-weight: 600;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(16, 185, 129, 0.4);
+        }
+        
+        .progress-bar {
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #8b5cf6, #3b82f6);
+            border-radius: 2px;
+            transition: width 0.5s ease;
         }
     </style>
 </head>
-<body class="min-h-screen">
-    <div class="container mx-auto px-4 py-8 max-w-4xl">
+<body class="min-h-screen py-8">
+    <div class="container mx-auto px-4 max-w-4xl">
         <!-- Header -->
         <div class="text-center mb-8">
-            <h1 class="text-3xl font-bold mb-2">Mental Health Assessment</h1>
-            <p class="text-gray-400">Help us understand your needs so we can provide the best support</p>
+            <h1 class="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-purple-400 via-pink-500 to-blue-500 bg-clip-text text-transparent">
+                🧠 AI-Powered Wellbeing Assessment
+            </h1>
+            <p class="text-lg text-purple-300 mb-4">
+                Help us understand your needs so we can provide personalized support
+            </p>
+            <div class="progress-bar max-w-md mx-auto mb-4">
+                <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+            </div>
+            <p class="text-sm text-purple-400">
+                ⚡ Instant therapist matching • 🤖 AI-powered analysis • 🔒 Completely confidential
+            </p>
         </div>
 
         <!-- Assessment Form -->
-        <div class="assessment-container p-8 rounded-lg shadow-lg">
+        <div class="glass-card p-8">
             <form id="intake-form" action="{{ url_for('dashboard.student_intake') }}" method="POST">
+                
                 <!-- Primary Concern -->
-                <div class="mb-6">
-                    <label class="block text-lg font-semibold mb-3">What's your primary concern today?</label>
-                    <select name="primary_concern" class="form-input w-full p-3 rounded-lg" required>
+                <div class="form-section mb-8">
+                    <h2 class="text-2xl font-bold mb-6 flex items-center">
+                        <span class="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-sm mr-3">1</span>
+                        What's your primary concern today?
+                    </h2>
+                    <select name="primary_concern" class="form-select w-full" required>
                         <option value="">Select your main concern...</option>
-                        <option value="anxiety">Anxiety & Worry</option>
-                        <option value="depression">Depression & Low Mood</option>
-                        <option value="academic_stress">Academic Stress</option>
-                        <option value="relationships">Relationship Issues</option>
-                        <option value="sleep">Sleep Problems</option>
-                        <option value="eating">Eating Concerns</option>
-                        <option value="substance">Substance Use</option>
-                        <option value="trauma">Trauma/PTSD</option>
-                        <option value="grief">Grief & Loss</option>
-                        <option value="identity">Identity & Self-esteem</option>
-                        <option value="other">Other</option>
+                        <option value="anxiety">😰 Anxiety & Worry</option>
+                        <option value="depression">😔 Depression & Low Mood</option>
+                        <option value="academic_stress">📚 Academic Stress & Pressure</option>
+                        <option value="relationships">💔 Relationship Issues</option>
+                        <option value="sleep">😴 Sleep Problems</option>
+                        <option value="eating">🍽️ Eating Concerns</option>
+                        <option value="substance">🍷 Substance Use</option>
+                        <option value="trauma">💥 Trauma/PTSD</option>
+                        <option value="grief">😢 Grief & Loss</option>
+                        <option value="identity">🪞 Identity & Self-esteem</option>
+                        <option value="other">🤔 Other</option>
                     </select>
                 </div>
 
                 <!-- Detailed Description -->
-                <div class="mb-6">
-                    <label class="block text-lg font-semibold mb-3">Tell us more about what you're experiencing</label>
-                    <textarea name="description" rows="4" class="form-input w-full p-3 rounded-lg" 
-                              placeholder="Describe your feelings, symptoms, or situations that brought you here..." required></textarea>
+                <div class="form-section mb-8">
+                    <h2 class="text-2xl font-bold mb-6 flex items-center">
+                        <span class="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-sm mr-3">2</span>
+                        Tell us more about what you're experiencing
+                    </h2>
+                    <textarea name="description" rows="4" class="form-textarea w-full" 
+                              placeholder="Describe your feelings, symptoms, or situations that brought you here..."
+                              required></textarea>
                 </div>
 
                 <!-- Severity Rating -->
-                <div class="mb-6">
-                    <label class="block text-lg font-semibold mb-3">How would you rate the severity of your concerns? (1-10)</label>
-                    <div class="flex space-x-2" id="severity-scale">
-                        <script>
-                            for(let i = 1; i <= 10; i++) {
-                                document.write(`
-                                    <button type="button" class="severity-btn w-12 h-12 rounded-full" data-value="${i}" onclick="setSeverity(${i})">
-                                        ${i}
-                                    </button>
-                                `);
-                            }
-                        </script>
+                <div class="form-section mb-8">
+                    <h2 class="text-2xl font-bold mb-6 flex items-center">
+                        <span class="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-sm mr-3">3</span>
+                        How would you rate the severity of your concerns?
+                    </h2>
+                    
+                    <div class="flex justify-center space-x-3 mb-4" id="severity-scale">
+                        <button type="button" class="severity-btn" data-value="1" onclick="setSeverity(1)">1</button>
+                        <button type="button" class="severity-btn" data-value="2" onclick="setSeverity(2)">2</button>
+                        <button type="button" class="severity-btn" data-value="3" onclick="setSeverity(3)">3</button>
+                        <button type="button" class="severity-btn" data-value="4" onclick="setSeverity(4)">4</button>
+                        <button type="button" class="severity-btn" data-value="5" onclick="setSeverity(5)">5</button>
+                        <button type="button" class="severity-btn" data-value="6" onclick="setSeverity(6)">6</button>
+                        <button type="button" class="severity-btn" data-value="7" onclick="setSeverity(7)">7</button>
+                        <button type="button" class="severity-btn" data-value="8" onclick="setSeverity(8)">8</button>
+                        <button type="button" class="severity-btn" data-value="9" onclick="setSeverity(9)">9</button>
+                        <button type="button" class="severity-btn" data-value="10" onclick="setSeverity(10)">10</button>
                     </div>
                     <input type="hidden" name="severity" id="severity-input" required>
-                    <div class="mt-2 text-sm text-gray-400">
+                    
+                    <div class="flex justify-between text-sm text-purple-300 mb-4">
                         <span>1 = Mild discomfort</span>
-                        <span class="float-right">10 = Severe, urgent need for help</span>
+                        <span>10 = Severe, urgent need for help</span>
                     </div>
                 </div>
 
                 <!-- Duration -->
-                <div class="mb-6">
-                    <label class="block text-lg font-semibold mb-3">How long have you been experiencing these concerns?</label>
-                    <select name="duration" class="form-input w-full p-3 rounded-lg" required>
+                <div class="form-section mb-8">
+                    <h2 class="text-2xl font-bold mb-6 flex items-center">
+                        <span class="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-sm mr-3">4</span>
+                        How long have you been experiencing these concerns?
+                    </h2>
+                    <select name="duration" class="form-select w-full" required>
                         <option value="">Select duration...</option>
-                        <option value="less_than_week">Less than a week</option>
-                        <option value="1-2_weeks">1-2 weeks</option>
-                        <option value="1_month">About a month</option>
-                        <option value="2-3_months">2-3 months</option>
-                        <option value="6_months">About 6 months</option>
-                        <option value="1_year">About a year</option>
-                        <option value="more_than_year">More than a year</option>
+                        <option value="less_than_week">📅 Less than a week</option>
+                        <option value="1-2_weeks">📅 1-2 weeks</option>
+                        <option value="1_month">📅 About a month</option>
+                        <option value="2-3_months">📅 2-3 months</option>
+                        <option value="6_months">📅 About 6 months</option>
+                        <option value="1_year">📅 About a year</option>
+                        <option value="more_than_year">📅 More than a year</option>
                     </select>
                 </div>
 
                 <!-- Previous Therapy -->
-                <div class="mb-6">
-                    <label class="block text-lg font-semibold mb-3">Have you received mental health treatment before?</label>
-                    <div class="space-y-2">
-                        <label class="flex items-center">
-                            <input type="radio" name="previous_therapy" value="never" class="mr-2">
-                            <span>Never received treatment</span>
+                <div class="form-section mb-8">
+                    <h2 class="text-2xl font-bold mb-6 flex items-center">
+                        <span class="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-sm mr-3">5</span>
+                        Have you received mental health treatment before?
+                    </h2>
+                    <div class="space-y-3">
+                        <label class="radio-option cursor-pointer">
+                            <input type="radio" name="previous_therapy" value="never" class="mr-3" onchange="selectRadio(this)">
+                            <span>🆕 Never received treatment</span>
                         </label>
-                        <label class="flex items-center">
-                            <input type="radio" name="previous_therapy" value="counseling" class="mr-2">
-                            <span>Counseling/Therapy only</span>
+                        <label class="radio-option cursor-pointer">
+                            <input type="radio" name="previous_therapy" value="counseling" class="mr-3" onchange="selectRadio(this)">
+                            <span>💬 Counseling/Therapy only</span>
                         </label>
-                        <label class="flex items-center">
-                            <input type="radio" name="previous_therapy" value="medication" class="mr-2">
-                            <span>Medication only</span>
+                        <label class="radio-option cursor-pointer">
+                            <input type="radio" name="previous_therapy" value="medication" class="mr-3" onchange="selectRadio(this)">
+                            <span>💊 Medication only</span>
                         </label>
-                        <label class="flex items-center">
-                            <input type="radio" name="previous_therapy" value="both" class="mr-2">
-                            <span>Both counseling and medication</span>
+                        <label class="radio-option cursor-pointer">
+                            <input type="radio" name="previous_therapy" value="both" class="mr-3" onchange="selectRadio(this)">
+                            <span>🔄 Both counseling and medication</span>
                         </label>
                     </div>
                 </div>
 
                 <!-- Therapist Preferences -->
-                <div class="mb-6">
-                    <label class="block text-lg font-semibold mb-3">Do you have any preferences for your therapist?</label>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="form-section mb-8">
+                    <h2 class="text-2xl font-bold mb-6 flex items-center">
+                        <span class="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-sm mr-3">6</span>
+                        Do you have any preferences for your therapist?
+                    </h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <label class="block text-sm font-medium mb-2">Gender Preference</label>
-                            <select name="therapist_gender" class="form-input w-full p-3 rounded-lg">
+                            <label class="block text-sm font-medium mb-2">👤 Gender Preference</label>
+                            <select name="therapist_gender" class="form-select w-full">
                                 <option value="no_preference">No preference</option>
                                 <option value="female">Female</option>
                                 <option value="male">Male</option>
@@ -156,81 +286,108 @@
                             </select>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium mb-2">Appointment Preference</label>
-                            <select name="appointment_type" class="form-input w-full p-3 rounded-lg">
-                                <option value="in_person">In-person</option>
-                                <option value="virtual">Virtual/Online</option>
-                                <option value="either">Either is fine</option>
+                            <label class="block text-sm font-medium mb-2">📱 Session Type Preference</label>
+                            <select name="appointment_type" class="form-select w-full">
+                                <option value="virtual">💻 Virtual/Online</option>
+                                <option value="in_person">🏢 In-person</option>
+                                <option value="either">🤝 Either is fine</option>
                             </select>
                         </div>
                     </div>
                 </div>
 
-                <!-- Crisis Assessment -->
-                <div class="mb-6">
-                    <label class="block text-lg font-semibold mb-3">Safety Assessment</label>
+                <!-- Safety Assessment -->
+                <div class="form-section mb-8">
+                    <h2 class="text-2xl font-bold mb-6 flex items-center">
+                        <span class="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center text-sm mr-3">7</span>
+                        Safety Assessment (Confidential)
+                    </h2>
+                    <p class="text-purple-300 mb-4">
+                        🔒 This information helps us provide appropriate support and is completely confidential
+                    </p>
                     <div class="space-y-3">
-                        <label class="flex items-start">
-                            <input type="checkbox" name="crisis_indicators" value="suicidal_thoughts" class="mr-3 mt-1">
-                            <span>I have thoughts of hurting myself or ending my life</span>
+                        <label class="checkbox-option cursor-pointer">
+                            <input type="checkbox" name="crisis_indicators" value="suicidal_thoughts" class="mr-3" onchange="selectCheckbox(this)">
+                            <span>⚠️ I have thoughts of hurting myself or ending my life</span>
                         </label>
-                        <label class="flex items-start">
-                            <input type="checkbox" name="crisis_indicators" value="harm_others" class="mr-3 mt-1">
-                            <span>I have thoughts of hurting someone else</span>
+                        <label class="checkbox-option cursor-pointer">
+                            <input type="checkbox" name="crisis_indicators" value="harm_others" class="mr-3" onchange="selectCheckbox(this)">
+                            <span>⚠️ I have thoughts of hurting someone else</span>
                         </label>
-                        <label class="flex items-start">
-                            <input type="checkbox" name="crisis_indicators" value="substance_crisis" class="mr-3 mt-1">
-                            <span>I'm struggling with substance use that feels out of control</span>
+                        <label class="checkbox-option cursor-pointer">
+                            <input type="checkbox" name="crisis_indicators" value="substance_crisis" class="mr-3" onchange="selectCheckbox(this)">
+                            <span>⚠️ I'm struggling with substance use that feels out of control</span>
                         </label>
-                        <label class="flex items-start">
-                            <input type="checkbox" name="crisis_indicators" value="eating_crisis" class="mr-3 mt-1">
-                            <span>I'm having severe problems with eating that are affecting my health</span>
+                        <label class="checkbox-option cursor-pointer">
+                            <input type="checkbox" name="crisis_indicators" value="eating_crisis" class="mr-3" onchange="selectCheckbox(this)">
+                            <span>⚠️ I'm having severe problems with eating that are affecting my health</span>
                         </label>
                     </div>
                 </div>
 
-                <!-- Crisis Warning (Hidden by default) -->
-                <div id="crisis-warning" class="crisis-warning p-4 rounded-lg mb-6" style="display: none;">
+                <!-- Crisis Warning -->
+                <div id="crisis-warning" class="crisis-warning mb-8" style="display: none;">
                     <div class="flex items-start">
-                        <i class="fas fa-exclamation-triangle text-red-400 mr-3 mt-1"></i>
+                        <i class="fas fa-shield-alt text-red-300 mr-4 mt-1 text-xl"></i>
                         <div>
-                            <h4 class="font-bold mb-2">Immediate Support Available</h4>
-                            <p class="mb-2">If you're having thoughts of suicide or self-harm, please reach out for immediate help:</p>
-                            <ul class="list-disc list-inside space-y-1 text-sm">
-                                <li>National Suicide Prevention Lifeline: 988</li>
-                                <li>Crisis Text Line: Text HOME to 741741</li>
-                                <li>Emergency Services: 911</li>
-                                <li>Campus Counseling Center: [Your Campus Number]</li>
-                            </ul>
+                            <h4 class="font-bold text-red-200 mb-3 text-lg">🆘 Immediate Support Available</h4>
+                            <p class="mb-4 text-red-100">If you're having thoughts of suicide or self-harm, please reach out for immediate help:</p>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                <div>
+                                    <p class="font-semibold text-red-200 mb-2">24/7 Crisis Support:</p>
+                                    <ul class="space-y-1 text-red-100">
+                                        <li>📞 National Suicide Prevention: <strong>988</strong></li>
+                                        <li>💬 Crisis Text Line: <strong>Text HOME to 741741</strong></li>
+                                        <li>🚨 Emergency Services: <strong>911</strong></li>
+                                    </ul>
+                                </div>
+                                <div>
+                                    <p class="font-semibold text-red-200 mb-2">Campus Resources:</p>
+                                    <ul class="space-y-1 text-red-100">
+                                        <li>🏫 Campus counseling: Available 24/7</li>
+                                        <li>🏥 Student health services</li>
+                                        <li>👥 Peer support groups</li>
+                                    </ul>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Emergency Contact -->
-                <div class="mb-8">
-                    <label class="block text-lg font-semibold mb-3">Emergency Contact Information</label>
+                <div class="form-section mb-8">
+                    <h2 class="text-2xl font-bold mb-6 flex items-center">
+                        <span class="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-sm mr-3">8</span>
+                        Emergency Contact Information
+                    </h2>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <input type="text" name="emergency_contact_name" placeholder="Contact Name" 
-                                   class="form-input w-full p-3 rounded-lg" required>
+                            <label class="block text-sm font-medium mb-2">👤 Contact Name</label>
+                            <input type="text" name="emergency_contact_name" placeholder="Full Name" 
+                                   class="form-input w-full" required>
                         </div>
                         <div>
-                            <input type="tel" name="emergency_contact_phone" placeholder="Phone Number" 
-                                   class="form-input w-full p-3 rounded-lg" required>
+                            <label class="block text-sm font-medium mb-2">📱 Phone Number</label>
+                            <input type="tel" name="emergency_contact_phone" placeholder="+254..." 
+                                   class="form-input w-full" required>
                         </div>
-                        <div>
-                            <input type="text" name="emergency_contact_relationship" placeholder="Relationship (e.g., Parent, Sibling)" 
-                                   class="form-input w-full p-3 rounded-lg" required>
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium mb-2">🤝 Relationship</label>
+                            <input type="text" name="emergency_contact_relationship" placeholder="e.g., Parent, Sibling, Friend" 
+                                   class="form-input w-full" required>
                         </div>
                     </div>
                 </div>
 
                 <!-- Submit Button -->
                 <div class="text-center">
-                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg text-lg font-semibold transition duration-300">
-                        <i class="fas fa-paper-plane mr-2"></i>
-                        Complete Assessment
+                    <button type="submit" class="submit-btn" id="submit-btn">
+                        <i class="fas fa-brain mr-2"></i>
+                        Complete Assessment & Get Matched
                     </button>
+                    <p class="text-sm text-purple-300 mt-4">
+                        ⚡ Instant AI matching • 📅 Automatic scheduling • 🔒 Complete privacy
+                    </p>
                 </div>
             </form>
         </div>
@@ -246,49 +403,94 @@
                 btn.classList.remove('active');
             });
             document.querySelector(`[data-value="${value}"]`).classList.add('active');
+            
+            updateProgress();
+        }
+
+        // Radio button selection
+        function selectRadio(element) {
+            const parent = element.closest('.form-section');
+            parent.querySelectorAll('.radio-option').forEach(opt => opt.classList.remove('selected'));
+            element.closest('.radio-option').classList.add('selected');
+            updateProgress();
+        }
+
+        // Checkbox selection
+        function selectCheckbox(element) {
+            const parent = element.closest('.checkbox-option');
+            if (element.checked) {
+                parent.classList.add('selected');
+            } else {
+                parent.classList.remove('selected');
+            }
+            checkCrisisIndicators();
+            updateProgress();
         }
 
         // Crisis Detection
-        document.querySelectorAll('input[name="crisis_indicators"]').forEach(checkbox => {
-            checkbox.addEventListener('change', function() {
-                const warningDiv = document.getElementById('crisis-warning');
-                const checkedBoxes = document.querySelectorAll('input[name="crisis_indicators"]:checked');
-                
-                if (checkedBoxes.length > 0) {
-                    warningDiv.style.display = 'block';
-                } else {
-                    warningDiv.style.display = 'none';
-                }
-            });
-        });
-
-        // Form Submission with Crisis Handling
-        document.getElementById('intake-form').addEventListener('submit', function(e) {
-            const checkedCrisis = document.querySelectorAll('input[name="crisis_indicators"]:checked');
-            const severity = document.getElementById('severity-input').value;
+        function checkCrisisIndicators() {
+            const warningDiv = document.getElementById('crisis-warning');
+            const checkedBoxes = document.querySelectorAll('input[name="crisis_indicators"]:checked');
             
-            // High severity or crisis indicators
+            if (checkedBoxes.length > 0) {
+                warningDiv.style.display = 'block';
+            } else {
+                warningDiv.style.display = 'none';
+            }
+        }
+
+        // Update progress bar
+        function updateProgress() {
+            const totalFields = 8;
+            let completedFields = 0;
+            
+            // Check each section
+            if (document.querySelector('select[name="primary_concern"]').value) completedFields++;
+            if (document.querySelector('textarea[name="description"]').value.trim()) completedFields++;
+            if (document.getElementById('severity-input').value) completedFields++;
+            if (document.querySelector('select[name="duration"]').value) completedFields++;
+            if (document.querySelector('input[name="previous_therapy"]:checked')) completedFields++;
+            if (document.querySelector('input[name="emergency_contact_name"]').value.trim()) completedFields++;
+            
+            const progress = (completedFields / totalFields) * 100;
+            document.getElementById('progress-fill').style.width = progress + '%';
+        }
+
+        // Form Submission
+        document.getElementById('intake-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Show loading state
+            const submitBtn = document.getElementById('submit-btn');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing with AI...';
+            submitBtn.disabled = true;
+            
+            // Check for crisis indicators
+            const checkedCrisis = document.querySelectorAll('input[name="crisis_indicators"]:checked');
+            const severity = parseInt(document.getElementById('severity-input').value);
+            
             if (severity >= 8 || checkedCrisis.length > 0) {
-                if (!confirm('Based on your responses, we recommend immediate support. Would you like to proceed with priority assignment to a counselor?')) {
-                    e.preventDefault();
+                if (!confirm('🚨 Based on your responses, we recommend immediate support. Would you like to proceed with priority assignment to a counselor?')) {
+                    submitBtn.innerHTML = originalText;
+                    submitBtn.disabled = false;
                     return;
                 }
             }
+            
+            // Submit form
+            setTimeout(() => {
+                this.submit();
+            }, 2000);
         });
 
-        // Keyword Detection in Description
-        const crisisKeywords = ['suicide', 'kill myself', 'end my life', 'want to die', 'hopeless', 'worthless', 'hurt myself', 'self-harm', 'cutting'];
-        
-        document.querySelector('textarea[name="description"]').addEventListener('blur', function() {
-            const text = this.value.toLowerCase();
-            const warningDiv = document.getElementById('crisis-warning');
-            
-            for (let keyword of crisisKeywords) {
-                if (text.includes(keyword)) {
-                    warningDiv.style.display = 'block';
-                    break;
-                }
-            }
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add event listeners
+            document.querySelectorAll('input, select, textarea').forEach(element => {
+                element.addEventListener('change', updateProgress);
+                element.addEventListener('input', updateProgress);
+            });
         });
     </script>
 </body>

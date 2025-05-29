@@ -3,300 +3,360 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register | Wellbeing Assistant</title>
+    <title>Register | AI-Powered Wellbeing Assistant</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css"> 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Poppins', sans-serif;
+            font-family: 'Inter', sans-serif;
         }
 
         body {
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 50%, #2d1b69 100%);
             min-height: 100vh;
-            background: #111827;
-            padding: 20px;
-        }
-
-        .login-box {
             display: flex;
+            align-items: center;
             justify-content: center;
-            flex-direction: column;
-            width: 100%;
-            max-width: 600px;
-            padding: 30px;
-            background: #1f2937;
-            border-radius: 10px;
-            box-shadow: 0px 5px 15px rgba(0,0,0,0.2);
-            color: #e0e0e0;
+            padding: 2rem 1rem;
         }
 
-        .login-header {
+        .register-container {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 800px;
+            padding: 3rem 2.5rem;
+            color: #e0e7ff;
+        }
+
+        .register-header {
             text-align: center;
-            margin: 20px 0 30px 0;
+            margin-bottom: 2.5rem;
         }
 
-        .login-header header {
-            color: #e0e0e0;
-            font-size: 28px;
-            font-weight: 600;
+        .register-header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #8b5cf6, #3b82f6, #10b981);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
-        .input-box .input-field, .input-box textarea {
+        .input-field, .select-field, .textarea-field {
             width: 100%;
-            height: 50px;
-            font-size: 16px;
-            padding: 0 20px;
-            margin-bottom: 15px;
-            border-radius: 25px;
-            border: 1px solid #4b5563;
-            background-color: #374151;
-            color: #e0e0e0;
+            height: 52px;
+            font-size: 1rem;
+            padding: 0 1.25rem;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.08);
+            color: #e0e7ff;
             outline: none;
-            transition: .3s;
-            resize: none;
+            transition: all 0.3s ease;
         }
 
-        .input-box textarea {
-            height: 80px;
-            padding: 15px 20px;
-            border-radius: 15px;
+        .textarea-field {
+            height: 100px;
+            padding: 1rem 1.25rem;
+            resize: vertical;
         }
 
-        .input-field:focus, textarea:focus {
-            border-color: #60a5fa;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+        .input-field:focus, .select-field:focus, .textarea-field:focus {
+            border-color: #8b5cf6;
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.25);
+            background: rgba(255, 255, 255, 0.12);
         }
 
-        .input-box select {
+        .input-field::placeholder, .textarea-field::placeholder {
+            color: #a78bfa;
+            opacity: 0.7;
+        }
+
+        .select-field {
             appearance: none;
-            background: #374151;
-            cursor: pointer;
-            background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236B7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+            background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%238b5cf6' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
             background-position: right 1rem center;
             background-repeat: no-repeat;
             background-size: 1.5em 1.5em;
-            padding-right: 2.5rem;
-        }
-
-        ::placeholder {
-            font-weight: 500;
-            color: #9ca3af;
-        }
-
-        .error-message {
-            color: #ef4444;
-            font-size: 14px;
-            display: none;
-            margin-bottom: 10px;
-        }
-
-        .submit-btn {
-            width: 100%;
-            height: 50px;
-            background: #4b5563;
-            border: none;
-            border-radius: 25px;
             cursor: pointer;
-            transition: .3s;
-            color: white;
-            font-size: 18px;
-            font-weight: 600;
         }
 
-        .submit-btn:hover {
-            background: #6b7280;
-            transform: translateY(-2px);
-        }
-
-        .sign-up-link {
-            text-align: center;
-            font-size: 15px;
-            margin-top: 20px;
-            color: #9ca3af;
-        }
-
-        .sign-up-link a {
-            color: #60a5fa;
-            font-weight: 600;
-            text-decoration: none;
-        }
-        
-        .sign-up-link a:hover {
-            text-decoration: underline;
-        }
-        
-        .input-row {
-            display: flex;
-            gap: 10px;
-        }
-        
-        .input-row .input-box {
-            flex: 1;
-        }
-
-        .mock-data-btn {
-            background: #059669;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 15px;
-            font-size: 12px;
-            cursor: pointer;
-            margin-top: 5px;
-            transition: .3s;
-        }
-
-        .mock-data-btn:hover {
-            background: #047857;
-        }
-
-        .dev-notice {
-            background: #065f46;
-            border: 1px solid #059669;
-            padding: 10px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            font-size: 12px;
-            text-align: center;
-        }
-
-        .hidden {
+        .role-section {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
             display: none;
         }
 
-        .checkbox-group {
+        .role-section.active {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .checkbox-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 10px;
-            margin: 10px 0;
-            padding: 15px;
-            background: #374151;
-            border-radius: 15px;
-            border: 1px solid #4b5563;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .checkbox-item {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .checkbox-item:hover {
+            background: rgba(139, 92, 246, 0.1);
+            transform: translateY(-1px);
         }
 
         .checkbox-item input[type="checkbox"] {
-            width: 16px;
-            height: 16px;
-            accent-color: #60a5fa;
-        }
-
-        .checkbox-item label {
-            font-size: 14px;
-            color: #e0e0e0;
-            cursor: pointer;
+            width: 18px;
+            height: 18px;
+            accent-color: #8b5cf6;
         }
 
         .availability-grid {
             display: grid;
-            gap: 15px;
-            padding: 15px;
-            background: #374151;
-            border-radius: 15px;
-            border: 1px solid #4b5563;
-            margin: 10px 0;
+            gap: 1rem;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .day-schedule {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 1rem;
+            padding: 0.75rem;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 8px;
         }
 
         .day-checkbox {
-            min-width: 100px;
+            min-width: 120px;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 0.5rem;
         }
 
         .time-inputs {
             display: flex;
-            gap: 10px;
+            gap: 0.75rem;
             flex: 1;
         }
 
         .time-inputs input {
-            height: 35px;
-            padding: 5px 10px;
+            height: 40px;
+            padding: 0.5rem;
             border-radius: 8px;
-            font-size: 14px;
+            font-size: 0.875rem;
+        }
+
+        .submit-btn {
+            width: 100%;
+            height: 56px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            border: none;
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: white;
+            font-size: 1.1rem;
+            font-weight: 600;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(16, 185, 129, 0.4);
+        }
+
+        .submit-btn:disabled {
+            background: rgba(255, 255, 255, 0.1);
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .dev-notice {
+            background: rgba(16, 185, 129, 0.2);
+            border: 1px solid rgba(16, 185, 129, 0.4);
+            padding: 1rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            font-size: 0.875rem;
+            text-align: center;
+        }
+
+        .mock-btn {
+            background: rgba(139, 92, 246, 0.2);
+            border: 1px solid rgba(139, 92, 246, 0.4);
+            color: #c4b5fd;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-left: 0.5rem;
+        }
+
+        .mock-btn:hover {
+            background: rgba(139, 92, 246, 0.3);
+        }
+
+        .error-message {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            color: #fca5a5;
+            padding: 0.75rem;
+            margin-bottom: 1rem;
+            font-size: 0.875rem;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .register-container {
+                padding: 2rem 1.5rem;
+            }
+            
+            .checkbox-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .day-schedule {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 0.5rem;
+            }
+            
+            .time-inputs {
+                justify-content: space-between;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="login-box">
-        <div class="login-header">
-            <header>Register</header>
-            <p class="text-gray-400 text-center mt-2">Create your account</p>
+    <div class="register-container">
+        <div class="register-header">
+            <h1>🚀 Join Wellbeing Assistant</h1>
+            <p class="text-lg text-purple-300">Create your account and start your mental health journey</p>
         </div>
 
         <!-- Development Notice -->
         <div class="dev-notice">
-            <strong>Development Mode:</strong> Use mock data buttons for quick testing
+            <strong>🚧 Development Mode:</strong> Use mock data buttons for quick testing
         </div>
+
+        <div class="error-message" id="error-message"></div>
 
         <form id="registerForm" action="{{ url_for('auth.register') }}" method="POST" onsubmit="return validateForm()">
             <!-- Role Selection -->
-            <div class="input-box">
-                <select name="role" id="role" class="input-field" required onchange="toggleFields()">
-                    <option value="" disabled selected>Select Role</option>
-                    <option value="student">Student</option>
-                    <option value="therapist">Therapist</option>
+            <div class="mb-6">
+                <label class="block text-lg font-semibold mb-3">👤 Select Your Role</label>
+                <select name="role" id="role" class="select-field" required onchange="toggleFields()">
+                    <option value="" disabled selected>Choose your role</option>
+                    <option value="student">🎓 Student - Get mental health support</option>
+                    <option value="therapist">👨‍⚕️ Therapist - Provide professional care</option>
                 </select>
-                <button type="button" class="mock-data-btn" onclick="fillMockData()">Fill Mock Data</button>
+                <button type="button" class="mock-btn" onclick="fillMockData()">
+                    <i class="fas fa-magic mr-1"></i> Fill Mock Data
+                </button>
             </div>
 
-            <div class="input-row">
-                <div class="input-box">
-                    <input type="text" id="first_name" name="first_name" class="input-field" placeholder="First Name" autocomplete="off" required>
-                    <p id="first-name-error" class="error-message">Enter a valid first name.</p>
+            <!-- Basic Information -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div>
+                    <label class="block text-sm font-medium mb-2">First Name</label>
+                    <input type="text" id="first_name" name="first_name" class="input-field" 
+                           placeholder="Enter your first name" required>
                 </div>
-                <div class="input-box">
-                    <input type="text" id="last_name" name="last_name" class="input-field" placeholder="Last Name" autocomplete="off" required>
-                    <p id="last-name-error" class="error-message">Enter a valid last name.</p>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Last Name</label>
+                    <input type="text" id="last_name" name="last_name" class="input-field" 
+                           placeholder="Enter your last name" required>
                 </div>
             </div>
 
-            <div class="input-box">
-                <input type="email" id="email" name="email" class="input-field" placeholder="Email" autocomplete="off" required>
-                <p id="email-error" class="error-message">Email must be at least 12 characters long.</p>
+            <div class="mb-6">
+                <label class="block text-sm font-medium mb-2">Email Address</label>
+                <input type="email" id="email" name="email" class="input-field" 
+                       placeholder="Enter your email address" required>
             </div>
 
             <!-- Student Fields -->
-            <div id="student-fields">
-                <div class="input-box">
-                    <input type="text" id="student_id" name="student_id" class="input-field" placeholder="Student ID" autocomplete="off">
-                    <p id="reg-error" class="error-message">Student ID must be numbers only.</p>
+            <div id="student-fields" class="role-section">
+                <h3 class="text-xl font-bold mb-4 text-green-400">
+                    <i class="fas fa-graduation-cap mr-2"></i>
+                    Student Information
+                </h3>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-2">Student ID</label>
+                    <input type="text" id="student_id" name="student_id" class="input-field" 
+                           placeholder="Enter your student ID number">
                 </div>
             </div>
 
             <!-- Therapist Fields -->
-            <div id="therapist-fields" class="hidden">
-                <div class="input-box">
-                    <input type="text" id="license_number" name="license_number" class="input-field" placeholder="License Number (e.g., LIC12345)" autocomplete="off">
-                    <p id="license-error" class="error-message">License number is required for therapists.</p>
+            <div id="therapist-fields" class="role-section">
+                <h3 class="text-xl font-bold mb-4 text-blue-400">
+                    <i class="fas fa-user-md mr-2"></i>
+                    Professional Information
+                </h3>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-2">License Number</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="license_number" name="license_number" class="input-field" 
+                               placeholder="e.g., KE-CL-123456">
+                        <button type="button" class="mock-btn" onclick="generateLicense()">
+                            <i class="fas fa-certificate mr-1"></i> Generate
+                        </button>
+                    </div>
                 </div>
 
-                <div class="input-row">
-                    <div class="input-box">
-                        <input type="text" id="phone" name="phone" class="input-field" placeholder="Phone (+254...)" autocomplete="off">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Phone Number</label>
+                        <input type="tel" id="phone" name="phone" class="input-field" 
+                               placeholder="+254712345678">
                     </div>
-                    <div class="input-box">
-                        <select name="gender" id="gender" class="input-field">
-                            <option value="" disabled selected>Gender</option>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Gender</label>
+                        <select name="gender" id="gender" class="select-field">
+                            <option value="" disabled selected>Select gender</option>
                             <option value="male">Male</option>
                             <option value="female">Female</option>
                             <option value="non-binary">Non-binary</option>
@@ -305,66 +365,74 @@
                     </div>
                 </div>
 
-                <div class="input-box">
-                    <textarea id="bio" name="bio" class="input-field" placeholder="Professional bio and approach to therapy..." rows="3"></textarea>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-2">Professional Bio</label>
+                    <textarea id="bio" name="bio" class="textarea-field" 
+                              placeholder="Describe your professional background, approach to therapy, and experience..."></textarea>
                 </div>
 
-                <div class="input-box">
-                    <label style="display: block; margin-bottom: 10px; font-weight: 500;">Specializations:</label>
-                    <div class="checkbox-group" id="specializations">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-3">Specializations (Select all that apply)</label>
+                    <div class="checkbox-grid">
                         <div class="checkbox-item">
                             <input type="checkbox" id="anxiety" name="specializations" value="anxiety">
-                            <label for="anxiety">Anxiety</label>
+                            <label for="anxiety">😰 Anxiety Disorders</label>
                         </div>
                         <div class="checkbox-item">
                             <input type="checkbox" id="depression" name="specializations" value="depression">
-                            <label for="depression">Depression</label>
+                            <label for="depression">😔 Depression</label>
                         </div>
                         <div class="checkbox-item">
                             <input type="checkbox" id="academic_stress" name="specializations" value="academic_stress">
-                            <label for="academic_stress">Academic Stress</label>
+                            <label for="academic_stress">📚 Academic Stress</label>
                         </div>
                         <div class="checkbox-item">
                             <input type="checkbox" id="trauma_therapy" name="specializations" value="trauma_therapy">
-                            <label for="trauma_therapy">Trauma Therapy</label>
+                            <label for="trauma_therapy">💥 Trauma Therapy</label>
                         </div>
                         <div class="checkbox-item">
                             <input type="checkbox" id="relationship_counseling" name="specializations" value="relationship_counseling">
-                            <label for="relationship_counseling">Relationship Counseling</label>
+                            <label for="relationship_counseling">💕 Relationship Counseling</label>
                         </div>
                         <div class="checkbox-item">
                             <input type="checkbox" id="eating_disorders" name="specializations" value="eating_disorders">
-                            <label for="eating_disorders">Eating Disorders</label>
+                            <label for="eating_disorders">🍽️ Eating Disorders</label>
                         </div>
                         <div class="checkbox-item">
                             <input type="checkbox" id="substance_abuse" name="specializations" value="substance_abuse">
-                            <label for="substance_abuse">Substance Abuse</label>
+                            <label for="substance_abuse">🍷 Substance Abuse</label>
                         </div>
                         <div class="checkbox-item">
                             <input type="checkbox" id="cognitive_behavioral" name="specializations" value="cognitive_behavioral">
-                            <label for="cognitive_behavioral">CBT</label>
+                            <label for="cognitive_behavioral">🧠 CBT</label>
                         </div>
                         <div class="checkbox-item">
                             <input type="checkbox" id="crisis_intervention" name="specializations" value="crisis_intervention">
-                            <label for="crisis_intervention">Crisis Intervention</label>
+                            <label for="crisis_intervention">🚨 Crisis Intervention</label>
                         </div>
                     </div>
                 </div>
 
-                <div class="input-row">
-                    <div class="input-box">
-                        <input type="number" id="max_students" name="max_students" class="input-field" placeholder="Max Students" min="5" max="50" value="20">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Maximum Students</label>
+                        <input type="number" id="max_students" name="max_students" class="input-field" 
+                               placeholder="20" min="5" max="50" value="20">
                     </div>
-                    <div class="input-box">
-                        <label style="display: flex; align-items: center; gap: 8px; padding: 0 20px; height: 50px; background: #374151; border-radius: 25px; border: 1px solid #4b5563;">
-                            <input type="checkbox" id="emergency_hours" name="emergency_hours" value="true" style="accent-color: #60a5fa;">
-                            <span>Emergency Hours Available</span>
+                    <div class="flex items-center">
+                        <label class="flex items-center gap-3 p-4 bg-red-900 bg-opacity-30 rounded-lg border border-red-500 cursor-pointer">
+                            <input type="checkbox" id="emergency_hours" name="emergency_hours" value="true" 
+                                   class="w-5 h-5 accent-color-red-500">
+                            <span class="text-red-200">
+                                <i class="fas fa-bolt mr-2"></i>
+                                Emergency Hours Available
+                            </span>
                         </label>
                     </div>
                 </div>
 
-                <div class="input-box">
-                    <label style="display: block; margin-bottom: 10px; font-weight: 500;">Weekly Availability:</label>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-3">Weekly Availability</label>
                     <div class="availability-grid">
                         <div class="day-schedule">
                             <div class="day-checkbox">
@@ -440,277 +508,257 @@
                 </div>
             </div>
 
-            <div class="input-box">
-                <input type="password" id="password" name="password" class="input-field" placeholder="Password" autocomplete="off" required>
-                <p id="password-error" class="error-message">Password must be at least 8 characters long and contain letters and numbers.</p>
+            <!-- Password Fields -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div>
+                    <label class="block text-sm font-medium mb-2">Password</label>
+                    <input type="password" id="password" name="password" class="input-field" 
+                           placeholder="Enter a strong password" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Confirm Password</label>
+                    <input type="password" id="confirm_password" name="confirm_password" class="input-field" 
+                           placeholder="Confirm your password" required>
+                </div>
             </div>
-            <div class="input-box">
-                <input type="password" id="confirm_password" name="confirm_password" class="input-field" placeholder="Confirm Password" autocomplete="off" required>
-                <p id="confirm-error" class="error-message">Passwords do not match!</p>
-            </div>
-            <div class="input-submit">
-                <button type="submit" class="submit-btn">Sign Up</button>
-            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" class="submit-btn" id="submit-btn">
+                <i class="fas fa-user-plus mr-2"></i>
+                Create Account
+            </button>
         </form>
 
-        <script>
-            // Mock data for development
-            const mockStudents = [
-                {
-                    first_name: "John",
-                    last_name: "Kariuki",
-                    email: "john.kariuki@student.university.ac.ke",
-                    student_id: "2021001234"
-                },
-                {
-                    first_name: "Mary",
-                    last_name: "Wanjiku",
-                    email: "mary.wanjiku@student.university.ac.ke", 
-                    student_id: "2021005678"
-                }
-            ];
+        <div class="text-center mt-6">
+            <p class="text-purple-300">
+                Already have an account? 
+                <a href="{{ url_for('auth.login') }}" class="text-purple-400 font-semibold hover:text-purple-300">
+                    Sign In
+                </a>
+            </p>
+        </div>
+    </div>
 
-            const mockTherapists = [
-                {
-                    first_name: "Grace",
-                    last_name: "Wanjiku",
-                    email: "grace.wanjiku@university.edu",
-                    license_number: "LIC12345",
-                    phone: "+254712345678",
-                    gender: "female",
-                    bio: "Specializing in anxiety and depression with 8+ years of experience. I use evidence-based CBT techniques to help students develop practical coping skills.",
-                    specializations: ["anxiety", "depression", "cognitive_behavioral"],
-                    max_students: 25,
-                    emergency_hours: true,
-                    availability: {
-                        monday: {start: "09:00", end: "17:00"},
-                        wednesday: {start: "10:00", end: "18:00"},
-                        friday: {start: "08:00", end: "16:00"}
-                    }
-                },
-                {
-                    first_name: "Michael",
-                    last_name: "Chen",
-                    email: "michael.chen@university.edu",
-                    license_number: "LIC67890",
-                    phone: "+254723456789",
-                    gender: "male",
-                    bio: "Academic stress specialist helping students navigate university pressures using mindfulness-based approaches.",
-                    specializations: ["academic_stress", "anxiety", "cognitive_behavioral"],
-                    max_students: 20,
-                    emergency_hours: false,
-                    availability: {
-                        tuesday: {start: "11:00", end: "19:00"},
-                        thursday: {start: "09:00", end: "17:00"},
-                        saturday: {start: "10:00", end: "14:00"}
-                    }
-                },
-                {
-                    first_name: "Amanda",
-                    last_name: "Torres",
-                    email: "amanda.torres@university.edu",
-                    license_number: "LIC55555",
-                    phone: "+254701234567",
-                    gender: "female",
-                    bio: "Crisis intervention specialist available for urgent mental health situations. Trained in suicide prevention and emergency support.",
-                    specializations: ["crisis_intervention", "anxiety", "depression"],
-                    max_students: 30,
-                    emergency_hours: true,
-                    availability: {
-                        monday: {start: "08:00", end: "20:00"},
-                        tuesday: {start: "08:00", end: "20:00"},
-                        wednesday: {start: "08:00", end: "20:00"},
-                        thursday: {start: "08:00", end: "20:00"},
-                        friday: {start: "08:00", end: "20:00"}
-                    }
-                }
-            ];
+    <script>
+        // Mock data for development
+        const mockStudents = [
+            {
+                first_name: "John",
+                last_name: "Kariuki",
+                email: "john.kariuki@student.university.ac.ke",
+                student_id: "2021001234"
+            },
+            {
+                first_name: "Mary",
+                last_name: "Wanjiku",
+                email: "mary.wanjiku@student.university.ac.ke", 
+                student_id: "2021005678"
+            }
+        ];
 
-            function toggleFields() {
-                const role = document.getElementById('role').value;
-                const studentFields = document.getElementById('student-fields');
-                const therapistFields = document.getElementById('therapist-fields');
-                
-                if (role === 'student') {
-                    studentFields.classList.remove('hidden');
-                    therapistFields.classList.add('hidden');
-                    document.getElementById('student_id').required = true;
-                    document.getElementById('license_number').required = false;
-                } else if (role === 'therapist') {
-                    studentFields.classList.add('hidden');
-                    therapistFields.classList.remove('hidden');
-                    document.getElementById('student_id').required = false;
-                    document.getElementById('license_number').required = true;
+        const mockTherapists = [
+            {
+                first_name: "Grace",
+                last_name: "Wanjiku",
+                email: "grace.wanjiku@university.edu",
+                license_number: "KE-CL-123456",
+                phone: "+254712345678",
+                gender: "female",
+                bio: "Specializing in anxiety and depression with 8+ years of experience. I use evidence-based CBT techniques to help students develop practical coping skills.",
+                specializations: ["anxiety", "depression", "cognitive_behavioral"],
+                max_students: 25,
+                emergency_hours: true,
+                availability: {
+                    monday: {start: "09:00", end: "17:00"},
+                    wednesday: {start: "10:00", end: "18:00"},
+                    friday: {start: "08:00", end: "16:00"}
                 }
             }
+        ];
 
-            function fillMockData() {
-                const role = document.getElementById('role').value;
-                if (!role) {
-                    alert('Please select a role first');
-                    return;
-                }
+        function toggleFields() {
+            const role = document.getElementById('role').value;
+            const studentFields = document.getElementById('student-fields');
+            const therapistFields = document.getElementById('therapist-fields');
+            
+            // Hide all sections first
+            studentFields.classList.remove('active');
+            therapistFields.classList.remove('active');
+            
+            if (role === 'student') {
+                studentFields.classList.add('active');
+                document.getElementById('student_id').required = true;
+                document.getElementById('license_number').required = false;
+            } else if (role === 'therapist') {
+                therapistFields.classList.add('active');
+                document.getElementById('student_id').required = false;
+                document.getElementById('license_number').required = true;
+            }
+        }
 
-                let mockData;
-                if (role === 'student') {
-                    mockData = mockStudents[Math.floor(Math.random() * mockStudents.length)];
-                } else if (role === 'therapist') {
-                    mockData = mockTherapists[Math.floor(Math.random() * mockTherapists.length)];
-                }
+        function generateLicense() {
+            fetch('/api/generate-license/kenya_clinical')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        document.getElementById('license_number').value = data.license_number;
+                        showMessage(`Generated license: ${data.license_number}`, 'success');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error generating license:', error);
+                });
+        }
 
-                // Fill common fields
-                document.getElementById('first_name').value = mockData.first_name;
-                document.getElementById('last_name').value = mockData.last_name;
-                document.getElementById('email').value = mockData.email;
-                document.getElementById('password').value = 'Password123';
-                document.getElementById('confirm_password').value = 'Password123';
-
-                // Fill role-specific fields
-                if (role === 'student') {
-                    document.getElementById('student_id').value = mockData.student_id;
-                } else if (role === 'therapist') {
-                    document.getElementById('license_number').value = mockData.license_number;
-                    document.getElementById('phone').value = mockData.phone;
-                    document.getElementById('gender').value = mockData.gender;
-                    document.getElementById('bio').value = mockData.bio;
-                    document.getElementById('max_students').value = mockData.max_students;
-                    document.getElementById('emergency_hours').checked = mockData.emergency_hours;
-
-                    // Fill specializations
-                    document.querySelectorAll('input[name="specializations"]').forEach(checkbox => {
-                        checkbox.checked = mockData.specializations.includes(checkbox.value);
-                    });
-
-                    // Fill availability
-                    Object.keys(mockData.availability).forEach(day => {
-                        const dayCheckbox = document.getElementById(day);
-                        const startTime = document.querySelector(`input[name="${day}_start"]`);
-                        const endTime = document.querySelector(`input[name="${day}_end"]`);
-                        
-                        if (dayCheckbox && startTime && endTime) {
-                            dayCheckbox.checked = true;
-                            startTime.disabled = false;
-                            endTime.disabled = false;
-                            startTime.value = mockData.availability[day].start;
-                            endTime.value = mockData.availability[day].end;
-                        }
-                    });
-                }
+        function fillMockData() {
+            const role = document.getElementById('role').value;
+            if (!role) {
+                alert('Please select a role first');
+                return;
             }
 
-            // Enable/disable time inputs based on day selection
-            document.querySelectorAll('input[name="available_days"]').forEach(checkbox => {
-                checkbox.addEventListener('change', function() {
-                    const day = this.value;
+            let mockData;
+            if (role === 'student') {
+                mockData = mockStudents[Math.floor(Math.random() * mockStudents.length)];
+            } else if (role === 'therapist') {
+                mockData = mockTherapists[0];
+            }
+
+            // Fill common fields
+            document.getElementById('first_name').value = mockData.first_name;
+            document.getElementById('last_name').value = mockData.last_name;
+            document.getElementById('email').value = mockData.email;
+            document.getElementById('password').value = 'Password123';
+            document.getElementById('confirm_password').value = 'Password123';
+
+            // Fill role-specific fields
+            if (role === 'student') {
+                document.getElementById('student_id').value = mockData.student_id;
+            } else if (role === 'therapist') {
+                document.getElementById('license_number').value = mockData.license_number;
+                document.getElementById('phone').value = mockData.phone;
+                document.getElementById('gender').value = mockData.gender;
+                document.getElementById('bio').value = mockData.bio;
+                document.getElementById('max_students').value = mockData.max_students;
+                document.getElementById('emergency_hours').checked = mockData.emergency_hours;
+
+                // Fill specializations
+                mockData.specializations.forEach(spec => {
+                    const checkbox = document.getElementById(spec);
+                    if (checkbox) checkbox.checked = true;
+                });
+
+                // Fill availability
+                Object.keys(mockData.availability).forEach(day => {
+                    const dayCheckbox = document.getElementById(day);
                     const startTime = document.querySelector(`input[name="${day}_start"]`);
                     const endTime = document.querySelector(`input[name="${day}_end"]`);
                     
-                    if (startTime && endTime) {
-                        startTime.disabled = !this.checked;
-                        endTime.disabled = !this.checked;
-                        
-                        if (!this.checked) {
-                            startTime.value = '';
-                            endTime.value = '';
-                        }
+                    if (dayCheckbox && startTime && endTime) {
+                        dayCheckbox.checked = true;
+                        startTime.disabled = false;
+                        endTime.disabled = false;
+                        startTime.value = mockData.availability[day].start;
+                        endTime.value = mockData.availability[day].end;
                     }
                 });
-            });
-
-            function validateForm() {
-                const role = document.getElementById("role").value;
-                var firstName = document.getElementById("first_name").value.trim();
-                var lastName = document.getElementById("last_name").value.trim();
-                var email = document.getElementById("email").value;
-                var password = document.getElementById("password").value;
-                var confirmPassword = document.getElementById("confirm_password").value;
-
-                var firstNameError = document.getElementById("first-name-error");
-                var lastNameError = document.getElementById("last-name-error");
-                var emailError = document.getElementById("email-error");
-                var passwordError = document.getElementById("password-error");
-                var confirmError = document.getElementById("confirm-error");
-
-                var isValid = true;
-
-                // First name validation
-                if (!/^[A-Za-z]+$/.test(firstName)) {
-                    firstNameError.style.display = "block";
-                    isValid = false;
-                } else {
-                    firstNameError.style.display = "none";
-                }
-                
-                // Last name validation
-                if (!/^[A-Za-z]+$/.test(lastName)) {
-                    lastNameError.style.display = "block";
-                    isValid = false;
-                } else {
-                    lastNameError.style.display = "none";
-                }
-
-                // Email validation (min 12 characters)
-                if (email.length < 12) {
-                    emailError.style.display = "block";
-                    isValid = false;
-                } else {
-                    emailError.style.display = "none";
-                }
-
-                // Role-specific validation
-                if (role === 'student') {
-                    var student_id = document.getElementById("student_id").value;
-                    var regError = document.getElementById("reg-error");
-                    
-                    if (!/^\d+$/.test(student_id)) {
-                        regError.style.display = "block";
-                        isValid = false;
-                    } else {
-                        regError.style.display = "none";
-                    }
-                } else if (role === 'therapist') {
-                    var license_number = document.getElementById("license_number").value;
-                    var licenseError = document.getElementById("license-error");
-                    
-                    if (!license_number.trim()) {
-                        licenseError.style.display = "block";
-                        isValid = false;
-                    } else {
-                        licenseError.style.display = "none";
-                    }
-
-                    // Check at least one specialization is selected
-                    const selectedSpecs = document.querySelectorAll('input[name="specializations"]:checked');
-                    if (selectedSpecs.length === 0) {
-                        alert('Please select at least one specialization');
-                        isValid = false;
-                    }
-                }
-
-                // Password validation (min 8 characters with letters & numbers)
-                var passwordPattern = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/;
-                if (!passwordPattern.test(password)) {
-                    passwordError.style.display = "block";
-                    isValid = false;
-                } else {
-                    passwordError.style.display = "none";
-                }
-
-                // Confirm password validation
-                if (password !== confirmPassword) {
-                    confirmError.style.display = "block";
-                    isValid = false;
-                } else {
-                    confirmError.style.display = "none";
-                }
-
-                return isValid;
             }
-        </script>
+        }
 
-        <div class="sign-up-link">
-            <p>Already have an account? <a href="{{ url_for('auth.login') }}">Login</a></p>
-        </div>
-    </div>
+        // Enable/disable time inputs based on day selection
+        document.querySelectorAll('input[name="available_days"]').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                const day = this.value;
+                const startTime = document.querySelector(`input[name="${day}_start"]`);
+                const endTime = document.querySelector(`input[name="${day}_end"]`);
+                
+                if (startTime && endTime) {
+                    startTime.disabled = !this.checked;
+                    endTime.disabled = !this.checked;
+                    
+                    if (!this.checked) {
+                        startTime.value = '';
+                        endTime.value = '';
+                    }
+                }
+            });
+        });
+
+        function showMessage(message, type) {
+            const errorDiv = document.getElementById('error-message');
+            errorDiv.textContent = message;
+            errorDiv.className = `error-message show ${type === 'success' ? 'bg-green-900 border-green-500 text-green-200' : ''}`;
+            
+            setTimeout(() => {
+                errorDiv.classList.remove('show');
+            }, 5000);
+        }
+
+        function validateForm() {
+            const role = document.getElementById("role").value;
+            const firstName = document.getElementById("first_name").value.trim();
+            const lastName = document.getElementById("last_name").value.trim();
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+            const confirmPassword = document.getElementById("confirm_password").value;
+
+            // Basic validation
+            if (!/^[A-Za-z]+$/.test(firstName)) {
+                showMessage('First name must contain only letters', 'error');
+                return false;
+            }
+            
+            if (!/^[A-Za-z]+$/.test(lastName)) {
+                showMessage('Last name must contain only letters', 'error');
+                return false;
+            }
+
+            if (email.length < 12) {
+                showMessage('Email must be at least 12 characters long', 'error');
+                return false;
+            }
+
+            // Role-specific validation
+            if (role === 'student') {
+                const studentId = document.getElementById("student_id").value;
+                if (!/^\d+$/.test(studentId)) {
+                    showMessage('Student ID must contain only numbers', 'error');
+                    return false;
+                }
+            } else if (role === 'therapist') {
+                const licenseNumber = document.getElementById("license_number").value;
+                if (!licenseNumber.trim()) {
+                    showMessage('License number is required for therapists', 'error');
+                    return false;
+                }
+
+                // Check specializations
+                const selectedSpecs = document.querySelectorAll('input[name="specializations"]:checked');
+                if (selectedSpecs.length === 0) {
+                    showMessage('Please select at least one specialization', 'error');
+                    return false;
+                }
+            }
+
+            // Password validation
+            const passwordPattern = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/;
+            if (!passwordPattern.test(password)) {
+                showMessage('Password must be at least 8 characters with letters and numbers', 'error');
+                return false;
+            }
+
+            if (password !== confirmPassword) {
+                showMessage('Passwords do not match', 'error');
+                return false;
+            }
+
+            // Show loading state
+            const submitBtn = document.getElementById('submit-btn');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Creating Account...';
+
+            return true;
+        }
+    </script>
 </body>
 </html>

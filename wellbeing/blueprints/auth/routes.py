@@ -1,6 +1,8 @@
 from datetime import datetime, timezone
 import secrets
 import os
+import re
+import logging
 from flask import render_template, request, redirect, url_for, session, flash, jsonify, make_response
 from werkzeug.security import generate_password_hash, check_password_hash
 from wellbeing.blueprints.auth import auth_bp
@@ -9,415 +11,486 @@ from wellbeing.models.user import (
 )
 from wellbeing import mongo, logger
 from wellbeing.utils.validators import validate_email, validate_password
+from wellbeing_modules import LicenseValidator, TestDataGenerator
 
 @auth_bp.route('/')
 def index():
     return redirect(url_for('auth.landing'))
+# =============================================================================
+# LOGIN ROUTE - ENHANCED WITH ROLE-BASED REDIRECTION
+# =============================================================================
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
-    try:
-        # Ensure JSON content type for POST requests
-        if request.method == 'POST':
-            if not request.is_json:
-                return jsonify({'error': 'Content-Type must be application/json'}), 415
-
-            data = request.get_json()
-            email = data.get('email', '').strip()
-            password = data.get('password', '')
-            role = data.get('role', '').lower()
-
-            # Validate input
-            if not email or not password or not role:
-                return jsonify({'error': 'All fields are required'}), 400
-
-            # Select appropriate user collection based on role
-            if role == 'admin':
-                user_collection = mongo.db.admin
-            elif role == 'therapist':
-                user_collection = mongo.db.therapists
+    """Enhanced login with better error handling and role-based redirection"""
+    
+    if request.method == 'POST':
+        try:
+            # Handle both JSON and form data
+            if request.is_json:
+                data = request.get_json()
+                email = data.get('email', '').strip().lower()
+                password = data.get('password', '')
+                role = data.get('role', '')
             else:
-                user_collection = mongo.db.users
+                email = request.form.get('email', '').strip().lower()
+                password = request.form.get('password', '')
+                role = request.form.get('role', '')
             
-            # Find user
-            user = user_collection.find_one({'email': email})
+            # Validate required fields
+            if not all([email, password, role]):
+                error_msg = 'All fields are required'
+                if request.is_json:
+                    return jsonify({'error': error_msg}), 400
+                flash(error_msg, 'error')
+                return render_template('login.html')
+            
+            # Validate email format
+            if not re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', email):
+                error_msg = 'Invalid email format'
+                if request.is_json:
+                    return jsonify({'error': error_msg}), 400
+                flash(error_msg, 'error')
+                return render_template('login.html')
+            
+            # Find user by email and role
+            user = mongo.db.users.find_one({'email': email, 'role': role})
             
             if not user:
-                return jsonify({'error': 'Invalid email or password'}), 401
-
+                error_msg = f'No {role} account found with this email'
+                if request.is_json:
+                    return jsonify({'error': error_msg}), 401
+                flash(error_msg, 'error')
+                return render_template('login.html')
+            
             # Verify password
             if not check_password_hash(user['password'], password):
-                return jsonify({'error': 'Invalid email or password'}), 401
-
-            # Verify role
-            if user.get('role', '').lower() != role:
-                return jsonify({'error': 'Incorrect role selection'}), 401
-                
-            # Check if user account is active
-            if user.get('status', 'Active') != 'active':
-                return jsonify({'error': 'Your account has been disabled. Please contact an admin.'}), 403
-
-            # Create session
-            session['user'] = str(user['_id'])
-            session['role'] = role
-            session['email'] = email
-            session['logged_in'] = True
-            session['last_activity'] = datetime.now(timezone.utc).isoformat()
+                error_msg = 'Invalid password'
+                if request.is_json:
+                    return jsonify({'error': error_msg}), 401
+                flash(error_msg, 'error')
+                return render_template('login.html')
             
-            # Update last login time
-            update_user_login(user['_id'])
-
-            return jsonify({
-                'message': 'Login successful', 
-                'role': role
-            }), 200
-
-        # GET request - render login page
-        return render_template('login.html')
-
-    except Exception as e:
-        logger.error(f"Login error: {e}")
-        return jsonify({'error': 'An unexpected error occurred'}), 500
+            # Check account status
+            if user.get('status') == 'inactive':
+                error_msg = 'Account is inactive. Please contact support.'
+                if request.is_json:
+                    return jsonify({'error': error_msg}), 403
+                flash(error_msg, 'error')
+                return render_template('login.html')
+            
+            # Set session
+            session['logged_in'] = True  # For existing system compatibility
+            session['user_id'] = str(user['_id'])  # Alternative key used in some places
+            session['user'] = str(user['_id'])  # New system key
+            session['email'] = user['email']
+            session['role'] = user['role']
+            session['name'] = user.get('name', user['email'].split('@')[0])
+            
+            # Update last login
+            mongo.db.users.update_one(
+                {'_id': user['_id']},
+                {'$set': {'last_login': datetime.now()}}
+            )
+            
+            # Role-based redirection
+            if role == 'admin':
+                redirect_url = '/admin/dashboard'
+            elif role == 'therapist':
+                redirect_url = '/therapist/dashboard'
+            else:  # student
+                redirect_url = '/dashboard'
+            
+            if request.is_json:
+                return jsonify({
+                    'success': True,
+                    'role': role,
+                    'redirect_url': redirect_url,
+                    'message': f'Welcome back, {session["name"]}!'
+                })
+            
+            flash(f'Welcome back, {session["name"]}!', 'success')
+            return redirect(redirect_url)
+            
+        except Exception as e:
+            logging.error(f"Login error: {str(e)}")
+            error_msg = 'Login failed. Please try again.'
+            if request.is_json:
+                return jsonify({'error': error_msg}), 500
+            flash(error_msg, 'error')
+            return render_template('login.html')
+    
+    return render_template('login.html')
     
 @auth_bp.route('/landing')
 def landing():
     return render_template('landing.html')
 
-def create_enhanced_therapist(data, password):
-    """Create a new therapist account with enhanced data structure matching your system"""
-    try:
-        hashed_password = generate_password_hash(password)
-        
-        # Process specializations
-        specializations = []
-        if isinstance(data.get('specializations'), list):
-            specializations = data['specializations']
-        else:
-            # Handle form data where specializations come as multiple values
-            specializations = request.form.getlist('specializations') if hasattr(request, 'form') else []
-        
-        # Process availability schedule
-        availability = {}
-        available_days = data.get('available_days', [])
-        if not isinstance(available_days, list):
-            available_days = request.form.getlist('available_days') if hasattr(request, 'form') else []
-        
-        for day in available_days:
-            start_time = data.get(f'{day}_start')
-            end_time = data.get(f'{day}_end')
-            if start_time and end_time:
-                availability[day] = [f"{start_time}-{end_time}"]
-        
-        # Build therapist data matching your enhanced structure
-        therapist_data = {
-            'name': f"Dr. {data['first_name']} {data['last_name']}",
-            'first_name': data['first_name'],
-            'last_name': data['last_name'],
-            'email': data['email'].lower(),
-            'license_number': data['license_number'],
-            'specializations': specializations,
-            'bio': data.get('bio', ''),
-            'availability': availability,
-            'max_students': int(data.get('max_students', 20)),
-            'current_students': 0,  # Start with 0
-            'rating': 0.0,  # Will be calculated based on reviews
-            'total_sessions': 0,  # Start with 0
-            'status': 'active',
-            'gender': data.get('gender', ''),
-            'phone': data.get('phone', ''),
-            'emergency_hours': data.get('emergency_hours') == 'true',
-            'password': hashed_password,
-            'role': 'therapist',
-            'is_verified': True,  # Auto-verify in development
-            'is_mock_data': os.getenv('FLASK_ENV') == 'development',
-            'speciality_focus': ', '.join(specializations[:2]) if specializations else '',
-            'created_at': datetime.now(timezone.utc),
-            'last_login': None
-        }
-        
-        # Add crisis specialist flag if applicable
-        if 'crisis_intervention' in specializations:
-            therapist_data['crisis_specialist'] = True
-        
-        result = mongo.db.therapists.insert_one(therapist_data)
-        logger.info(f"Enhanced therapist created successfully: {data['email']}")
-        return result.inserted_id
-        
-    except Exception as e:
-        logger.error(f"Error creating enhanced therapist: {e}")
-        raise
+
+# =============================================================================
+# REGISTER ROUTE - ENHANCED WITH LICENSE VALIDATION
+# =============================================================================
 
 @auth_bp.route('/register', methods=['GET', 'POST'])
 def register():
-    try:
-        if request.method == 'POST':
-            # Try getting JSON data first, otherwise get form data
-            if request.is_json:
-                data = request.get_json()
-            else:
-                data = request.form.to_dict()
-                # Handle multiple values (specializations, available_days)
-                data['specializations'] = request.form.getlist('specializations')
-                data['available_days'] = request.form.getlist('available_days')
+    """Enhanced registration with automated license validation"""
+    
+    if request.method == 'POST':
+        try:
+            # Get form data
+            role = request.form.get('role', '').strip()
+            first_name = request.form.get('first_name', '').strip()
+            last_name = request.form.get('last_name', '').strip()
+            email = request.form.get('email', '').strip().lower()
+            password = request.form.get('password', '')
+            confirm_password = request.form.get('confirm_password', '')
             
-            # Extract and sanitize input fields
-            role = data.get('role', '').strip().lower()
-            first_name = data.get('first_name', '').strip()
-            last_name = data.get('last_name', '').strip()
-            email = data.get('email', '').strip()
-            password = data.get('password', '')
-            confirm_password = data.get('confirm_password', '')
+            # Validate basic fields
+            validation_errors = []
             
-            # Validation checks
-            errors = []
+            if not all([role, first_name, last_name, email, password, confirm_password]):
+                validation_errors.append('All fields are required')
             
-            if not role or role not in ['student', 'therapist']:
-                errors.append('Please select a valid role.')
-            if not first_name or not first_name.isalpha():
-                errors.append('First name must contain only letters.')
-            if not last_name or not last_name.isalpha():
-                errors.append('Last name must contain only letters.')
-            if not email or len(email) < 12:
-                errors.append('Email must be at least 12 characters.')
-            if not validate_email(email):
-                errors.append('Invalid email format.')
-            if not validate_password(password):
-                errors.append('Password must be at least 8 characters with letters and numbers.')
+            if not re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', email):
+                validation_errors.append('Invalid email format')
+            
+            if len(password) < 8:
+                validation_errors.append('Password must be at least 8 characters')
+            
             if password != confirm_password:
-                errors.append('Passwords do not match.')
+                validation_errors.append('Passwords do not match')
             
-            # Role-specific validation and processing
+            if not re.match(r'^[A-Za-z]+$', first_name):
+                validation_errors.append('First name must contain only letters')
+            
+            if not re.match(r'^[A-Za-z]+$', last_name):
+                validation_errors.append('Last name must contain only letters')
+            
+            # Check if email already exists
+            existing_user = mongo.db.users.find_one({'email': email})
+            if existing_user:
+                validation_errors.append('Email already registered')
+            
+            # Role-specific validation
             if role == 'student':
-                student_id = data.get('student_id', '').strip()
+                student_id = request.form.get('student_id', '').strip()
+                if not student_id:
+                    validation_errors.append('Student ID is required')
+                elif not re.match(r'^\d+$', student_id):
+                    validation_errors.append('Student ID must contain only numbers')
                 
-                if not student_id or not student_id.isdigit():
-                    errors.append('Student ID must contain only numbers.')
-                
-                # Check if student ID or email already exists
-                if not errors:
-                    if mongo.db.users.find_one({'student_id': student_id}):
-                        errors.append('Student ID already exists')
-                    if find_user_by_email(email):
-                        errors.append('Email already exists')
-                
-                if not errors:
-                    # Create student account
-                    create_user(first_name, last_name, email, student_id, password)
-                    return redirect(url_for('auth.login'))
-                    
+                # Check if student ID already exists
+                existing_student = mongo.db.students.find_one({'student_id': student_id})
+                if existing_student:
+                    validation_errors.append('Student ID already registered')
+            
             elif role == 'therapist':
-                license_number = data.get('license_number', '').strip()
-                specializations = data.get('specializations', [])
+                license_number = request.form.get('license_number', '').strip()
                 
                 if not license_number:
-                    errors.append('License number is required for therapists.')
-                if not specializations or len(specializations) == 0:
-                    errors.append('At least one specialization is required.')
+                    # Generate license for development
+                    license_number = LicenseValidator.generate_license('kenya_clinical')
+                    flash(f'🔧 Development mode: Generated license {license_number}', 'info')
                 
-                # Check for existing therapist email or license
-                if not errors:
-                    if mongo.db.therapists.find_one({'email': email.lower()}):
-                        errors.append('Email already exists')
-                    if mongo.db.therapists.find_one({'license_number': license_number}):
-                        errors.append('License number already exists')
+                # Validate license
+                license_validation = LicenseValidator.validate_license(license_number)
+                if not license_validation['valid']:
+                    validation_errors.append(f'Invalid license: {license_validation["error"]}')
                 
-                if not errors:
-                    # Create enhanced therapist account
-                    create_enhanced_therapist(data, password)
-                    return redirect(url_for('auth.login'))
+                # Check if license already exists
+                existing_therapist = mongo.db.therapists.find_one({'license_number': license_number})
+                if existing_therapist:
+                    validation_errors.append('License number already registered')
+                
+                # Validate specializations
+                specializations = request.form.getlist('specializations')
+                if not specializations:
+                    validation_errors.append('At least one specialization is required')
             
-            if errors:
-                if request.is_json:
-                    return jsonify({'errors': errors}), 400
-                else:
-                    # For form submissions, flash errors and reload page
-                    for error in errors:
-                        flash(error, 'error')
-                    return render_template('register.html')
-        
-        # GET request - Render registration page
-        return render_template('register.html')
-    
-    except Exception as e:
-        logger.error(f"Registration error: {e}")
-        if request.is_json:
-            return jsonify({'error': 'An unexpected error occurred'}), 500
-        else:
-            flash('An unexpected error occurred. Please try again.', 'error')
-            return render_template('register.html')
-
-@auth_bp.route('/register/bulk-therapists', methods=['POST'])
-def bulk_register_therapists():
-    """Development-only endpoint for bulk therapist registration"""
-    try:
-        # Only allow in development environment
-        if os.getenv('FLASK_ENV') != 'development':
-            return jsonify({'error': 'This endpoint is only available in development'}), 403
-        
-        # Enhanced mock therapist data for Kenya matching your system structure
-        mock_therapists = [
-            {
-                "name": "Dr. Grace Wanjiku",
-                "first_name": "Grace",
-                "last_name": "Wanjiku",
-                "email": "grace.wanjiku@university.edu",
-                "license_number": "KPCA001234",
-                "specializations": ["anxiety", "depression", "cognitive_behavioral"],
-                "bio": "Specializing in anxiety and depression with 8+ years of experience. I use evidence-based CBT techniques to help students develop practical coping skills and build resilience.",
-                "availability": {
-                    "monday": ["09:00-12:00", "14:00-17:00"],
-                    "tuesday": ["10:00-16:00"],
-                    "wednesday": ["09:00-12:00", "13:00-18:00"],
-                    "thursday": ["08:00-15:00"],
-                    "friday": ["09:00-14:00"]
-                },
-                "max_students": 25,
-                "gender": "female",
-                "phone": "+254712345678",
-                "emergency_hours": True,
-                "speciality_focus": "Anxiety and academic stress"
-            },
-            {
-                "name": "Dr. Michael Kiprotich",
-                "first_name": "Michael",
-                "last_name": "Kiprotich",
-                "email": "michael.kiprotich@university.edu",
-                "license_number": "KPCA005678",
-                "specializations": ["academic_stress", "anxiety", "stress_management"],
-                "bio": "Academic stress specialist helping students navigate university pressures. I focus on mindfulness-based stress reduction and practical time management strategies.",
-                "availability": {
-                    "monday": ["11:00-18:00"],
-                    "wednesday": ["09:00-17:00"],
-                    "thursday": ["10:00-16:00"],
-                    "friday": ["08:00-15:00"],
-                    "saturday": ["10:00-14:00"]
-                },
-                "max_students": 20,
-                "gender": "male",
-                "phone": "+254723456789",
-                "emergency_hours": False,
-                "speciality_focus": "Study habits and test anxiety"
-            },
-            {
-                "name": "Dr. Sarah Mwangi",
-                "first_name": "Sarah",
-                "last_name": "Mwangi",
-                "email": "sarah.mwangi@university.edu",
-                "license_number": "KPCA009876",
-                "specializations": ["trauma_therapy", "ptsd", "grief_counseling"],
-                "bio": "Trauma-informed therapy specialist with expertise in PTSD and grief counseling. I provide a safe, supportive environment for healing using EMDR and other evidence-based approaches.",
-                "availability": {
-                    "tuesday": ["09:00-18:00"],
-                    "thursday": ["08:00-17:00"],
-                    "friday": ["10:00-19:00"],
-                    "saturday": ["09:00-15:00"]
-                },
-                "max_students": 15,
-                "gender": "female",
-                "phone": "+254734567890",
-                "emergency_hours": True,
-                "speciality_focus": "Complex trauma and PTSD recovery"
-            },
-            {
-                "name": "Dr. James Kamau",
-                "first_name": "James",
-                "last_name": "Kamau",
-                "email": "james.kamau@university.edu",
-                "license_number": "KPCA012345",
-                "specializations": ["substance_abuse", "addiction_counseling", "group_therapy"],
-                "bio": "Addiction counselor with 12+ years helping students overcome substance use challenges. I offer both individual and group therapy with a non-judgmental, recovery-focused approach.",
-                "availability": {
-                    "monday": ["13:00-19:00"],
-                    "tuesday": ["12:00-18:00"],
-                    "wednesday": ["14:00-20:00"],
-                    "thursday": ["13:00-17:00"],
-                    "sunday": ["15:00-19:00"]
-                },
-                "max_students": 22,
-                "gender": "male",
-                "phone": "+254701234567",
-                "emergency_hours": True,
-                "speciality_focus": "Substance abuse and behavioral addictions"
-            },
-            {
-                "name": "Dr. Amanda Torres",
-                "first_name": "Amanda",
-                "last_name": "Torres",
-                "email": "amanda.torres@university.edu",
-                "license_number": "KPCA055555",
-                "specializations": ["crisis_intervention", "suicide_prevention", "emergency_therapy"],
-                "bio": "Crisis intervention specialist available for urgent mental health situations. Trained in suicide prevention, crisis de-escalation, and emergency psychological support with immediate response capabilities.",
-                "availability": {
-                    "monday": ["08:00-20:00"],
-                    "tuesday": ["08:00-20:00"],
-                    "wednesday": ["08:00-20:00"],
-                    "thursday": ["08:00-20:00"],
-                    "friday": ["08:00-20:00"],
-                    "saturday": ["10:00-18:00"],
-                    "sunday": ["12:00-18:00"]
-                },
-                "max_students": 30,
-                "gender": "female",
-                "phone": "+254700000911",
-                "emergency_hours": True,
-                "crisis_specialist": True,
-                "speciality_focus": "Emergency intervention and crisis stabilization"
+            # Return errors if any
+            if validation_errors:
+                for error in validation_errors:
+                    flash(error, 'error')
+                return render_template('register.html')
+            
+            # Create user account
+            user_data = {
+                'email': email,
+                'password': generate_password_hash(password),
+                'role': role,
+                'name': f"{first_name} {last_name}",
+                'first_name': first_name,
+                'last_name': last_name,
+                'status': 'active',
+                'created_at': datetime.now(),
+                'last_login': None
             }
-        ]
-        
-        created_therapists = []
-        for therapist_data in mock_therapists:
-            try:
-                # Check if therapist already exists
-                existing = mongo.db.therapists.find_one({
-                    '$or': [
-                        {'email': therapist_data['email']},
-                        {'license_number': therapist_data['license_number']}
-                    ]
-                })
-                
-                if existing:
-                    logger.info(f"Therapist {therapist_data['email']} already exists, skipping...")
-                    continue
-                
-                # Add common fields
-                therapist_data.update({
-                    'current_students': 0,
-                    'rating': 4.5 + (len(created_therapists) * 0.1),  # Vary ratings
-                    'total_sessions': 0,
+            
+            # Insert user
+            user_result = mongo.db.users.insert_one(user_data)
+            user_id = user_result.inserted_id
+            
+            # Role-specific profile creation
+            if role == 'student':
+                student_data = {
+                    '_id': user_id,
+                    'student_id': student_id,
+                    'name': f"{first_name} {last_name}",
+                    'email': email,
                     'status': 'active',
-                    'role': 'therapist',
-                    'password': generate_password_hash('Password123'),  # Default dev password
-                    'is_verified': True,
-                    'is_mock_data': True,
-                    'created_at': datetime.now(timezone.utc),
-                    'last_login': None
-                })
+                    'assigned_therapist_id': None,
+                    'intake_completed': False,
+                    'created_at': datetime.now(),
+                    'progress': {
+                        'meditation': 0,
+                        'exercise': 0
+                    }
+                }
+                mongo.db.students.insert_one(student_data)
                 
-                result = mongo.db.therapists.insert_one(therapist_data)
-                created_therapists.append({
-                    'id': str(result.inserted_id),
-                    'name': therapist_data['name'],
-                    'email': therapist_data['email']
-                })
+                flash(f'✅ Student account created successfully! Welcome {first_name}!', 'success')
                 
-            except Exception as e:
-                logger.error(f"Error creating therapist {therapist_data['email']}: {e}")
-                continue
-        
-        return jsonify({
-            'message': f'Successfully created {len(created_therapists)} therapists',
-            'therapists': created_therapists
-        }), 201
-        
-    except Exception as e:
-        logger.error(f"Bulk therapist registration error: {e}")
-        return jsonify({'error': 'Failed to create bulk therapists'}), 500
+            elif role == 'therapist':
+                # Process therapist-specific data
+                therapist_data = {
+                    '_id': user_id,
+                    'name': f"{first_name} {last_name}",
+                    'email': email,
+                    'license_number': license_number,
+                    'license_validation': license_validation,
+                    'phone': request.form.get('phone', ''),
+                    'gender': request.form.get('gender', ''),
+                    'bio': request.form.get('bio', ''),
+                    'specializations': specializations,
+                    'max_students': int(request.form.get('max_students', 20)),
+                    'current_students': 0,
+                    'emergency_hours': bool(request.form.get('emergency_hours')),
+                    'status': 'active',
+                    'rating': 5.0,  # Start with perfect rating
+                    'total_sessions': 0,
+                    'years_experience': 0,
+                    'created_at': datetime.now()
+                }
+                
+                # Process availability
+                availability = {}
+                days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+                available_days = request.form.getlist('available_days')
+                
+                for day in available_days:
+                    if day in days:
+                        start_time = request.form.get(f'{day}_start')
+                        end_time = request.form.get(f'{day}_end')
+                        if start_time and end_time:
+                            availability[day] = {
+                                'start': start_time,
+                                'end': end_time
+                            }
+                
+                therapist_data['availability'] = availability
+                
+                # Insert therapist
+                mongo.db.therapists.insert_one(therapist_data)
+                
+                flash(f'✅ Therapist account created successfully! License: {license_number}', 'success')
+            
+            return redirect(url_for('auth.login'))
+            
+        except Exception as e:
+            logging.error(f"Registration error: {str(e)}")
+            flash('Registration failed. Please try again.', 'error')
+            return render_template('register.html')
+    
+    return render_template('register.html')
+
+
+# =============================================================================
+# LOGOUT ROUTE
+# =============================================================================
 
 @auth_bp.route('/logout')
 def logout():
-    session.clear()
-    return redirect(url_for('auth.login'))
+    """Enhanced logout with proper session cleanup"""
+    
+    try:
+        # Get user info before clearing session
+        user_name = session.get('name', 'User')
+        
+        # Clear session
+        session.clear()
+        
+        flash(f'👋 Goodbye, {user_name}! You have been logged out successfully.', 'info')
+        return redirect(url_for('auth.login'))
+        
+    except Exception as e:
+        logging.error(f"Logout error: {str(e)}")
+        session.clear()  # Clear session anyway
+        return redirect(url_for('auth.login'))
+    
+# =============================================================================
+# API ROUTES FOR DEVELOPMENT
+# =============================================================================
+
+@auth_bp.route('/api/generate-license/<license_type>')
+def api_generate_license(license_type):
+    """API endpoint to generate license for development"""
+    
+    try:
+        license_number = LicenseValidator.generate_license(license_type)
+        validation = LicenseValidator.validate_license(license_number)
+        
+        return jsonify({
+            'success': True,
+            'license_number': license_number,
+            'validation': validation,
+            'message': f'Generated {license_type} license'
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@auth_bp.route('/api/validate-license', methods=['POST'])
+def api_validate_license():
+    """API endpoint to validate license number"""
+    
+    try:
+        data = request.get_json()
+        license_number = data.get('license_number', '').strip()
+        
+        if not license_number:
+            return jsonify({
+                'success': False,
+                'error': 'License number is required'
+            }), 400
+        
+        validation = LicenseValidator.validate_license(license_number)
+        
+        return jsonify({
+            'success': True,
+            'validation': validation
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@auth_bp.route('/api/check-email', methods=['POST'])
+def api_check_email():
+    """API endpoint to check if email is available"""
+    
+    try:
+        data = request.get_json()
+        email = data.get('email', '').strip().lower()
+        
+        if not email:
+            return jsonify({
+                'success': False,
+                'error': 'Email is required'
+            }), 400
+        
+        existing_user = mongo.db.users.find_one({'email': email})
+        
+        return jsonify({
+            'success': True,
+            'available': existing_user is None,
+            'message': 'Email available' if existing_user is None else 'Email already registered'
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@auth_bp.route('/dev/create-test-accounts')
+def create_test_accounts():
+    """Create test accounts for development"""
+    
+    try:
+        # Create test student
+        student_data = {
+            'email': 'student@test.com',
+            'password': generate_password_hash('password123'),
+            'role': 'student',
+            'name': 'Test Student',
+            'first_name': 'Test',
+            'last_name': 'Student',
+            'status': 'active',
+            'created_at': datetime.now()
+        }
+        
+        student_result = mongo.db.users.insert_one(student_data)
+        
+        # Create student profile
+        student_profile = {
+            '_id': student_result.inserted_id,
+            'student_id': '2024001',
+            'name': 'Test Student',
+            'email': 'student@test.com',
+            'status': 'active',
+            'assigned_therapist_id': None,
+            'intake_completed': False,
+            'created_at': datetime.now()
+        }
+        mongo.db.students.insert_one(student_profile)
+        
+        # Create test therapist
+        therapist_license = LicenseValidator.generate_license('kenya_clinical')
+        therapist_data = {
+            'email': 'therapist@test.com',
+            'password': generate_password_hash('password123'),
+            'role': 'therapist',
+            'name': 'Dr. Test Therapist',
+            'first_name': 'Dr. Test',
+            'last_name': 'Therapist',
+            'status': 'active',
+            'created_at': datetime.now()
+        }
+        
+        therapist_result = mongo.db.users.insert_one(therapist_data)
+        
+        # Create therapist profile
+        therapist_profile = {
+            '_id': therapist_result.inserted_id,
+            'name': 'Dr. Test Therapist',
+            'email': 'therapist@test.com',
+            'license_number': therapist_license,
+            'specializations': ['anxiety', 'depression'],
+            'max_students': 25,
+            'current_students': 0,
+            'emergency_hours': True,
+            'status': 'active',
+            'rating': 5.0,
+            'availability': {
+                'monday': {'start': '09:00', 'end': '17:00'},
+                'wednesday': {'start': '10:00', 'end': '18:00'},
+                'friday': {'start': '08:00', 'end': '16:00'}
+            },
+            'created_at': datetime.now()
+        }
+        mongo.db.therapists.insert_one(therapist_profile)
+        
+        return jsonify({
+            'success': True,
+            'message': 'Test accounts created',
+            'accounts': {
+                'student': 'student@test.com / password123',
+                'therapist': 'therapist@test.com / password123',
+                'therapist_license': therapist_license
+            }
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
 
 @auth_bp.route('/csrf-token', methods=['GET'])
 def get_csrf_token():

@@ -52,7 +52,7 @@ def student_intake():
         
         # Step 2: Prepare intake data
         intake_data = {
-            'student_id': ObjectId(session['user']),  # Changed from session['user_id']
+            'student_id': ObjectId(session['user']),
             **form_data,
             'severity': int(form_data['severity']),
             'created_at': datetime.now()
@@ -68,9 +68,9 @@ def student_intake():
         if therapist:
             # Step 5: AUTO-SCHEDULE THE APPOINTMENT! 🚀
             appointment_id, appointment = auto_schedule_best_time(
-                session['user'], 
-                therapist, 
-                form_data['appointment_type'], 
+                ObjectId(session['user']),
+                therapist,
+                form_data['appointment_type'],
                 crisis_level
             )
             
@@ -148,7 +148,7 @@ def appointment_confirmed(appointment_id):
 def get_therapist_availability(therapist_id):
     """API endpoint to get real-time therapist availability"""
     
-    if 'user_id' not in session:
+    if 'user' not in session:
         return {'error': 'Not authenticated'}, 401
     
     therapist = mongo.db.therapists.find_one({'_id': ObjectId(therapist_id)})
@@ -178,7 +178,7 @@ def get_therapist_availability(therapist_id):
 def book_specific_slot():
     """Book a specific time slot with Google Meet link"""
     
-    if 'user_id' not in session:
+    if 'user' not in session:
         return redirect(url_for('auth.login'))
     
     # Get form data
@@ -208,7 +208,7 @@ def book_specific_slot():
     
     # Schedule the appointment
     appointment_id, appointment = schedule_appointment_automatically(
-        session['user_id'], therapist, selected_slot, appointment_type
+        session['user'], therapist, selected_slot, appointment_type
     )
     
     if appointment_id:
@@ -383,26 +383,23 @@ def index():
 def therapist_info():
     """Therapist profile page - renders Template 3"""
     
-    # Fix: Use consistent session key
     if 'user' not in session or session.get('role') != 'student':
         return redirect(url_for('auth.login'))
     
-    user_id = ObjectId(session['user'])  # Changed from session['user_id'] 
+    user_id = ObjectId(session['user'])
     user = mongo.db.students.find_one({'_id': user_id})
     
-    # Get assigned therapist
     therapist = None
     if user and user.get('assigned_therapist_id'):
         therapist = mongo.db.therapists.find_one({'_id': user['assigned_therapist_id']})
     
-    # Get appointments for this student
     appointments = []
     if therapist:
         appointments = list(mongo.db.appointments.find({
             'student_id': user_id,
             'therapist_id': therapist['_id']
         }).sort('datetime', 1))
-    
+
     return render_template('student/therapist_info.html',
                          therapist=therapist,
                          appointments=appointments)
@@ -418,7 +415,6 @@ def intake_assessment():
 def match_results(therapist_id):
     """Show therapist matching results after intake - redirect to therapist info"""
     
-    # Fix: Use consistent session key
     if 'user' not in session:
         return redirect(url_for('auth.login'))
     
@@ -429,13 +425,19 @@ def match_results(therapist_id):
         flash('Therapist not found', 'error')
         return redirect(url_for('dashboard.index'))
     
-    # Flash success message and redirect to therapist info page
     if crisis_level == 'high':
         flash(f'✅ Priority match found! You\'ve been assigned to {therapist["name"]} for immediate support.', 'success')
     else:
         flash(f'✅ Perfect match! You\'ve been assigned to {therapist["name"]} who specializes in your areas of concern.', 'success')
     
+    user_id = ObjectId(session['user'])
+    mongo.db.students.update_one(
+        {'_id': user_id},
+        {'$set': {'assigned_therapist_id': ObjectId(therapist_id)}}
+    )
+
     return redirect(url_for('dashboard.therapist_info'))
+
 
 @dashboard_bp.route('/profile', methods=['GET', 'POST'])
 @login_required

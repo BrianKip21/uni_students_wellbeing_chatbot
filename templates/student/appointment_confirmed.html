@@ -3,126 +3,197 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Session Scheduled! | Wellbeing Assistant</title>
+    <title>Session Confirmed! | Wellbeing Assistant</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css"> 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Poppins', sans-serif;
+            font-family: 'Inter', sans-serif;
         }
 
         body {
-            background: linear-gradient(135deg, #111827 0%, #1f2937 100%);
-            color: #e0e0e0;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 50%, #2d1b69 100%);
+            color: #e0e7ff;
             min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
         }
         
-        .celebration {
-            animation: celebrate 2s ease-out;
-        }
-        
-        @keyframes celebrate {
-            0% { transform: scale(0) rotate(-180deg); opacity: 0; }
-            50% { transform: scale(1.1) rotate(-90deg); opacity: 0.8; }
-            100% { transform: scale(1) rotate(0deg); opacity: 1; }
-        }
-        
-        .appointment-card {
-            background: linear-gradient(145deg, #1f2937, #111827);
-            border: 2px solid #10b981;
-            box-shadow: 0 20px 40px rgba(16, 185, 129, 0.2);
-        }
-        
-        .meeting-link-card {
-            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.4);
-        }
-        
-        .meeting-link-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 15px 40px rgba(59, 130, 246, 0.6);
-        }
-        
-        .therapist-badge {
-            background: linear-gradient(135deg, #10b981, #059669);
-            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
-        }
-        
-        .countdown-timer {
-            background: linear-gradient(135deg, #f59e0b, #d97706);
-            border-radius: 1rem;
-            padding: 1rem;
-            text-align: center;
-            animation: pulse 2s infinite;
-        }
-        
-        .floating-icons {
+        /* Animated background particles */
+        .particles {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
             pointer-events: none;
-            z-index: -1;
+            z-index: 0;
         }
         
-        .floating-icon {
+        .particle {
             position: absolute;
-            font-size: 2rem;
-            opacity: 0.1;
+            width: 4px;
+            height: 4px;
+            background: rgba(139, 92, 246, 0.3);
+            border-radius: 50%;
             animation: float 6s ease-in-out infinite;
         }
         
         @keyframes float {
-            0%, 100% { transform: translateY(0px) rotate(0deg); }
-            50% { transform: translateY(-20px) rotate(180deg); }
+            0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.3; }
+            50% { transform: translateY(-20px) rotate(180deg); opacity: 1; }
         }
         
-        .pulse-success {
-            animation: pulseSuccess 1.5s ease-in-out infinite;
+        /* Success animation */
+        .success-animation {
+            animation: successPulse 2s ease-out;
         }
         
-        @keyframes pulseSuccess {
-            0%, 100% { background-color: #10b981; }
-            50% { background-color: #059669; }
+        @keyframes successPulse {
+            0% { transform: scale(0) rotate(-180deg); opacity: 0; }
+            50% { transform: scale(1.1) rotate(-90deg); opacity: 0.8; }
+            100% { transform: scale(1) rotate(0deg); opacity: 1; }
         }
         
-        .appointment-details {
-            background-color: #1f2937;
-            border: 1px solid #374151;
-            border-radius: 1rem;
-            padding: 1.5rem;
-            margin-bottom: 1rem;
+        /* Card styles */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
         }
         
-        .detail-item {
+        .gradient-border {
+            background: linear-gradient(135deg, #8b5cf6, #3b82f6, #10b981);
+            padding: 2px;
+            border-radius: 24px;
+        }
+        
+        .gradient-border-inner {
+            background: rgba(15, 15, 35, 0.9);
+            border-radius: 22px;
+        }
+        
+        /* Success checkmark */
+        .success-checkmark {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #10b981, #059669);
             display: flex;
             align-items: center;
-            padding: 0.75rem 0;
-            border-bottom: 1px solid #374151;
+            justify-content: center;
+            margin: 0 auto 2rem;
+            position: relative;
+            animation: checkmarkBounce 0.8s ease-out;
+            box-shadow: 0 20px 40px rgba(16, 185, 129, 0.3);
         }
         
-        .detail-item:last-child {
-            border-bottom: none;
+        @keyframes checkmarkBounce {
+            0% { transform: scale(0); }
+            60% { transform: scale(1.2); }
+            100% { transform: scale(1); }
         }
         
-        .copy-btn {
-            background-color: #374151;
-            border: 1px solid #4b5563;
+        .success-checkmark::before {
+            content: '';
+            position: absolute;
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: rgba(16, 185, 129, 0.2);
+            animation: ripple 2s infinite;
+        }
+        
+        @keyframes ripple {
+            0% { transform: scale(1); opacity: 0.6; }
+            100% { transform: scale(1.5); opacity: 0; }
+        }
+        
+        /* Meeting link card */
+        .meeting-card {
+            background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+            border-radius: 20px;
+            padding: 2rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
             transition: all 0.3s ease;
         }
         
-        .copy-btn:hover {
-            background-color: #4b5563;
-            transform: scale(1.05);
+        .meeting-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transform: rotate(45deg);
+            transition: all 0.5s ease;
         }
         
-        .success-checkmark {
+        .meeting-card:hover::before {
+            animation: shimmer 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+        }
+        
+        .meeting-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 25px 50px rgba(59, 130, 246, 0.4);
+        }
+        
+        /* Countdown timer */
+        .countdown-timer {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            border-radius: 16px;
+            padding: 1.5rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .countdown-timer::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            animation: countdownShine 3s infinite;
+        }
+        
+        @keyframes countdownShine {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+        
+        /* Therapist card */
+        .therapist-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 2rem;
+            transition: all 0.3s ease;
+        }
+        
+        .therapist-card:hover {
+            background: rgba(255, 255, 255, 0.05);
+            transform: translateY(-2px);
+        }
+        
+        .therapist-badge {
             width: 80px;
             height: 80px;
             border-radius: 50%;
@@ -130,168 +201,294 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 0 auto 2rem;
-            animation: checkmarkBounce 0.6s ease-out;
+            position: relative;
         }
         
-        @keyframes checkmarkBounce {
-            0% { transform: scale(0); }
-            50% { transform: scale(1.2); }
-            100% { transform: scale(1); }
+        .therapist-badge::after {
+            content: '✓';
+            position: absolute;
+            bottom: -5px;
+            right: -5px;
+            width: 24px;
+            height: 24px;
+            background: #10b981;
+            border: 3px solid #0f0f23;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: white;
+        }
+        
+        /* Priority badge */
+        .priority-badge {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            animation: priorityPulse 2s infinite;
+        }
+        
+        @keyframes priorityPulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            50% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+        }
+        
+        /* Buttons */
+        .btn-primary {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 12px;
+            color: white;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s ease;
+        }
+        
+        .btn-primary:hover::before {
+            left: 100%;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(139, 92, 246, 0.4);
+        }
+        
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .glass-card {
+                margin: 1rem;
+                border-radius: 16px;
+            }
+            
+            .success-checkmark {
+                width: 80px;
+                height: 80px;
+            }
+        }
+        
+        /* Status indicators */
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        
+        .status-confirmed {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+        
+        .status-virtual {
+            background: rgba(59, 130, 246, 0.2);
+            color: #3b82f6;
+            border: 1px solid rgba(59, 130, 246, 0.3);
         }
     </style>
 </head>
 <body>
-    <!-- Floating Background Icons -->
-    <div class="floating-icons">
-        <i class="floating-icon fas fa-calendar-check" style="top: 10%; left: 10%; animation-delay: 0s;"></i>
-        <i class="floating-icon fas fa-video" style="top: 20%; right: 15%; animation-delay: 1s;"></i>
-        <i class="floating-icon fas fa-heart" style="bottom: 30%; left: 20%; animation-delay: 2s;"></i>
-        <i class="floating-icon fas fa-user-md" style="bottom: 20%; right: 10%; animation-delay: 3s;"></i>
-        <i class="floating-icon fas fa-thumbs-up" style="top: 50%; left: 5%; animation-delay: 1.5s;"></i>
-    </div>
-
-    <div class="min-h-screen flex items-center justify-center p-4">
+    <!-- Animated background particles -->
+    <div class="particles" id="particles"></div>
+    
+    <div class="min-h-screen flex items-center justify-center p-4 relative z-10">
         <div class="max-w-4xl w-full">
             
             <!-- Success Header -->
-            <div class="text-center mb-8 celebration">
+            <div class="text-center mb-8 success-animation">
                 <div class="success-checkmark">
-                    <i class="fas fa-check text-3xl text-white"></i>
+                    <i class="fas fa-check text-4xl text-white"></i>
                 </div>
                 
-                {% if crisis_level == 'high' %}
-                <div class="bg-red-600 text-white px-6 py-3 rounded-full inline-block mb-4 pulse-success">
-                    <i class="fas fa-bolt mr-2"></i>
+                {% if crisis_level == 'high' or crisis_level == 'critical' %}
+                <div class="priority-badge mb-6">
+                    <i class="fas fa-bolt"></i>
                     PRIORITY SESSION SCHEDULED
                 </div>
                 {% endif %}
                 
-                <h1 class="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-green-400 to-blue-600 bg-clip-text text-transparent">
+                <h1 class="text-5xl md:text-6xl font-bold mb-4 bg-gradient-to-r from-purple-400 via-pink-500 to-blue-500 bg-clip-text text-transparent">
                     🎉 You're All Set!
                 </h1>
-                <p class="text-xl text-gray-300 mb-2">
+                <p class="text-xl text-purple-200 mb-2">
                     Your therapy session has been automatically scheduled
                 </p>
                 <p class="text-lg text-green-400 font-semibold">
-                    ✨ Everything is ready - just show up!
+                    ✨ Everything is ready - just show up and heal!
                 </p>
             </div>
 
             <!-- Main Appointment Card -->
-            <div class="appointment-card rounded-2xl p-8 mb-8">
-                <div class="text-center mb-8">
-                    <h2 class="text-2xl font-bold text-white mb-2">Your Session Details</h2>
-                    <p class="text-gray-400">We've taken care of everything for you</p>
-                </div>
-
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    
-                    <!-- Session Info -->
-                    <div class="appointment-details">
-                        <h3 class="text-lg font-bold text-white mb-4 flex items-center">
-                            <i class="fas fa-calendar-alt mr-3 text-green-400"></i>
-                            Session Information
-                        </h3>
-                        
-                        <div class="detail-item">
-                            <i class="fas fa-clock text-blue-400 mr-4 w-5"></i>
-                            <div>
-                                <div class="font-medium text-white">{{ appointment.formatted_time }}</div>
-                                <div class="text-sm text-gray-400">
-                                    {% if crisis_level == 'high' %}
-                                        Priority scheduling - sooner than usual
-                                    {% else %}
-                                        Perfect timing for your schedule
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="detail-item">
-                            <i class="fas fa-user-md text-green-400 mr-4 w-5"></i>
-                            <div>
-                                <div class="font-medium text-white">{{ therapist.name }}</div>
-                                <div class="text-sm text-gray-400">Licensed Mental Health Professional</div>
-                            </div>
-                        </div>
-                        
-                        <div class="detail-item">
-                            <i class="fas fa-{% if appointment.type == 'virtual' %}video{% elif appointment.type == 'phone' %}phone{% else %}building{% endif %} text-purple-400 mr-4 w-5"></i>
-                            <div>
-                                <div class="font-medium text-white">{{ appointment.type.title() }} Session</div>
-                                <div class="text-sm text-gray-400">
-                                    {% if appointment.type == 'virtual' %}
-                                        Video call - join from anywhere
-                                    {% elif appointment.type == 'phone' %}
-                                        Phone call - we'll call you
-                                    {% else %}
-                                        In-person at campus counseling center
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="detail-item">
-                            <i class="fas fa-hourglass-half text-yellow-400 mr-4 w-5"></i>
-                            <div>
-                                <div class="font-medium text-white">60 Minutes</div>
-                                <div class="text-sm text-gray-400">Standard session duration</div>
-                            </div>
-                        </div>
+            <div class="gradient-border mb-8">
+                <div class="gradient-border-inner p-8">
+                    <div class="text-center mb-8">
+                        <h2 class="text-3xl font-bold text-white mb-2">Your Session Details</h2>
+                        <p class="text-purple-300">AI-powered matching • Instant scheduling • Seamless experience</p>
                     </div>
-                    
-                    <!-- Meeting Access -->
-                    {% if appointment.type == 'virtual' and appointment.meeting_info %}
-                    <div>
-                        <div class="meeting-link-card rounded-2xl p-6 text-center mb-6">
-                            <h3 class="text-xl font-bold text-white mb-4">
-                                <i class="fas fa-video mr-2"></i>
-                                Join Your Session
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        
+                        <!-- Session Information -->
+                        <div class="glass-card p-6">
+                            <h3 class="text-xl font-bold text-white mb-6 flex items-center">
+                                <i class="fas fa-calendar-alt mr-3 text-green-400"></i>
+                                Session Information
                             </h3>
                             
-                            <div class="bg-white bg-opacity-20 rounded-lg p-4 mb-4">
-                                <p class="text-sm text-blue-100 mb-2">Google Meet Link:</p>
-                                <div class="flex items-center space-x-2">
-                                    <input type="text" 
-                                           value="{{ appointment.meeting_info.meet_link }}" 
-                                           id="meet-link" 
-                                           class="bg-transparent text-white text-sm flex-1 p-2 border border-blue-300 rounded" 
-                                           readonly>
-                                    <button onclick="copyMeetLink()" class="copy-btn text-white px-3 py-2 rounded text-sm">
-                                        <i class="fas fa-copy"></i>
-                                    </button>
+                            <div class="space-y-4">
+                                <div class="flex items-start space-x-4">
+                                    <div class="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center flex-shrink-0">
+                                        <i class="fas fa-clock text-white"></i>
+                                    </div>
+                                    <div>
+                                        <div class="font-semibold text-white text-lg">{{ appointment.formatted_time }}</div>
+                                        <div class="text-sm text-purple-300">
+                                            {% if crisis_level in ['high', 'critical'] %}
+                                                ⚡ Priority scheduling - sooner than usual
+                                            {% else %}
+                                                🎯 Perfect timing for your schedule
+                                            {% endif %}
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
-                            
-                            <a href="{{ appointment.meeting_info.meet_link }}" 
-                               target="_blank" 
-                               class="bg-white text-blue-600 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition duration-300 inline-block">
-                                <i class="fas fa-external-link-alt mr-2"></i>
-                                Open Google Meet
-                            </a>
-                            
-                            <div class="mt-4 text-xs text-blue-100">
-                                📞 Dial-in: {{ appointment.meeting_info.dial_in }}
+                                
+                                <div class="flex items-start space-x-4">
+                                    <div class="w-10 h-10 rounded-lg bg-green-600 flex items-center justify-center flex-shrink-0">
+                                        <i class="fas fa-user-md text-white"></i>
+                                    </div>
+                                    <div>
+                                        <div class="font-semibold text-white text-lg">{{ therapist.name }}</div>
+                                        <div class="text-sm text-purple-300">Licensed Mental Health Professional</div>
+                                        <div class="flex items-center mt-1">
+                                            <div class="flex text-yellow-400 mr-2">
+                                                {% for i in range(5) %}
+                                                    {% if i < (therapist.rating|round|int) %}
+                                                        <i class="fas fa-star text-xs"></i>
+                                                    {% else %}
+                                                        <i class="far fa-star text-xs"></i>
+                                                    {% endif %}
+                                                {% endfor %}
+                                            </div>
+                                            <span class="text-xs text-purple-300">({{ therapist.rating or 'New' }})</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-start space-x-4">
+                                    <div class="w-10 h-10 rounded-lg bg-purple-600 flex items-center justify-center flex-shrink-0">
+                                        <i class="fas fa-{% if appointment.type == 'virtual' %}video{% elif appointment.type == 'phone' %}phone{% else %}building{% endif %} text-white"></i>
+                                    </div>
+                                    <div>
+                                        <div class="font-semibold text-white text-lg">{{ appointment.type.title() }} Session</div>
+                                        <div class="text-sm text-purple-300">
+                                            {% if appointment.type == 'virtual' %}
+                                                🌐 Video call - join from anywhere, anytime
+                                            {% elif appointment.type == 'phone' %}
+                                                📞 Phone call - we'll call you at the scheduled time
+                                            {% else %}
+                                                🏢 In-person at campus counseling center
+                                            {% endif %}
+                                        </div>
+                                        <div class="status-{{ appointment.type }} mt-2">
+                                            <i class="fas fa-check-circle"></i>
+                                            Confirmed & Ready
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-start space-x-4">
+                                    <div class="w-10 h-10 rounded-lg bg-yellow-500 flex items-center justify-center flex-shrink-0">
+                                        <i class="fas fa-hourglass-half text-white"></i>
+                                    </div>
+                                    <div>
+                                        <div class="font-semibold text-white text-lg">60 Minutes</div>
+                                        <div class="text-sm text-purple-300">Standard session duration • Full confidentiality</div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         
-                        <!-- Countdown Timer -->
-                        <div class="countdown-timer" id="countdown">
-                            <div class="text-sm font-medium text-white mb-1">Session starts in:</div>
-                            <div id="countdown-display" class="text-2xl font-bold text-white">
-                                Loading...
+                        <!-- Meeting Access & Countdown -->
+                        <div class="space-y-6">
+                            {% if appointment.type == 'virtual' and appointment.meeting_info %}
+                            <!-- Meeting Link Card -->
+                            <div class="meeting-card">
+                                <h3 class="text-xl font-bold text-white mb-4">
+                                    <i class="fas fa-video mr-2"></i>
+                                    Join Your Session
+                                </h3>
+                                
+                                <div class="bg-white bg-opacity-20 rounded-lg p-4 mb-4">
+                                    <p class="text-sm text-blue-100 mb-2">🔗 Google Meet Link:</p>
+                                    <div class="flex items-center space-x-2">
+                                        <input type="text" 
+                                               value="{{ appointment.meeting_info.meet_link }}" 
+                                               id="meet-link" 
+                                               class="bg-transparent text-white text-sm flex-1 p-2 border border-blue-300 rounded font-mono" 
+                                               readonly>
+                                        <button onclick="copyMeetLink()" 
+                                                class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-3 py-2 rounded text-sm transition-all">
+                                            <i class="fas fa-copy"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <a href="{{ appointment.meeting_info.meet_link }}" 
+                                   target="_blank" 
+                                   class="btn-primary inline-flex items-center">
+                                    <i class="fas fa-external-link-alt mr-2"></i>
+                                    Open Google Meet
+                                </a>
+                                
+                                <div class="mt-4 text-xs text-blue-100">
+                                    📞 Dial-in: {{ appointment.meeting_info.dial_in }}
+                                    <br>
+                                    🔢 PIN: {{ appointment.meeting_info.dial_in_pin }}
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            <!-- Countdown Timer -->
+                            <div class="countdown-timer" id="countdown">
+                                <div class="text-sm font-medium text-white mb-1">⏰ Session starts in:</div>
+                                <div id="countdown-display" class="text-2xl font-bold text-white">
+                                    Loading...
+                                </div>
+                                <div class="text-xs text-orange-100 mt-2">
+                                    Join 05 minutes early to test your connection
+                                </div>
                             </div>
                         </div>
                     </div>
-                    {% endif %}
                 </div>
             </div>
 
             <!-- Therapist Profile -->
-            <div class="appointment-details mb-8">
+            <div class="therapist-card mb-8">
                 <div class="flex items-center space-x-6">
-                    <div class="therapist-badge w-20 h-20 rounded-full flex items-center justify-center flex-shrink-0">
+                    <div class="therapist-badge flex-shrink-0">
                         {% if therapist.photo %}
                             <img src="{{ therapist.photo }}" alt="{{ therapist.name }}" class="w-20 h-20 rounded-full">
                         {% else %}
@@ -300,151 +497,201 @@
                     </div>
                     
                     <div class="flex-grow">
-                        <h3 class="text-xl font-bold text-white">Meet {{ therapist.name }}</h3>
-                        <p class="text-gray-400 mb-2">Your matched therapist</p>
+                        <h3 class="text-2xl font-bold text-white mb-2">Meet {{ therapist.name }}</h3>
+                        <p class="text-purple-300 mb-3">🎯 AI-matched to your specific needs</p>
                         
                         <!-- Specializations -->
-                        <div class="flex flex-wrap gap-2 mb-3">
-                            {% for spec in therapist.specializations[:3] %}
-                            <span class="bg-green-900 bg-opacity-50 text-green-300 px-2 py-1 rounded text-xs">
-                                {{ spec.replace('_', ' ').title() }}
+                        <div class="flex flex-wrap gap-2 mb-4">
+                            {% for spec in therapist.specializations[:4] %}
+                            <span class="bg-gradient-to-r from-green-400 to-blue-500 bg-opacity-20 text-green-300 px-3 py-1 rounded-full text-sm border border-green-400 border-opacity-30">
+                                ✓ {{ spec.replace('_', ' ').title() }}
                             </span>
                             {% endfor %}
                         </div>
                         
-                        <!-- Rating -->
-                        <div class="flex items-center text-yellow-400">
-                            {% for i in range(5) %}
-                                {% if i < (therapist.rating|round|int) %}
-                                    <i class="fas fa-star"></i>
-                                {% else %}
-                                    <i class="far fa-star"></i>
-                                {% endif %}
-                            {% endfor %}
-                            <span class="ml-2 text-gray-400 text-sm">({{ therapist.rating or 'New' }})</span>
+                        <!-- Stats -->
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                            <div>
+                                <div class="text-lg font-bold text-green-400">{{ therapist.total_sessions or 0 }}+</div>
+                                <div class="text-xs text-purple-300">Sessions</div>
+                            </div>
+                            <div>
+                                <div class="text-lg font-bold text-blue-400">{{ therapist.rating or 5.0 }}/5</div>
+                                <div class="text-xs text-purple-300">Rating</div>
+                            </div>
+                            <div>
+                                <div class="text-lg font-bold text-purple-400">Licensed</div>
+                                <div class="text-xs text-purple-300">{{ therapist.license_number[:8] }}...</div>
+                            </div>
+                            <div>
+                                <div class="text-lg font-bold text-yellow-400">
+                                    {% if therapist.emergency_hours %}24/7{% else %}Standard{% endif %}
+                                </div>
+                                <div class="text-xs text-purple-300">Availability</div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- Preparation Tips -->
-            <div class="appointment-details mb-8">
-                <h3 class="text-xl font-bold text-white mb-4 flex items-center">
+            <div class="glass-card p-6 mb-8">
+                <h3 class="text-xl font-bold text-white mb-6 flex items-center">
                     <i class="fas fa-lightbulb mr-3 text-yellow-400"></i>
-                    How to Prepare
+                    🚀 How to Prepare for Success
                 </h3>
                 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="flex items-start space-x-3">
-                        <div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
-                            <i class="fas fa-clock text-white text-sm"></i>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="flex items-start space-x-4">
+                        <div class="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
+                            <i class="fas fa-clock text-white"></i>
                         </div>
                         <div>
-                            <h4 class="font-medium text-white">Join 5 Minutes Early</h4>
-                            <p class="text-sm text-gray-400">Test your connection and get settled</p>
+                            <h4 class="font-semibold text-white mb-1">Join 5 Minutes Early</h4>
+                            <p class="text-sm text-purple-300">Test your connection, get comfortable, and settle in</p>
                         </div>
                     </div>
                     
-                    <div class="flex items-start space-x-3">
-                        <div class="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center flex-shrink-0">
-                            <i class="fas fa-home text-white text-sm"></i>
+                    <div class="flex items-start space-x-4">
+                        <div class="w-12 h-12 bg-gradient-to-r from-green-500 to-teal-600 rounded-full flex items-center justify-center flex-shrink-0">
+                            <i class="fas fa-home text-white"></i>
                         </div>
                         <div>
-                            <h4 class="font-medium text-white">Find a Quiet Space</h4>
-                            <p class="text-sm text-gray-400">Private area where you can speak freely</p>
+                            <h4 class="font-semibold text-white mb-1">Find Your Safe Space</h4>
+                            <p class="text-sm text-purple-300">Private, quiet area where you can speak freely</p>
                         </div>
                     </div>
                     
-                    <div class="flex items-start space-x-3">
-                        <div class="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
-                            <i class="fas fa-sticky-note text-white text-sm"></i>
+                    <div class="flex items-start space-x-4">
+                        <div class="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full flex items-center justify-center flex-shrink-0">
+                            <i class="fas fa-sticky-note text-white"></i>
                         </div>
                         <div>
-                            <h4 class="font-medium text-white">Bring a Notepad</h4>
-                            <p class="text-sm text-gray-400">Jot down insights and action items</p>
+                            <h4 class="font-semibold text-white mb-1">Bring a Journal</h4>
+                            <p class="text-sm text-purple-300">Capture insights, breakthroughs, and action items</p>
                         </div>
                     </div>
                     
-                    <div class="flex items-start space-x-3">
-                        <div class="w-8 h-8 bg-orange-600 rounded-full flex items-center justify-center flex-shrink-0">
-                            <i class="fas fa-heart text-white text-sm"></i>
+                    <div class="flex items-start space-x-4">
+                        <div class="w-12 h-12 bg-gradient-to-r from-red-500 to-orange-600 rounded-full flex items-center justify-center flex-shrink-0">
+                            <i class="fas fa-heart text-white"></i>
                         </div>
                         <div>
-                            <h4 class="font-medium text-white">Be Open & Honest</h4>
-                            <p class="text-sm text-gray-400">The more you share, the more we can help</p>
+                            <h4 class="font-semibold text-white mb-1">Be Authentic</h4>
+                            <p class="text-sm text-purple-300">The more open you are, the more we can help you grow</p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Emergency Support (if crisis level high) -->
-            {% if crisis_level == 'high' %}
-            <div class="bg-red-900 border border-red-500 rounded-lg p-6 mb-8">
-                <h3 class="text-lg font-bold text-red-200 mb-3 flex items-center">
-                    <i class="fas fa-exclamation-triangle mr-2"></i>
-                    Immediate Support Available
+            <!-- Crisis Support (if high priority) -->
+            {% if crisis_level in ['high', 'critical'] %}
+            <div class="glass-card border-red-500 border-2 p-6 mb-8">
+                <h3 class="text-lg font-bold text-red-300 mb-4 flex items-center">
+                    <i class="fas fa-shield-alt mr-3"></i>
+                    🆘 Immediate Support Always Available
                 </h3>
-                <p class="text-red-200 mb-3">If you need help before your session:</p>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
                     <div>
-                        <p class="font-semibold text-red-100">24/7 Crisis Support:</p>
-                        <p class="text-red-200">• Call or text <strong>988</strong> anytime</p>
-                        <p class="text-red-200">• Emergency services: <strong>911</strong></p>
+                        <p class="font-semibold text-red-200 mb-2">24/7 Crisis Support:</p>
+                        <div class="space-y-1 text-red-100">
+                            <p>• 📞 Call or text <strong class="text-white">988</strong> anytime</p>
+                            <p>• 🚨 Emergency services: <strong class="text-white">911</strong></p>
+                            <p>• 💬 Crisis text: <strong class="text-white">Text HOME to 741741</strong></p>
+                        </div>
                     </div>
                     <div>
-                        <p class="font-semibold text-red-100">Campus Resources:</p>
-                        <p class="text-red-200">• Campus counseling: Available 24/7</p>
-                        <p class="text-red-200">• Student health services</p>
+                        <p class="font-semibold text-red-200 mb-2">Campus Resources:</p>
+                        <div class="space-y-1 text-red-100">
+                            <p>• 🏫 Campus counseling: Available 24/7</p>
+                            <p>• 🏥 Student health services</p>
+                            <p>• 👥 Peer support groups</p>
+                        </div>
                     </div>
                 </div>
             </div>
             {% endif %}
 
             <!-- Action Buttons -->
-            <div class="text-center space-y-4">
+            <div class="text-center space-y-6">
                 <div class="flex flex-wrap justify-center gap-4">
+                    {% if appointment.type == 'virtual' and appointment.meeting_info %}
+                    <a href="{{ appointment.meeting_info.meet_link }}" 
+                       target="_blank"
+                       class="btn-primary">
+                        <i class="fas fa-video mr-2"></i>
+                        Join Session Now
+                    </a>
+                    {% endif %}
+                    
                     <a href="{{ url_for('dashboard.therapist_info') }}" 
-                       class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-semibold transition duration-300">
+                       class="bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white px-8 py-3 rounded-lg font-semibold transition duration-300">
                         <i class="fas fa-user-md mr-2"></i>
                         View Therapist Profile
                     </a>
                     
                     <a href="{{ url_for('dashboard.index') }}" 
-                       class="bg-gray-600 hover:bg-gray-700 text-white px-8 py-3 rounded-lg font-semibold transition duration-300">
+                       class="bg-gradient-to-r from-purple-600 to-indigo-700 hover:from-purple-700 hover:to-indigo-800 text-white px-8 py-3 rounded-lg font-semibold transition duration-300">
                         <i class="fas fa-home mr-2"></i>
                         Back to Dashboard
                     </a>
                 </div>
                 
-                <p class="text-sm text-gray-400">
-                    <i class="fas fa-envelope mr-1"></i>
-                    Confirmation details have been sent to your email
-                </p>
+                <div class="text-sm text-purple-300 space-y-2">
+                    <p>
+                        <i class="fas fa-envelope mr-2"></i>
+                        📧 Confirmation details sent to your email
+                    </p>
+                    <p>
+                        <i class="fas fa-calendar-plus mr-2"></i>
+                        📅 Calendar invite sent automatically
+                    </p>
+                    <p>
+                        <i class="fas fa-bell mr-2"></i>
+                        🔔 You'll receive reminders 24h and 1h before your session
+                    </p>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
+        // Create animated particles
+        function createParticles() {
+            const particles = document.getElementById('particles');
+            const particleCount = 50;
+            
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.top = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 6 + 's';
+                particle.style.animationDuration = (Math.random() * 3 + 3) + 's';
+                particles.appendChild(particle);
+            }
+        }
+        
         // Copy meeting link functionality
         function copyMeetLink() {
             const linkInput = document.getElementById('meet-link');
             linkInput.select();
             linkInput.setSelectionRange(0, 99999);
-            document.execCommand('copy');
             
-            // Show feedback
-            const copyBtn = event.target.closest('button');
-            const originalHTML = copyBtn.innerHTML;
-            copyBtn.innerHTML = '<i class="fas fa-check"></i>';
-            copyBtn.style.backgroundColor = '#10b981';
-            
-            setTimeout(() => {
-                copyBtn.innerHTML = originalHTML;
-                copyBtn.style.backgroundColor = '';
-            }, 2000);
+            navigator.clipboard.writeText(linkInput.value).then(() => {
+                const copyBtn = event.target.closest('button');
+                const originalHTML = copyBtn.innerHTML;
+                copyBtn.innerHTML = '<i class="fas fa-check"></i>';
+                copyBtn.style.background = 'rgba(16, 185, 129, 0.3)';
+                
+                setTimeout(() => {
+                    copyBtn.innerHTML = originalHTML;
+                    copyBtn.style.background = '';
+                }, 2000);
+            });
         }
 
-        // Countdown timer
+        // Enhanced countdown timer
         function updateCountdown() {
             const sessionTime = new Date('{{ appointment.datetime.isoformat() }}');
             const now = new Date();
@@ -458,36 +705,39 @@
                 
                 let display = '';
                 if (days > 0) display += `${days}d `;
-                if (hours > 0) display += `${hours}h `;
+                if (hours > 0 || days > 0) display += `${hours}h `;
                 display += `${minutes}m ${seconds}s`;
                 
                 document.getElementById('countdown-display').textContent = display;
                 
-                // Change color as session approaches
+                // Change countdown styling as session approaches
                 const countdownEl = document.getElementById('countdown');
                 if (timeDiff < 15 * 60 * 1000) { // Less than 15 minutes
                     countdownEl.style.background = 'linear-gradient(135deg, #10b981, #059669)';
-                    countdownEl.innerHTML += '<div class="text-xs mt-2">🟢 Ready to join!</div>';
+                    countdownEl.innerHTML = countdownEl.innerHTML.replace('Session starts in:', '🟢 Ready to join!');
+                } else if (timeDiff < 60 * 60 * 1000) { // Less than 1 hour
+                    countdownEl.style.background = 'linear-gradient(135deg, #f59e0b, #d97706)';
                 }
             } else {
-                document.getElementById('countdown-display').textContent = 'Session time!';
+                document.getElementById('countdown-display').textContent = '🎉 Session time!';
                 document.getElementById('countdown').style.background = 'linear-gradient(135deg, #10b981, #059669)';
             }
         }
 
-        // Update countdown every second
-        updateCountdown();
-        setInterval(updateCountdown, 1000);
-
-        // Celebration animation on load
-        setTimeout(() => {
-            document.querySelectorAll('.celebration').forEach(el => {
-                el.style.transform = 'scale(1.05)';
+        // Initialize everything
+        document.addEventListener('DOMContentLoaded', function() {
+            createParticles();
+            updateCountdown();
+            setInterval(updateCountdown, 1000);
+            
+            // Success animation
+            setTimeout(() => {
+                document.querySelector('.success-animation').style.transform = 'scale(1.02)';
                 setTimeout(() => {
-                    el.style.transform = 'scale(1)';
-                }, 500);
-            });
-        }, 1000);
+                    document.querySelector('.success-animation').style.transform = 'scale(1)';
+                }, 300);
+            }, 1000);
+        });
     </script>
 </body>
 </html>
