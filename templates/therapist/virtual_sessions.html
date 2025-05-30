@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Virtual Sessions | Therapist Portal</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 50%, #2d1b69 100%);
+            color: #e0e7ff;
+            min-height: 100vh;
+        }
+        
+        .sidebar {
+            background: rgba(15, 15, 35, 0.9);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 260px;
+            z-index: 1000;
+        }
+        
+        .sidebar-nav a {
+            color: #a78bfa;
+            padding: 0.75rem 1.5rem;
+            display: flex;
+            align-items: center;
+            transition: all 0.3s ease;
+            border-radius: 0 20px 20px 0;
+            margin-right: 1rem;
+        }
+        
+        .sidebar-nav a:hover {
+            background: rgba(139, 92, 246, 0.2);
+            color: #c4b5fd;
+            transform: translateX(8px);
+        }
+        
+        .sidebar-nav a.active {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            color: white;
+            box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4);
+        }
+        
+        .main-content {
+            margin-left: 260px;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .session-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .session-card:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: #8b5cf6;
+            transform: translateY(-2px);
+        }
+        
+        .session-confirmed {
+            border-left: 4px solid #10b981;
+            background: rgba(16, 185, 129, 0.1);
+        }
+        
+        .session-completed {
+            border-left: 4px solid #6b7280;
+            background: rgba(107, 114, 128, 0.1);
+        }
+        
+        .session-cancelled {
+            border-left: 4px solid #ef4444;
+            background: rgba(239, 68, 68, 0.1);
+        }
+        
+        .crisis-indicator {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            animation: pulse 2s infinite;
+        }
+        
+        .virtual-only-badge {
+            background: rgba(59, 130, 246, 0.2);
+            color: #60a5fa;
+            border: 1px solid rgba(59, 130, 246, 0.4);
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(139, 92, 246, 0.4);
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #10b981, #059669);
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+        }
+        
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(16, 185, 129, 0.4);
+        }
+        
+        .tab-button {
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #a78bfa;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .tab-button.active {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            color: white;
+            box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4);
+        }
+        
+        .tab-button:hover:not(.active) {
+            background: rgba(139, 92, 246, 0.2);
+            color: #c4b5fd;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .meeting-link-box {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .copy-btn {
+            background: #3b82f6;
+            border: none;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .copy-btn:hover {
+            background: #2563eb;
+        }
+        
+        .auto-action-btn {
+            background: rgba(245, 158, 11, 0.2);
+            border: 1px solid rgba(245, 158, 11, 0.4);
+            color: #fbbf24;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .auto-action-btn:hover {
+            background: rgba(245, 158, 11, 0.3);
+            transform: translateY(-1px);
+        }
+        
+        .suggest-btn {
+            background: rgba(59, 130, 246, 0.2);
+            border: 1px solid rgba(59, 130, 246, 0.4);
+            color: #60a5fa;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .suggest-btn:hover {
+            background: rgba(59, 130, 246, 0.3);
+            transform: translateY(-1px);
+        }
+        
+        @media (max-width: 1024px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+        <div class="p-6">
+            <h1 class="text-2xl font-bold mb-8 bg-gradient-to-r from-purple-400 to-pink-600 bg-clip-text text-transparent">
+                Therapist Portal
+            </h1>
+        </div>
+        <nav class="sidebar-nav">
+            <ul class="space-y-2">
+                <li><a href="{{ url_for('therapist.index') }}" class="flex items-center">
+                    <i class="fas fa-chart-line w-5 mr-3"></i> Dashboard
+                </a></li>
+                <li><a href="{{ url_for('therapist.students') }}" class="flex items-center">
+                    <i class="fas fa-users w-5 mr-3"></i> My Students
+                </a></li>
+                <li><a href="{{ url_for('therapist.virtual_sessions') }}" class="flex items-center active">
+                    <i class="fas fa-video w-5 mr-3"></i> Virtual Sessions
+                </a></li>
+                <li><a href="{{ url_for('therapist.availability') }}" class="flex items-center">
+                    <i class="fas fa-calendar-alt w-5 mr-3"></i> Availability
+                </a></li>
+                <li><a href="{{ url_for('therapist.resources') }}" class="flex items-center">
+                    <i class="fas fa-book w-5 mr-3"></i> Resources
+                </a></li>
+                <li><a href="{{ url_for('therapist.profile') }}" class="flex items-center">
+                    <i class="fas fa-user w-5 mr-3"></i> Profile
+                </a></li>
+            </ul>
+            
+            <div class="mt-auto p-6">
+                <a href="{{ url_for('auth.logout') }}" class="flex items-center text-red-400 hover:text-red-300">
+                    <i class="fas fa-sign-out-alt w-5 mr-3"></i> Logout
+                </a>
+            </div>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="max-w-7xl mx-auto">
+            
+            <!-- Header -->
+            <div class="mb-8">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h1 class="text-4xl font-bold mb-2 bg-gradient-to-r from-purple-400 to-pink-600 bg-clip-text text-transparent">
+                            Virtual Sessions
+                        </h1>
+                        <p class="text-purple-300">
+                            <i class="fas fa-video mr-2"></i>
+                            Manage all your virtual therapy sessions • Google Meet Integration
+                        </p>
+                    </div>
+                    <div class="virtual-only-badge">
+                        <i class="fas fa-video mr-2"></i>
+                        Virtual Sessions Only
+                    </div>
+                </div>
+            </div>
+
+            <!-- Session Tabs -->
+            <div class="glass-card p-6 mb-8">
+                <div class="flex space-x-4 mb-6">
+                    <button class="tab-button active" onclick="showTab('confirmed')">
+                        <i class="fas fa-check-circle mr-2"></i>
+                        Confirmed ({{ confirmed_sessions|length }})
+                    </button>
+                    <button class="tab-button" onclick="showTab('completed')">
+                        <i class="fas fa-check-double mr-2"></i>
+                        Completed ({{ completed_sessions|length }})
+                    </button>
+                    <button class="tab-button" onclick="showTab('cancelled')">
+                        <i class="fas fa-times-circle mr-2"></i>
+                        Cancelled ({{ cancelled_sessions|length }})
+                    </button>
+                </div>
+
+                <!-- Confirmed Sessions Tab -->
+                <div id="confirmed-tab" class="tab-content active">
+                    <h3 class="text-xl font-bold mb-4 text-white">
+                        <i class="fas fa-video mr-2 text-green-400"></i>
+                        Confirmed Virtual Sessions
+                    </h3>
+                    
+                    {% if confirmed_sessions %}
+                    <div class="space-y-4">
+                        {% for session in confirmed_sessions %}
+                        <div class="session-card session-confirmed">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-4">
+                                    <div class="w-12 h-12 bg-green-600 rounded-full flex items-center justify-center">
+                                        <i class="fas fa-video text-white"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-semibold text-white text-lg">
+                                            {{ session.student_name }}
+                                            {% if session.crisis_level in ['high', 'critical'] %}
+                                            <span class="crisis-indicator ml-2">
+                                                <i class="fas fa-exclamation-triangle mr-1"></i>Priority
+                                            </span>
+                                            {% endif %}
+                                        </h4>
+                                        <p class="text-green-300">
+                                            {{ session.formatted_time }} • 
+                                            <span class="virtual-only-badge">Virtual Session</span>
+                                            {% if session.auto_scheduled %}
+                                            <span class="ml-2 text-yellow-400 text-sm">
+                                                <i class="fas fa-magic mr-1"></i>Auto-Scheduled
+                                            </span>
+                                            {% endif %}
+                                        </p>
+                                        <p class="text-gray-400 text-sm mt-1">
+                                            Duration: 60 minutes • Platform: Google Meet
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="flex flex-col space-y-2">
+                                    {% if session.meeting_info %}
+                                    <a href="{{ session.meeting_info.meet_link }}" target="_blank" class="btn-success">
+                                        <i class="fas fa-video mr-2"></i>
+                                        Join Session
+                                    </a>
+                                    {% endif %}
+                                    <button onclick="autoReschedule('{{ session._id }}')" class="auto-action-btn">
+                                        <i class="fas fa-sync mr-2"></i>
+                                        Auto-Reschedule
+                                    </button>
+                                    <button onclick="suggestAlternative('{{ session._id }}')" class="suggest-btn">
+                                        <i class="fas fa-user-friends mr-2"></i>
+                                        Suggest Alternative
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            {% if session.meeting_info %}
+                            <div class="meeting-link-box">
+                                <p class="text-blue-300 text-sm font-medium mb-2">
+                                    <i class="fas fa-link mr-1"></i>
+                                    Meeting Link (Share with student if needed):
+                                </p>
+                                <div class="flex items-center space-x-2">
+                                    <input type="text" 
+                                           value="{{ session.meeting_info.meet_link }}" 
+                                           id="link-{{ session._id }}" 
+                                           class="bg-transparent text-blue-200 text-sm flex-1 p-2 border border-blue-400 rounded font-mono" 
+                                           readonly>
+                                    <button onclick="copyLink('{{ session._id }}')" class="copy-btn">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-12">
+                        <i class="fas fa-video text-6xl text-purple-400 mb-4 opacity-50"></i>
+                        <h4 class="text-xl font-semibold text-white mb-2">No confirmed virtual sessions</h4>
+                        <p class="text-purple-300">New auto-scheduled sessions will appear here once confirmed.</p>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Completed Sessions Tab -->
+                <div id="completed-tab" class="tab-content">
+                    <h3 class="text-xl font-bold mb-4 text-white">
+                        <i class="fas fa-check-double mr-2 text-gray-400"></i>
+                        Completed Virtual Sessions
+                    </h3>
+                    
+                    {% if completed_sessions %}
+                    <div class="space-y-4">
+                        {% for session in completed_sessions[:10] %}
+                        <div class="session-card session-completed">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-4">
+                                    <div class="w-12 h-12 bg-gray-600 rounded-full flex items-center justify-center">
+                                        <i class="fas fa-check text-white"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-semibold text-white text-lg">
+                                            {{ session.student_name }}
+                                        </h4>
+                                        <p class="text-gray-300">
+                                            {{ session.formatted_time }} • 
+                                            <span class="virtual-only-badge">Virtual Session</span>
+                                        </p>
+                                        <p class="text-gray-400 text-sm mt-1">
+                                            Session completed • Duration: 60 minutes
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="flex flex-col space-y-2">
+                                    <a href="{{ url_for('therapist.add_session_notes', appointment_id=session._id) }}" class="btn-primary">
+                                        <i class="fas fa-notes-medical mr-2"></i>
+                                        Session Notes
+                                    </a>
+                                    <a href="{{ url_for('therapist.student_details', student_id=session.user_id) }}" class="btn-primary">
+                                        <i class="fas fa-user mr-2"></i>
+                                        View Student
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-12">
+                        <i class="fas fa-history text-6xl text-purple-400 mb-4 opacity-50"></i>
+                        <h4 class="text-xl font-semibold text-white mb-2">No completed sessions yet</h4>
+                        <p class="text-purple-300">Completed virtual sessions will appear here for record keeping.</p>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Cancelled Sessions Tab -->
+                <div id="cancelled-tab" class="tab-content">
+                    <h3 class="text-xl font-bold mb-4 text-white">
+                        <i class="fas fa-times-circle mr-2 text-red-400"></i>
+                        Cancelled Virtual Sessions
+                    </h3>
+                    
+                    {% if cancelled_sessions %}
+                    <div class="space-y-4">
+                        {% for session in cancelled_sessions[:10] %}
+                        <div class="session-card session-cancelled">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-4">
+                                    <div class="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center">
+                                        <i class="fas fa-times text-white"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-semibold text-white text-lg">
+                                            {{ session.student_name }}
+                                        </h4>
+                                        <p class="text-red-300">
+                                            {{ session.formatted_time }} • 
+                                            <span class="virtual-only-badge">Virtual Session</span>
+                                        </p>
+                                        <p class="text-gray-400 text-sm mt-1">
+                                            {% if session.cancellation_reason %}
+                                                Reason: {{ session.cancellation_reason }}
+                                            {% else %}
+                                                Session cancelled
+                                            {% endif %}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="flex flex-col space-y-2">
+                                    <a href="{{ url_for('therapist.student_details', student_id=session.user_id) }}" class="btn-primary">
+                                        <i class="fas fa-user mr-2"></i>
+                                        View Student
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-12">
+                        <i class="fas fa-times-circle text-6xl text-purple-400 mb-4 opacity-50"></i>
+                        <h4 class="text-xl font-semibold text-white mb-2">No cancelled sessions</h4>
+                        <p class="text-purple-300">Cancelled virtual sessions will appear here for record keeping.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Session Statistics -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="glass-card p-6">
+                    <h3 class="text-xl font-bold mb-4 text-white">
+                        <i class="fas fa-chart-bar mr-2 text-blue-400"></i>
+                        This Week
+                    </h3>
+                    <div class="space-y-3">
+                        <div class="flex justify-between">
+                            <span class="text-purple-300">Virtual Sessions:</span>
+                            <span class="font-semibold">{{ confirmed_sessions|length + completed_sessions|length }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-purple-300">Avg Duration:</span>
+                            <span class="font-semibold">60 minutes</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-purple-300">Platform:</span>
+                            <span class="font-semibold text-blue-400">Google Meet</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="glass-card p-6">
+                    <h3 class="text-xl font-bold mb-4 text-white">
+                        <i class="fas fa-robot mr-2 text-green-400"></i>
+                        Auto-Scheduling
+                    </h3>
+                    <div class="space-y-3">
+                        <div class="flex justify-between">
+                            <span class="text-purple-300">Auto-Confirmed:</span>
+                            <span class="font-semibold text-green-400">
+                                {{ (confirmed_sessions)|selectattr('auto_scheduled')|list|length }}
+                            </span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-purple-300">Cancelled:</span>
+                            <span class="font-semibold text-red-400">{{ cancelled_sessions|length }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-purple-300">Success Rate:</span>
+                            <span class="font-semibold text-green-400">98%</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="glass-card p-6">
+                    <h3 class="text-xl font-bold mb-4 text-white">
+                        <i class="fas fa-exclamation-triangle mr-2 text-red-400"></i>
+                        Crisis Sessions
+                    </h3>
+                    <div class="space-y-3">
+                        <div class="flex justify-between">
+                            <span class="text-purple-300">High Priority:</span>
+                            <span class="font-semibold text-red-400">
+                                {{ (confirmed_sessions + cancelled_sessions)|selectattr('crisis_level', 'in', ['high', 'critical'])|list|length }}
+                            </span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-purple-300">Response Time:</span>
+                            <span class="font-semibold text-green-400">&lt; 1 hour</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-purple-300">Availability:</span>
+                            <span class="font-semibold text-green-400">24/7 Virtual</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        // Tab switching
+        function showTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Remove active class from all buttons
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabName + '-tab').classList.add('active');
+            
+            // Add active class to clicked button
+            event.target.classList.add('active');
+        }
+        
+        // Auto-reschedule session
+        function autoReschedule(sessionId) {
+            if (confirm('Auto-reschedule this virtual session to the next available slot?')) {
+                fetch(`/therapist/auto-reschedule-appointment/${sessionId}`, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(`✅ Session auto-rescheduled successfully!\n\nNew time: ${data.new_time}`);
+                        location.reload();
+                    } else {
+                        alert('❌ Failed to auto-reschedule: ' + (data.error || 'Unknown error'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('❌ Failed to auto-reschedule session. Please try again.');
+                });
+            }
+        }
+        
+        // Suggest alternative therapist
+        function suggestAlternative(sessionId) {
+            if (confirm('Suggest alternative therapist options to the student?\n\nThis will cancel the current appointment and provide the student with compatible therapist alternatives.')) {
+                fetch(`/therapist/suggest-alternative-therapist/${sessionId}`, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(`✅ Alternative therapist options sent to student!\n\n${data.alternatives_count} compatible therapists found.`);
+                        location.reload();
+                    } else {
+                        alert('❌ Failed to suggest alternatives: ' + (data.error || 'Unknown error'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('❌ Failed to suggest alternatives. Please try again.');
+                });
+            }
+        }
+        
+        // Copy meeting link
+        function copyLink(sessionId) {
+            const linkInput = document.getElementById('link-' + sessionId);
+            linkInput.select();
+            linkInput.setSelectionRange(0, 99999);
+            
+            navigator.clipboard.writeText(linkInput.value).then(() => {
+                const copyBtn = event.target.closest('button');
+                const originalHTML = copyBtn.innerHTML;
+                copyBtn.innerHTML = '<i class="fas fa-check"></i>';
+                copyBtn.style.background = 'rgba(16, 185, 129, 0.7)';
+                
+                setTimeout(() => {
+                    copyBtn.innerHTML = originalHTML;
+                    copyBtn.style.background = '';
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy text: ', err);
+                alert('Failed to copy link. Please copy manually.');
+            });
+        }
+        
+        // Auto-refresh sessions every 3 minutes for confirmed sessions
+        setInterval(() => {
+            const currentTab = document.querySelector('.tab-button.active').textContent.toLowerCase();
+            if (currentTab.includes('confirmed')) {
+                location.reload();
+            }
+        }, 180000);
+    </script>
+</body>
+</html>

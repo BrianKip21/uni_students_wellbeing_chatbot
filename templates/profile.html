@@ -3,282 +3,727 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wellbeing Assistant - Profile</title>
+    <title>Profile | Wellbeing Assistant</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css"> 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
 
     <style>
-        {% if settings.theme_mode == 'dark' %}
-        /* Dark mode styles */
-        body {
-            background-color: #121212 !important;
-            color: #e0e0e0 !important;
-        }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         
-        .bg-white {
-            background-color: #1e1e1e !important;
-        }
-        
-        .text-gray-700, .text-gray-800, .text-gray-900 {
-            color: #e0e0e0 !important;
-        }
-        
-        .text-gray-500, .text-gray-600 {
-            color: #a0a0a0 !important;
-        }
-        
-        .bg-gray-50, .bg-gray-100, .bg-gray-200 {
-            background-color: #2a2a2a !important;
-        }
-        
-        .border-gray-200, .border-gray-300 {
-            border-color: #333 !important;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
         }
 
-        .hover\:bg-gray-100:hover {
-            background-color: #333333 !important;
+        body {
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 50%, #2d1b69 100%);
+            color: #e0e7ff;
+            min-height: 100vh;
+        }
+        
+        /* Sidebar styling to match dashboard */
+        .sidebar {
+            background: rgba(15, 15, 35, 0.9);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 260px;
+            z-index: 1000;
+        }
+        
+        .sidebar-nav a {
+            color: #a78bfa;
+            padding: 0.75rem 1.5rem;
+            display: flex;
+            align-items: center;
+            transition: all 0.3s ease;
+            border-radius: 0 20px 20px 0;
+            margin-right: 1rem;
+            text-decoration: none;
+        }
+        
+        .sidebar-nav a:hover {
+            background: rgba(139, 92, 246, 0.2);
+            color: #c4b5fd;
+            transform: translateX(8px);
+        }
+        
+        .sidebar-nav a.active {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            color: white;
+            box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4);
+        }
+        
+        /* Main content area */
+        .main-content {
+            margin-left: 260px;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        
+        /* Glass card effect */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+            padding: 1.5rem;
+            animation: fadeInSlide 0.6s ease-out;
+        }
+        
+        .glass-card:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateY(-2px);
+        }
+        
+        /* Flash messages styling */
+        .flash-message {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-left: 4px solid #3b82f6;
+            color: #93c5fd;
+            padding: 1rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+        }
+        
+        .flash-message.success {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: rgba(16, 185, 129, 0.3);
+            border-left-color: #10b981;
+            color: #6ee7b7;
+        }
+        
+        .flash-message.error {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: rgba(239, 68, 68, 0.3);
+            border-left-color: #ef4444;
+            color: #fca5a5;
+        }
+        
+        /* Profile avatar */
+        .profile-avatar {
+            width: 8rem;
+            height: 8rem;
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 3rem;
+            margin: 0 auto 1rem;
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 25px rgba(139, 92, 246, 0.3);
+        }
+        
+        .profile-avatar img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        
+        /* Form styling */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-label {
+            display: block;
+            color: #c4b5fd;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: #e0e7ff;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 0.08);
+            border-color: #8b5cf6;
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.25);
+        }
+        
+        .form-input:disabled {
+            background: rgba(255, 255, 255, 0.02);
+            color: #a78bfa;
+            cursor: not-allowed;
+        }
+        
+        .form-input::placeholder {
+            color: #a78bfa;
+            opacity: 0.7;
+        }
+        
+        .form-help {
+            font-size: 0.75rem;
+            color: #a78bfa;
+            margin-top: 0.25rem;
+            opacity: 0.8;
+        }
+        
+        /* Button styling */
+        .btn-primary {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(139, 92, 246, 0.4);
+            color: white;
+            text-decoration: none;
+        }
+        
+        /* Stats styling */
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .stat-item:last-child {
+            border-bottom: none;
+        }
+        
+        .stat-label {
+            color: #a78bfa;
+            font-weight: 500;
+        }
+        
+        .stat-value {
+            color: #e0e7ff;
+            font-weight: 600;
+        }
+        
+        /* Activity items */
+        .activity-item {
+            padding: 1rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+        
+        .activity-item:hover {
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 8px;
+            padding-left: 1rem;
+            padding-right: 1rem;
+        }
+        
+        .activity-title {
+            color: #e0e7ff;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+        
+        .activity-description {
+            color: #a78bfa;
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .activity-time {
+            color: #6b7280;
+            font-size: 0.75rem;
+        }
+        
+        /* Section headers */
+        .section-header {
+            background: linear-gradient(135deg, #8b5cf6, #ec4899);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 700;
+            font-size: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .card-header {
+            color: #e0e7ff;
+            font-weight: 600;
+            font-size: 1.25rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        /* Password section styling */
+        .password-section {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 1.5rem;
+            margin-top: 1.5rem;
+        }
+        
+        .password-section h4 {
+            color: #c4b5fd;
+            font-weight: 600;
+            font-size: 1.125rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        /* Animations */
+        @keyframes fadeInSlide {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* Grid responsive */
+        .profile-grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        @media (max-width: 768px) {
+            .profile-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .main-content {
+                margin-left: 0;
+                padding: 1rem;
+            }
+            
+            .sidebar {
+                transform: translateX(-100%);
+            }
+        }
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        
+        @media (max-width: 640px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* Accessibility - Theme modes */
+        {% if settings.theme_mode == 'dark' %}
+        body {
+            background: linear-gradient(135deg, #000000 0%, #1a1a3e 50%, #2d1b69 100%);
+        }
+        
+        .glass-card {
+            background: rgba(0, 0, 0, 0.3);
+        }
+        
+        .sidebar {
+            background: rgba(0, 0, 0, 0.9);
         }
         {% endif %}
         
         {% if settings.contrast == 'high' %}
-        /* High contrast styles */
         body {
-            background-color: #ffffff !important;
-            color: #000000 !important;
-        }
-        
-        .text-gray-500, .text-gray-600, .text-gray-700, .text-gray-800, .text-gray-900 {
-            color: #000000 !important;
-        }
-        
-        .bg-gray-800 {
-            background-color: #000000 !important;
-        }
-        
-        .text-gray-200 {
+            background: #000000 !important;
             color: #ffffff !important;
         }
         
-        input, select, button {
-            border: 2px solid #000000 !important;
+        .glass-card {
+            background: rgba(255, 255, 255, 0.1) !important;
+            border: 2px solid #ffffff !important;
+        }
+        
+        .card-header, .section-header {
+            color: #ffffff !important;
+            -webkit-text-fill-color: #ffffff !important;
+        }
+        
+        .form-input {
+            border: 2px solid #ffffff !important;
+            color: #ffffff !important;
+        }
+        
+        .stat-label, .stat-value, .activity-title, .activity-description {
+            color: #ffffff !important;
         }
         {% endif %}
         
         {% if settings.text_size == 'lg' %}
-        /* Large text */
         body {
             font-size: 1.125rem !important;
         }
         
-        .text-sm {
-            font-size: 0.9375rem !important;
+        .form-input {
+            font-size: 1.125rem !important;
         }
         
-        .text-lg, .text-xl, .text-2xl, .text-3xl {
-            font-size: 1.3125rem !important;
+        .section-header {
+            font-size: 2.25rem !important;
+        }
+        
+        .card-header {
+            font-size: 1.375rem !important;
         }
         {% elif settings.text_size == 'xl' %}
-        /* Extra large text */
         body {
             font-size: 1.25rem !important;
         }
         
-        .text-sm {
-            font-size: 1.0625rem !important;
+        .form-input {
+            font-size: 1.25rem !important;
         }
         
-        .text-lg, .text-xl {
-            font-size: 1.5rem !important;
+        .section-header {
+            font-size: 2.5rem !important;
         }
-
-        .text-2xl, .text-3xl {
-            font-size: 1.75rem !important;
+        
+        .card-header {
+            font-size: 1.5rem !important;
         }
         {% endif %}
     </style>
 </head>
 
-<body class="bg-gray-200 flex text-gray-900">
+<body>
     <!-- Sidebar Navigation -->
-    <aside class="w-64 h-screen bg-gray-800 text-gray-200 p-4 fixed">
-        <h1 class="text-2xl font-bold mb-6">Wellbeing Assistant</h1>
-        <nav>
-            <ul class="space-y-4">
-                <li><a href="{{ url_for('dashboard.index') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-chart-line"></i> Dashboard</a></li>
-                <li><a href="{{ url_for('tracking.index') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-chart-bar"></i> Wellness Tracker</a></li>
-                <li><a href="{{ url_for('chatbot.chatbot_page') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-comments"></i> Chat</a></li>
-                <li><a href="{{ url_for('dashboard.therapist_info') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-calendar-alt"></i> Therapist</a></li>
-                <li><a href="{{ url_for('dashboard.profile') }}" class="block p-2 bg-gray-700 rounded"> <i class="fas fa-user"></i> Profile</a></li>
-                <li><a href="{{ url_for('dashboard.student_resources') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-book"></i> Resources</a></li>
-                <li><a href="{{ url_for('dashboard.settings') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-cog"></i> Settings</a></li>
-                <li><a href="{{ url_for('auth.logout') }}" class="block p-2 hover:bg-gray-700 rounded mt-8"> <i class="fas fa-sign-out-alt"></i> Logout</a></li>
+    <aside class="sidebar">
+        <div class="p-6">
+            <h1 class="text-2xl font-bold mb-8 bg-gradient-to-r from-purple-400 to-pink-600 bg-clip-text text-transparent">
+                Wellbeing Assistant
+            </h1>
+        </div>
+        <nav class="sidebar-nav">
+            <ul class="space-y-2">
+                <li><a href="{{ url_for('dashboard.index') }}" class="flex items-center">
+                    <i class="fas fa-chart-line w-5 mr-3"></i> Dashboard
+                </a></li>
+                <li><a href="{{ url_for('tracking.index') }}" class="flex items-center">
+                    <i class="fas fa-chart-bar w-5 mr-3"></i> Wellness Tracker
+                </a></li>
+                <li><a href="{{ url_for('chatbot.chatbot_page') }}" class="flex items-center">
+                    <i class="fas fa-comments w-5 mr-3"></i> AI Chat
+                </a></li>
+                <li><a href="{{ url_for('dashboard.therapist_info') }}" class="flex items-center">
+                    <i class="fas fa-user-md w-5 mr-3"></i> Your Therapist
+                </a></li>
+                <li><a href="{{ url_for('dashboard.profile') }}" class="flex items-center active">
+                    <i class="fas fa-user w-5 mr-3"></i> Profile
+                </a></li>
+                <li><a href="{{ url_for('dashboard.student_resources') }}" class="flex items-center">
+                    <i class="fas fa-book w-5 mr-3"></i> Resources
+                </a></li>
+                <li><a href="{{ url_for('dashboard.settings') }}" class="flex items-center">
+                    <i class="fas fa-cog w-5 mr-3"></i> Settings
+                </a></li>
             </ul>
+            
+            <div class="mt-auto p-6">
+                <a href="{{ url_for('auth.logout') }}" class="flex items-center text-red-400 hover:text-red-300">
+                    <i class="fas fa-sign-out-alt w-5 mr-3"></i> Logout
+                </a>
+            </div>
         </nav>
     </aside>
 
     <!-- Main Content -->
-    <main class="ml-64 p-8 w-full">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="{% if category == 'error' %}bg-red-100 border-l-4 border-red-500 text-red-700{% elif category == 'success' %}bg-green-100 border-l-4 border-green-500 text-green-700{% else %}bg-blue-100 border-l-4 border-blue-500 text-blue-700{% endif %} p-4 mb-6" role="alert">
-                        <p>{{ message }}</p>
-                    </div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
-    
-        <h2 class="text-3xl font-bold text-gray-800 mb-6">My Profile</h2>
+    <main class="main-content">
+        <div class="max-w-6xl mx-auto">
+            
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="flash-message {% if category == 'error' %}error{% elif category == 'success' %}success{% endif %}" role="alert">
+                            <p>{{ message }}</p>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
         
-        <!-- Profile Card -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-            <!-- User Info Card -->
-            <div class="bg-white p-6 rounded shadow md:col-span-1">
-                <div class="flex flex-col items-center">
-                    <div class="w-32 h-32 bg-gray-300 rounded-full flex items-center justify-center mb-4">
-                        {% if user.avatar_url %}
-                            <img src="{{ user.avatar_url }}" alt="{{ user.first_name }}'s avatar" class="w-32 h-32 rounded-full">
-                        {% else %}
-                            <i class="fas fa-user text-6xl text-gray-600"></i>
-                        {% endif %}
-                    </div>
-                    <h3 class="text-xl font-semibold">{{ user.first_name }} {{ user.last_name }}</h3>
-                    <p class="text-gray-600 mb-4">{{ user.email }}</p>
-                    
-                    <div class="w-full border-t border-gray-200 pt-4 mt-2">
-                        <div class="flex justify-between mb-2">
-                            <span class="text-gray-700">Registered:</span>
-                            <span class="text-gray-700">{{ stats.registration_date }}</span>
+            <h2 class="section-header">My Profile</h2>
+            
+            <!-- Profile Grid -->
+            <div class="profile-grid">
+                <!-- User Info Card -->
+                <div class="glass-card">
+                    <div class="text-center">
+                        <div class="profile-avatar">
+                            {% if user.avatar_url %}
+                                <img src="{{ user.avatar_url }}" alt="{{ user.first_name }}'s avatar">
+                            {% else %}
+                                <i class="fas fa-user"></i>
+                            {% endif %}
                         </div>
-                        <div class="flex justify-between mb-2">
-                            <span class="text-gray-700">Login Count:</span>
-                            <span class="text-gray-700">{{ stats.login_count }}</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-700">Last Login:</span>
-                            <span class="text-gray-700">{{ stats.last_login }}</span>
+                        <h3 class="text-xl font-semibold text-e0e7ff mb-2">{{ user.first_name }} {{ user.last_name }}</h3>
+                        <p class="text-a78bfa mb-6">{{ user.email }}</p>
+                        
+                        <div class="text-left">
+                            <div class="stat-item">
+                                <span class="stat-label">
+                                    <i class="fas fa-calendar-plus mr-2"></i>Registered
+                                </span>
+                                <span class="stat-value">{{ stats.registration_date }}</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">
+                                    <i class="fas fa-sign-in-alt mr-2"></i>Login Count
+                                </span>
+                                <span class="stat-value">{{ stats.login_count }}</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">
+                                    <i class="fas fa-clock mr-2"></i>Last Login
+                                </span>
+                                <span class="stat-value">{{ stats.last_login }}</span>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-            
-            <!-- Update Profile Form -->
-            <div class="bg-white p-6 rounded shadow md:col-span-2">
-                <h3 class="text-xl font-semibold mb-4">Update Profile</h3>
-                <form action="{{ url_for('dashboard.profile') }}" method="post">
-                    <div class="space-y-4">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-gray-700 text-sm font-bold mb-2" for="first_name">
-                                    First Name
+                
+                <!-- Update Profile Form -->
+                <div class="glass-card">
+                    <h3 class="card-header">Update Profile</h3>
+                    <form action="{{ url_for('dashboard.profile') }}" method="post">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label class="form-label" for="first_name">
+                                    <i class="fas fa-user mr-2"></i>First Name
                                 </label>
                                 <input type="text" id="first_name" name="first_name" value="{{ user.first_name }}" 
-                                    class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
-                                    disabled>
-                                <p class="text-xs text-gray-500 mt-1">Name cannot be changed.</p>
+                                    class="form-input" disabled>
+                                <p class="form-help">Name cannot be changed for security reasons.</p>
                             </div>
-                            <div>
-                                <label class="block text-gray-700 text-sm font-bold mb-2" for="last_name">
-                                    Last Name
+                            <div class="form-group">
+                                <label class="form-label" for="last_name">
+                                    <i class="fas fa-user mr-2"></i>Last Name
                                 </label>
                                 <input type="text" id="last_name" name="last_name" value="{{ user.last_name }}" 
-                                    class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
-                                    disabled>
-                                <p class="text-xs text-gray-500 mt-1">Name cannot be changed.</p>
+                                    class="form-input" disabled>
+                                <p class="form-help">Name cannot be changed for security reasons.</p>
                             </div>
                         </div>
                         
-                        <div>
-                            <label class="block text-gray-700 text-sm font-bold mb-2" for="email">
-                                Email
+                        <div class="form-group">
+                            <label class="form-label" for="email">
+                                <i class="fas fa-envelope mr-2"></i>Email Address
                             </label>
                             <input type="email" id="email" name="email" value="{{ user.email }}" 
-                                class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
-                                disabled>
-                            <p class="text-xs text-gray-500 mt-1">Email cannot be changed.</p>
+                                class="form-input" disabled>
+                            <p class="form-help">Email cannot be changed. Contact support if needed.</p>
                         </div>
                         
-                        <div class="border-t border-gray-200 pt-4 mt-4">
-                            <h4 class="text-lg font-medium mb-4">Change Password</h4>
+                        <div class="password-section">
+                            <h4>
+                                <i class="fas fa-key mr-2"></i>Change Password
+                            </h4>
                             
-                            <div>
-                                <label class="block text-gray-700 text-sm font-bold mb-2" for="current_password">
+                            <div class="form-group">
+                                <label class="form-label" for="current_password">
                                     Current Password
                                 </label>
                                 <input type="password" id="current_password" name="current_password" 
-                                    class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                                    placeholder="Enter your current password">
+                                    class="form-input" placeholder="Enter your current password">
                             </div>
                             
-                            <div class="mt-4">
-                                <label class="block text-gray-700 text-sm font-bold mb-2" for="new_password">
+                            <div class="form-group">
+                                <label class="form-label" for="new_password">
                                     New Password
                                 </label>
                                 <input type="password" id="new_password" name="new_password" 
-                                    class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                                    placeholder="Enter new password (min 8 characters)">
+                                    class="form-input" placeholder="Enter new password (min 8 characters)">
                             </div>
                             
-                            <div class="mt-4">
-                                <label class="block text-gray-700 text-sm font-bold mb-2" for="confirm_password">
+                            <div class="form-group">
+                                <label class="form-label" for="confirm_password">
                                     Confirm New Password
                                 </label>
                                 <input type="password" id="confirm_password" name="confirm_password" 
-                                    class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                                    placeholder="Confirm your new password">
+                                    class="form-input" placeholder="Confirm your new password">
                             </div>
                         </div>
                         
                         <div class="mt-6">
-                            <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
-                                Update Password
+                            <button type="submit" class="btn-primary">
+                                <i class="fas fa-save mr-2"></i>Update Password
                             </button>
                         </div>
-                    </div>
-                </form>
+                    </form>
+                </div>
             </div>
-        </div>
-        
-        <!-- Recent Activity -->
-        <div class="grid grid-cols-1 gap-6">
-            <div class="bg-white p-6 rounded shadow">
-                <h3 class="text-xl font-semibold mb-4">Recent Activity</h3>
+            
+            <!-- Recent Activity -->
+            <div class="glass-card">
+                <h3 class="card-header">
+                    <i class="fas fa-history mr-2"></i>Recent Activity
+                </h3>
                 
                 {% if activity and activity|length > 0 %}
-                    <div class="space-y-4">
+                    <div>
                         {% for entry in activity %}
-                            <div class="border-b border-gray-200 pb-4 {% if loop.last %}border-0{% endif %}">
+                            <div class="activity-item">
                                 <div class="flex items-center justify-between">
-                                    <div>
-                                        <h4 class="font-medium">
+                                    <div class="flex-1">
+                                        <h4 class="activity-title">
                                             {% if entry.mood == 'happy' %}
-                                                Feeling Happy 😊
+                                                <i class="fas fa-smile text-green-400 mr-2"></i>Feeling Happy 😊
                                             {% elif entry.mood == 'sad' %}
-                                                Feeling Sad 😢
+                                                <i class="fas fa-frown text-blue-400 mr-2"></i>Feeling Sad 😢
                                             {% elif entry.mood == 'neutral' %}
-                                                Feeling Neutral 😐
+                                                <i class="fas fa-meh text-gray-400 mr-2"></i>Feeling Neutral 😐
                                             {% else %}
-                                                {{ entry.type|title }}
+                                                <i class="fas fa-calendar-check text-purple-400 mr-2"></i>{{ entry.type|title }}
                                             {% endif %}
                                         </h4>
                                         {% if entry.notes %}
-                                            <p class="text-sm text-gray-700">{{ entry.notes }}</p>
+                                            <p class="activity-description">{{ entry.notes }}</p>
                                         {% endif %}
                                     </div>
-                                    <span class="text-sm text-gray-500">{{ entry.timestamp.strftime('%B %d, %Y at %I:%M %p') }}</span>
+                                    <span class="activity-time">
+                                        <i class="fas fa-clock mr-1"></i>{{ entry.timestamp.strftime('%B %d, %Y at %I:%M %p') }}
+                                    </span>
                                 </div>
                             </div>
                         {% endfor %}
                     </div>
                 {% else %}
-                    <p class="text-gray-700">No recent activity recorded. Start tracking your moods and wellness data to see your history here.</p>
+                    <div class="text-center py-8">
+                        <i class="fas fa-chart-line text-4xl text-a78bfa opacity-50 mb-4"></i>
+                        <p class="text-a78bfa text-lg">No recent activity recorded.</p>
+                        <p class="text-6b7280 text-sm mt-2">Start tracking your moods and wellness data to see your history here.</p>
+                        <div class="mt-4">
+                            <a href="{{ url_for('tracking.index') }}" class="btn-primary">
+                                <i class="fas fa-plus mr-2"></i>Start Tracking
+                            </a>
+                        </div>
+                    </div>
                 {% endif %}
             </div>
         </div>
     </main>
 
-    <!-- Optional JavaScript -->
+    <!-- Enhanced JavaScript -->
     <script src="{{ url_for('static', filename='dashboard.js') }}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Password validation
+            const newPassword = document.getElementById('new_password');
+            const confirmPassword = document.getElementById('confirm_password');
+            const currentPassword = document.getElementById('current_password');
+            const submitButton = document.querySelector('button[type="submit"]');
+            
+            function validatePasswords() {
+                const newPass = newPassword.value;
+                const confirmPass = confirmPassword.value;
+                const currentPass = currentPassword.value;
+                
+                // Reset styles
+                newPassword.style.borderColor = '';
+                confirmPassword.style.borderColor = '';
+                
+                // Check if attempting to change password
+                if (newPass || confirmPass || currentPass) {
+                    // Validate password strength
+                    if (newPass.length > 0 && newPass.length < 8) {
+                        newPassword.style.borderColor = '#ef4444';
+                        return false;
+                    }
+                    
+                    // Check if passwords match
+                    if (newPass !== confirmPass) {
+                        confirmPassword.style.borderColor = '#ef4444';
+                        return false;
+                    }
+                    
+                    // Check if all fields are filled
+                    if (!currentPass || !newPass || !confirmPass) {
+                        return false;
+                    }
+                    
+                    // All good
+                    newPassword.style.borderColor = '#10b981';
+                    confirmPassword.style.borderColor = '#10b981';
+                    return true;
+                }
+                
+                return true; // No password change attempted
+            }
+            
+            // Add event listeners
+            [newPassword, confirmPassword, currentPassword].forEach(input => {
+                input.addEventListener('input', validatePasswords);
+                input.addEventListener('blur', validatePasswords);
+            });
+            
+            // Form submission
+            document.querySelector('form').addEventListener('submit', function(e) {
+                if (!validatePasswords()) {
+                    e.preventDefault();
+                    
+                    // Show error message
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'flash-message error';
+                    errorDiv.innerHTML = '<p>Please fill all password fields correctly and ensure passwords match.</p>';
+                    
+                    // Remove existing error messages
+                    const existingError = document.querySelector('.flash-message.error');
+                    if (existingError) {
+                        existingError.remove();
+                    }
+                    
+                    // Add new error message
+                    document.querySelector('.main-content .max-w-6xl').insertBefore(
+                        errorDiv, 
+                        document.querySelector('.section-header')
+                    );
+                    
+                    // Scroll to top
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    
+                    // Auto-remove error after 5 seconds
+                    setTimeout(() => {
+                        errorDiv.remove();
+                    }, 5000);
+                }
+            });
+            
+            console.log('Profile page loaded with enhanced styling');
+        });
+    </script>
 </body>
 </html>

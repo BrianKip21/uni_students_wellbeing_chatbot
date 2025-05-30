@@ -3,264 +3,541 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wellbeing Assistant Chat</title>
+    <title>AI Chat | Wellbeing Assistant</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
     <style>
-          
-        {% if settings.theme_mode == 'dark' %}
-        /* Dark mode styles */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
         body {
-            background-color: #121212 !important;
-            color: #e0e0e0 !important;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 50%, #2d1b69 100%);
+            color: #e0e7ff;
+            min-height: 100vh;
+            overflow: hidden;
         }
         
-        .bg-white {
-            background-color: #1e1e1e !important;
+        /* Sidebar styling to match dashboard */
+        .sidebar {
+            background: rgba(15, 15, 35, 0.9);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 260px;
+            z-index: 1000;
         }
         
-        .text-gray-700, .text-gray-800, .text-gray-900 {
-            color: #e0e0e0 !important;
+        .sidebar-nav a {
+            color: #a78bfa;
+            padding: 0.75rem 1.5rem;
+            display: flex;
+            align-items: center;
+            transition: all 0.3s ease;
+            border-radius: 0 20px 20px 0;
+            margin-right: 1rem;
+            text-decoration: none;
         }
         
-        .text-gray-500, .text-gray-600 {
-            color: #a0a0a0 !important;
+        .sidebar-nav a:hover {
+            background: rgba(139, 92, 246, 0.2);
+            color: #c4b5fd;
+            transform: translateX(8px);
         }
         
-        .bg-gray-50, .bg-gray-100, .bg-gray-200 {
-            background-color: #2a2a2a !important;
+        .sidebar-nav a.active {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            color: white;
+            box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4);
         }
         
-        .border-gray-200, .border-gray-300 {
-            border-color: #333 !important;
+        /* Main chat area */
+        .chat-container {
+            margin-left: 260px;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
-
-        .hover\:bg-gray-100:hover {
-            background-color: #333333 !important;
+        
+        /* Chat header with glass effect */
+        .chat-header {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 1rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
         }
-
-        .hover\:bg-gray-200:hover {
-            background-color: #444444 !important;
+        
+        .assistant-avatar {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            box-shadow: 0 8px 25px rgba(139, 92, 246, 0.3);
         }
-
-        .hover\:bg-green-200:hover {
-            background-color: #0d503c !important;
+        
+        .user-avatar {
+            background: linear-gradient(135deg, #6b7280, #4b5563);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
         }
-
-        .hover\:bg-blue-200:hover {
-            background-color: #0d365e !important;
+        
+        /* Chat messages area */
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.5rem;
+            background: rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
         }
-
-        .bg-green-100 {
-            background-color: #064e3b !important;
+        
+        /* Message styling */
+        .message-container {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            animation: fadeInSlide 0.5s ease-out;
         }
-
-        .bg-blue-100 {
-            background-color: #0c4a6e !important;
+        
+        .user-message {
+            flex-direction: row-reverse;
+        }
+        
+        .message-bubble {
+            max-width: 70%;
+            padding: 1rem 1.25rem;
+            border-radius: 20px;
+            position: relative;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .assistant-message .message-bubble {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #e0e7ff;
+        }
+        
+        .user-message .message-bubble {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            color: white;
+            margin-left: auto;
+        }
+        
+        /* Chat buttons */
+        .chat-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+        
+        .chat-button {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #a78bfa;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .chat-button:hover {
+            background: rgba(139, 92, 246, 0.2);
+            border-color: #8b5cf6;
+            color: #c4b5fd;
+            transform: translateY(-2px);
+        }
+        
+        /* Feedback styling */
+        .feedback-container {
+            margin-top: 0.75rem;
+            padding: 0.75rem;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        .feedback-buttons {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+        
+        .feedback-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #a78bfa;
+            padding: 0.5rem 0.75rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .feedback-btn:hover {
+            background: rgba(139, 92, 246, 0.1);
+            border-color: #8b5cf6;
+        }
+        
+        .feedback-btn[data-helpful="true"]:hover {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: #10b981;
+            color: #6ee7b7;
+        }
+        
+        .feedback-btn[data-helpful="false"]:hover {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: #ef4444;
+            color: #fca5a5;
+        }
+        
+        /* Star rating */
+        .star-rating {
+            display: flex;
+            gap: 0.25rem;
+            margin: 0.5rem 0;
+        }
+        
+        .star-rating span {
+            cursor: pointer;
+            font-size: 1.25rem;
+            transition: all 0.3s ease;
+            opacity: 0.4;
+        }
+        
+        .star-rating span:hover,
+        .star-rating span.selected {
+            opacity: 1;
+            transform: scale(1.1);
+        }
+        
+        /* Chat input area */
+        .chat-input-area {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 1.5rem;
+        }
+        
+        .chat-input-container {
+            max-width: 4xl;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 0.5rem;
+        }
+        
+        .chat-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: #e0e7ff;
+            padding: 0.75rem 1rem;
+            font-size: 1rem;
+        }
+        
+        .chat-input::placeholder {
+            color: #a78bfa;
+            opacity: 0.7;
+        }
+        
+        .send-button {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            border: none;
+            color: white;
+            padding: 0.75rem;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .send-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4);
+        }
+        
+        /* Animations */
+        @keyframes fadeInSlide {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* Accessibility - Theme modes */
+        {% if settings.theme_mode == 'dark' %}
+        body {
+            background: linear-gradient(135deg, #000000 0%, #1a1a3e 50%, #2d1b69 100%);
+        }
+        
+        .assistant-message .message-bubble {
+            background: rgba(0, 0, 0, 0.3);
+        }
+        
+        .sidebar {
+            background: rgba(0, 0, 0, 0.9);
         }
         {% endif %}
         
         {% if settings.contrast == 'high' %}
-        /* High contrast styles */
         body {
-            background-color: #ffffff !important;
-            color: #000000 !important;
-        }
-        
-        .text-gray-500, .text-gray-600, .text-gray-700, .text-gray-800, .text-gray-900 {
-            color: #000000 !important;
-        }
-        
-        .bg-gray-800 {
-            background-color: #000000 !important;
-        }
-        
-        .text-gray-200 {
+            background: #000000 !important;
             color: #ffffff !important;
         }
         
-        input, select, button {
-            border: 2px solid #000000 !important;
+        .assistant-message .message-bubble {
+            background: rgba(255, 255, 255, 0.1) !important;
+            border: 2px solid #ffffff !important;
+            color: #ffffff !important;
         }
-
-        .bg-green-100, .bg-blue-100, .bg-gray-100 {
-            background-color: #ffffff !important;
-            border: 2px solid #000000 !important;
-        }
-
-        .text-green-500, .text-blue-500, .text-purple-500 {
+        
+        .user-message .message-bubble {
+            background: #ffffff !important;
             color: #000000 !important;
+        }
+        
+        .chat-input {
+            color: #ffffff !important;
+        }
+        
+        .chat-button, .feedback-btn {
+            border: 2px solid #ffffff !important;
+            color: #ffffff !important;
         }
         {% endif %}
         
         {% if settings.text_size == 'lg' %}
-        /* Large text */
         body {
             font-size: 1.125rem !important;
         }
         
-        .text-sm {
-            font-size: 0.9375rem !important;
+        .message-bubble {
+            font-size: 1.125rem !important;
         }
         
-        .text-lg, .text-xl, .text-2xl, .text-3xl {
-            font-size: 1.3125rem !important;
+        .chat-input {
+            font-size: 1.125rem !important;
         }
         {% elif settings.text_size == 'xl' %}
-        /* Extra large text */
         body {
             font-size: 1.25rem !important;
         }
         
-        .text-sm {
-            font-size: 1.0625rem !important;
+        .message-bubble {
+            font-size: 1.25rem !important;
         }
         
-        .text-lg, .text-xl {
-            font-size: 1.5rem !important;
-        }
-
-        .text-2xl, .text-3xl {
-            font-size: 1.75rem !important;
+        .chat-input {
+            font-size: 1.25rem !important;
         }
         {% endif %}
-    
-        .star-rating span {
-            cursor: pointer;
+        
+        /* Responsive design */
+        @media (max-width: 1024px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            
+            .chat-container {
+                margin-left: 0;
+            }
+            
+            .message-bubble {
+                max-width: 85%;
+            }
         }
-        .star-rating span.selected {
-            color: gold;
+        
+        /* Custom scrollbar */
+        .chat-messages::-webkit-scrollbar {
+            width: 8px;
         }
-        .user-avatar {
-            background-color: #6B7280;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
+        
+        .chat-messages::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
         }
-        .assistant-avatar {
-            background-color: #3B82F6;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
+        
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: rgba(139, 92, 246, 0.3);
+            border-radius: 4px;
+        }
+        
+        .chat-messages::-webkit-scrollbar-thumb:hover {
+            background: rgba(139, 92, 246, 0.5);
         }
     </style>
 </head>
-<body class="bg-gray-200 text-gray-900">
-    <div class="min-h-screen flex">
-        <!-- Sidebar -->
-        <aside class="w-64 h-screen bg-gray-800 text-gray-200 p-4 fixed">
-            <h1 class="text-2xl font-bold mb-6">Wellbeing Assistant</h1>
-            <nav>
-                <ul class="space-y-4">
-                <li><a href="{{ url_for('dashboard.index') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-chart-line"></i> Dashboard</a></li>
-                <li><a href="{{ url_for('tracking.index') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-chart-bar"></i> Wellness Tracker</a></li>
-                <li><a href="{{ url_for('chatbot.chatbot_page') }}" class="block p-2 bg-gray-700 rounded"> <i class="fas fa-comments"></i> Chat</a></li>
-                <li><a href="{{ url_for('dashboard.profile') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-user"></i> Profile</a></li>
-                <li><a href="{{ url_for('dashboard.student_resources') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-book"></i> Resources</a></li>
-                <li><a href="{{ url_for('dashboard.settings') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-cog"></i> Settings</a></li>
-                <li><a href="{{ url_for('auth.logout') }}" class="block p-2 hover:bg-gray-700 rounded mt-8"> <i class="fas fa-sign-out-alt"></i> Logout</a></li>
-                </ul>
-            </nav>
-        </aside>
+<body>
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+        <div class="p-6">
+            <h1 class="text-2xl font-bold mb-8 bg-gradient-to-r from-purple-400 to-pink-600 bg-clip-text text-transparent">
+                Wellbeing Assistant
+            </h1>
+        </div>
+        <nav class="sidebar-nav">
+            <ul class="space-y-2">
+                <li><a href="{{ url_for('dashboard.index') }}" class="flex items-center">
+                    <i class="fas fa-chart-line w-5 mr-3"></i> Dashboard
+                </a></li>
+                <li><a href="{{ url_for('tracking.index') }}" class="flex items-center">
+                    <i class="fas fa-chart-bar w-5 mr-3"></i> Wellness Tracker
+                </a></li>
+                <li><a href="{{ url_for('chatbot.chatbot_page') }}" class="flex items-center active">
+                    <i class="fas fa-comments w-5 mr-3"></i> AI Chat
+                </a></li>
+                <li><a href="{{ url_for('dashboard.therapist_info') }}" class="flex items-center">
+                    <i class="fas fa-user-md w-5 mr-3"></i> Your Therapist
+                </a></li>
+                <li><a href="{{ url_for('dashboard.profile') }}" class="flex items-center">
+                    <i class="fas fa-user w-5 mr-3"></i> Profile
+                </a></li>
+                <li><a href="{{ url_for('dashboard.student_resources') }}" class="flex items-center">
+                    <i class="fas fa-book w-5 mr-3"></i> Resources
+                </a></li>
+                <li><a href="{{ url_for('dashboard.settings') }}" class="flex items-center">
+                    <i class="fas fa-cog w-5 mr-3"></i> Settings
+                </a></li>
+            </ul>
+            
+            <div class="mt-auto p-6">
+                <a href="{{ url_for('auth.logout') }}" class="flex items-center text-red-400 hover:text-red-300">
+                    <i class="fas fa-sign-out-alt w-5 mr-3"></i> Logout
+                </a>
+            </div>
+        </nav>
+    </aside>
 
-        <!-- Main Chat Content -->
-        <main class="ml-64 h-screen flex flex-col w-full">
-            <!-- Chat Header -->
-            <div class="bg-gray-700 text-white p-4 flex items-center space-x-4">
+    <!-- Main Chat Container -->
+    <main class="chat-container">
+        <!-- Chat Header -->
+        <div class="chat-header">
+            <div class="assistant-avatar">
+                <i class="fas fa-robot text-lg"></i>
+            </div>
+            <div>
+                <h2 class="font-semibold text-lg text-e0e7ff">AI Wellbeing Assistant</h2>
+                <p class="text-sm text-a78bfa">Here to support you 24/7 with personalized guidance</p>
+            </div>
+        </div>
+
+        <!-- Chat Messages Area -->
+        <div class="chat-messages" id="chat-messages">
+            <!-- Welcome message -->
+            <div class="message-container assistant-message">
                 <div class="assistant-avatar">
                     <i class="fas fa-robot"></i>
                 </div>
-                <div>
-                    <h2 class="font-semibold">Wellbeing Assistant</h2>
-                    <p class="text-sm text-gray-300">Here to support you 24/7</p>
+                <div class="message-bubble">
+                    <p class="mb-3">Hi there! I'm your AI Wellbeing Assistant. 🌟</p>
+                    <p class="mb-3">I'm here to provide you with personalized mental health support, coping strategies, and a safe space to share your thoughts and feelings.</p>
+                    <p class="text-sm opacity-75">How can I help you today?</p>
+                    <div class="chat-buttons">
+                        <button class="chat-button">I'm feeling stressed</button>
+                        <button class="chat-button">Help with sleep</button>
+                        <button class="chat-button">Need motivation</button>
+                        <button class="chat-button">Anxiety support</button>
+                    </div>
                 </div>
             </div>
+            
+            <!-- Previous chat messages will be loaded here -->
+            {% for message in messages %}
+            <div class="message-container {% if message.user_id %}user-message{% else %}assistant-message{% endif %}">
+                {% if message.user_id %}
+                <!-- User message -->
+                <div class="user-avatar">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div class="message-bubble">
+                    <p>{{ message.message }}</p>
+                </div>
+                {% else %}
+                <!-- Assistant message -->
+                <div class="assistant-avatar">
+                    <i class="fas fa-robot"></i>
+                </div>
+                <div class="message-bubble">
+                    <p>{{ message.response }}</p>
+                    <div class="feedback-container" id="feedback-{{ message._id }}">
+                        <p class="text-sm text-a78bfa opacity-75">Was this response helpful?</p>
+                        <div class="feedback-buttons">
+                            <button data-id="{{ message._id }}" data-helpful="true" class="feedback-btn">
+                                <i class="fas fa-thumbs-up mr-1"></i> Yes
+                            </button>
+                            <button data-id="{{ message._id }}" data-helpful="false" class="feedback-btn">
+                                <i class="fas fa-thumbs-down mr-1"></i> No
+                            </button>
+                        </div>
+                        <div class="rating-container mt-3" id="rating-{{ message._id }}" style="display:none;">
+                            <p class="text-sm text-a78bfa opacity-75">How would you rate this response?</p>
+                            <div class="star-rating" data-id="{{ message._id }}">
+                                <span data-rating="1">⭐</span>
+                                <span data-rating="2">⭐</span>
+                                <span data-rating="3">⭐</span>
+                                <span data-rating="4">⭐</span>
+                                <span data-rating="5">⭐</span>
+                            </div>
+                            <textarea id="feedback-text-{{ message._id }}" class="w-full p-2 mt-2 bg-transparent border border-white border-opacity-20 rounded-lg text-e0e7ff placeholder-a78bfa" placeholder="Any additional feedback? (optional)"></textarea>
+                            <button data-id="{{ message._id }}" class="submit-feedback mt-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-lg hover:from-purple-600 hover:to-purple-700 transition">
+                                <i class="fas fa-paper-plane mr-1"></i> Submit
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
 
-            <!-- Chat Messages Area -->
-            <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-300">
-                <div class="flex items-start space-x-4">
-                    <div class="assistant-avatar">
-                        <i class="fas fa-robot"></i>
-                    </div>
-                    <div class="flex-1">
-                        <div class="bg-gray-100 p-4 rounded-lg shadow-sm max-w-2xl">
-                            <p class="mb-2">Hi, I'm your Wellbeing Assistant. How can I help you today?</p>
-                            <div class="mt-4 flex flex-wrap gap-2">
-                                <button class="chat-button bg-gray-600 text-white px-4 py-2 rounded-full text-sm hover:bg-gray-700">I'm feeling stressed</button>
-                                <button class="chat-button bg-gray-600 text-white px-4 py-2 rounded-full text-sm hover:bg-gray-700">Help with sleep</button>
-                                <button class="chat-button bg-gray-600 text-white px-4 py-2 rounded-full text-sm hover:bg-gray-700">Need motivation</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Previous chat messages will be loaded here if any -->
-                {% for message in messages %}
-                <div class="flex items-start space-x-4">
-                    {% if message.user_id %}
-                    <!-- User message -->
-                    <div class="user-avatar order-2">
-                        <i class="fas fa-user"></i>
-                    </div>
-                    <div class="flex-1 order-1">
-                        <div class="bg-gray-700 text-white p-4 rounded-lg shadow-sm max-w-2xl ml-auto">
-                            <p>{{ message.message }}</p>
-                        </div>
-                    </div>
-                    {% else %}
-                    <!-- Assistant message -->
-                    <div class="assistant-avatar">
-                        <i class="fas fa-robot"></i>
-                    </div>
-                    <div class="flex-1">
-                        <div class="bg-gray-100 p-4 rounded-lg shadow-sm max-w-2xl">
-                            <p>{{ message.response }}</p>
-                        </div>
-                        <div class="feedback-container mt-2" id="feedback-{{ message._id }}">
-                            <p class="text-sm text-gray-500">Was this response helpful?</p>
-                            <div class="feedback-buttons">
-                                <button data-id="{{ message._id }}" data-helpful="true" class="feedback-btn text-sm px-2 py-1 bg-green-100 rounded">👍 Yes</button>
-                                <button data-id="{{ message._id }}" data-helpful="false" class="feedback-btn text-sm px-2 py-1 bg-red-100 rounded">👎 No</button>
-                            </div>
-                            <div class="rating-container mt-2" id="rating-{{ message._id }}" style="display:none;">
-                                <p class="text-sm text-gray-500">How would you rate this response?</p>
-                                <div class="star-rating" data-id="{{ message._id }}">
-                                    <span data-rating="1">⭐</span>
-                                    <span data-rating="2">⭐</span>
-                                    <span data-rating="3">⭐</span>
-                                    <span data-rating="4">⭐</span>
-                                    <span data-rating="5">⭐</span>
-                                </div>
-                                <textarea id="feedback-text-{{ message._id }}" class="w-full p-2 mt-2 border rounded" placeholder="Any additional feedback? (optional)"></textarea>
-                                <button data-id="{{ message._id }}" class="submit-feedback mt-2 px-4 py-1 bg-blue-500 text-white rounded">Submit</button>
-                            </div>
-                        </div>
-                    </div>
-                    {% endif %}
-                </div>
-                {% endfor %}
+        <!-- Chat Input Area -->
+        <div class="chat-input-area">
+            <div class="chat-input-container">
+                <input type="text" id="message-input" placeholder="Type your message here..." class="chat-input"/>
+                <button id="send-button" class="send-button">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
             </div>
-
-            <!-- Chat Input Area -->
-            <div class="bg-gray-700 border-t p-4">
-                <div class="max-w-4xl mx-auto flex items-center space-x-4">
-                    <input type="text" id="message-input" placeholder="Type your message..." class="flex-1 p-3 border rounded-lg focus:outline-none bg-gray-100"/>
-                    <button id="send-button" class="bg-gray-800 text-white p-3 rounded-lg hover:bg-gray-900">
-                        <i class="fas fa-paper-plane"></i>
-                    </button>
-                </div>
-            </div>
-        </main>
-    </div>
+        </div>
+    </main>
 
     <script>
     document.addEventListener('DOMContentLoaded', function() {
@@ -272,12 +549,18 @@
         // Feedback state object
         const feedbackState = {};
         
+        // Auto-scroll to bottom
+        function scrollToBottom() {
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        
         // Event delegation for feedback interactions
         document.addEventListener('click', function(event) {
             // Handle feedback buttons (Yes/No)
-            if (event.target.classList.contains('feedback-btn')) {
-                const chatId = event.target.dataset.id;
-                const isHelpful = event.target.dataset.helpful === 'true';
+            if (event.target.classList.contains('feedback-btn') || event.target.parentElement.classList.contains('feedback-btn')) {
+                const button = event.target.classList.contains('feedback-btn') ? event.target : event.target.parentElement;
+                const chatId = button.dataset.id;
+                const isHelpful = button.dataset.helpful === 'true';
                 
                 document.getElementById('rating-' + chatId).style.display = 'block';
                 feedbackState[chatId] = {
@@ -285,6 +568,10 @@
                     rating: 0,
                     feedback: ''
                 };
+                
+                // Visual feedback
+                button.style.opacity = '0.5';
+                button.disabled = true;
             }
             
             // Handle star ratings
@@ -305,8 +592,9 @@
             }
             
             // Handle submit feedback button
-            if (event.target.classList.contains('submit-feedback')) {
-                const chatId = event.target.dataset.id;
+            if (event.target.classList.contains('submit-feedback') || event.target.parentElement.classList.contains('submit-feedback')) {
+                const button = event.target.classList.contains('submit-feedback') ? event.target : event.target.parentElement;
+                const chatId = button.dataset.id;
                 submitFeedback(chatId);
             }
         });
@@ -332,29 +620,27 @@
             .then(response => response.json())
             .then(data => {
                 document.getElementById('feedback-' + chatId).innerHTML = 
-                    '<p class="text-green-500">Thank you for your feedback!</p>';
+                    '<p class="text-green-400 text-sm"><i class="fas fa-check-circle mr-1"></i>Thank you for your feedback!</p>';
             })
             .catch(error => {
                 console.error('Error:', error);
                 document.getElementById('feedback-' + chatId).innerHTML = 
-                    '<p class="text-red-500">Error submitting feedback. Please try again.</p>';
+                    '<p class="text-red-400 text-sm"><i class="fas fa-exclamation-circle mr-1"></i>Error submitting feedback. Please try again.</p>';
             });
         }
         
         function addMessage(message, isUser = false, chatId = null) {
             const messageDiv = document.createElement('div');
-            messageDiv.className = 'flex items-start space-x-4';
+            messageDiv.className = `message-container ${isUser ? 'user-message' : 'assistant-message'}`;
             
             let messageHTML = '';
             if (isUser) {
                 messageHTML = `
-                    <div class="user-avatar order-2">
+                    <div class="user-avatar">
                         <i class="fas fa-user"></i>
                     </div>
-                    <div class="flex-1 order-1">
-                        <div class="bg-gray-700 text-white p-4 rounded-lg shadow-sm max-w-2xl ml-auto">
-                            <p>${message}</p>
-                        </div>
+                    <div class="message-bubble">
+                        <p>${message}</p>
                     </div>
                 `;
             } else {
@@ -362,23 +648,25 @@
                     <div class="assistant-avatar">
                         <i class="fas fa-robot"></i>
                     </div>
-                    <div class="flex-1">
-                        <div class="bg-gray-100 p-4 rounded-lg shadow-sm max-w-2xl">
-                            <p>${message}</p>
-                        </div>
+                    <div class="message-bubble">
+                        <p>${message}</p>
                 `;
                 
                 // Add feedback UI if this is a bot message and we have a chatId
                 if (chatId) {
                     messageHTML += `
-                        <div class="feedback-container mt-2" id="feedback-${chatId}">
-                            <p class="text-sm text-gray-500">Was this response helpful?</p>
+                        <div class="feedback-container" id="feedback-${chatId}">
+                            <p class="text-sm text-a78bfa opacity-75">Was this response helpful?</p>
                             <div class="feedback-buttons">
-                                <button data-id="${chatId}" data-helpful="true" class="feedback-btn text-sm px-2 py-1 bg-green-100 rounded">👍 Yes</button>
-                                <button data-id="${chatId}" data-helpful="false" class="feedback-btn text-sm px-2 py-1 bg-red-100 rounded">👎 No</button>
+                                <button data-id="${chatId}" data-helpful="true" class="feedback-btn">
+                                    <i class="fas fa-thumbs-up mr-1"></i> Yes
+                                </button>
+                                <button data-id="${chatId}" data-helpful="false" class="feedback-btn">
+                                    <i class="fas fa-thumbs-down mr-1"></i> No
+                                </button>
                             </div>
-                            <div class="rating-container mt-2" id="rating-${chatId}" style="display:none;">
-                                <p class="text-sm text-gray-500">How would you rate this response?</p>
+                            <div class="rating-container mt-3" id="rating-${chatId}" style="display:none;">
+                                <p class="text-sm text-a78bfa opacity-75">How would you rate this response?</p>
                                 <div class="star-rating" data-id="${chatId}">
                                     <span data-rating="1">⭐</span>
                                     <span data-rating="2">⭐</span>
@@ -386,8 +674,10 @@
                                     <span data-rating="4">⭐</span>
                                     <span data-rating="5">⭐</span>
                                 </div>
-                                <textarea id="feedback-text-${chatId}" class="w-full p-2 mt-2 border rounded" placeholder="Any additional feedback? (optional)"></textarea>
-                                <button data-id="${chatId}" class="submit-feedback mt-2 px-4 py-1 bg-blue-500 text-white rounded">Submit</button>
+                                <textarea id="feedback-text-${chatId}" class="w-full p-2 mt-2 bg-transparent border border-white border-opacity-20 rounded-lg text-e0e7ff placeholder-a78bfa" placeholder="Any additional feedback? (optional)"></textarea>
+                                <button data-id="${chatId}" class="submit-feedback mt-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-lg hover:from-purple-600 hover:to-purple-700 transition">
+                                    <i class="fas fa-paper-plane mr-1"></i> Submit
+                                </button>
                             </div>
                         </div>
                     `;
@@ -398,13 +688,17 @@
             
             messageDiv.innerHTML = messageHTML;
             chatMessages.appendChild(messageDiv);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
+            scrollToBottom();
         }
     
         async function sendMessage(message) {
             if (!message) return;
+            
             addMessage(message, true);
             messageInput.value = '';
+            sendButton.disabled = true;
+            sendButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            
             try {
                 const response = await fetch('/api/chat', {
                     method: 'POST',
@@ -412,21 +706,33 @@
                     body: JSON.stringify({message: message})
                 });
                 const data = await response.json();
-                addMessage(data.response || "No response received", false, data.chat_id);
+                addMessage(data.response || "I apologize, but I'm having trouble processing your request right now. Please try again.", false, data.chat_id);
             } catch (error) {
                 console.error('Error:', error);
-                addMessage('Error sending message. Please try again.', false);
+                addMessage('I\'m sorry, but I\'m experiencing technical difficulties. Please try again in a moment.', false);
+            } finally {
+                sendButton.disabled = false;
+                sendButton.innerHTML = '<i class="fas fa-paper-plane"></i>';
+                messageInput.focus();
             }
         }
     
         // Event listeners
         sendButton.addEventListener('click', () => sendMessage(messageInput.value.trim()));
         messageInput.addEventListener('keypress', (e) => { 
-            if (e.key === 'Enter') sendMessage(messageInput.value.trim()); 
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage(messageInput.value.trim()); 
+            }
         });
+        
         chatButtons.forEach(button => 
             button.addEventListener('click', () => sendMessage(button.textContent.trim()))
         );
+        
+        // Focus input on load
+        messageInput.focus();
+        scrollToBottom();
     });
     </script>
 </body>

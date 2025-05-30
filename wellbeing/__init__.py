@@ -6,6 +6,10 @@ from flask_cors import CORS
 from flask_pymongo import PyMongo
 from werkzeug.middleware.proxy_fix import ProxyFix
 from apscheduler.schedulers.background import BackgroundScheduler
+from flask_moment import Moment
+
+app = Flask(__name__)
+moment = Moment(app)
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, 
@@ -26,7 +30,8 @@ def create_app(test_config=None):
     # Load config
     if test_config is None:
         # Load the instance config, if it exists
-        app.config.from_object('config.Config')
+        app.config.from_object('config.DevelopmentConfig')
+
     else:
         # Load the test config if passed in
         app.config.from_mapping(test_config)

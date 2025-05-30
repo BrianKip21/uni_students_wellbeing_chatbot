@@ -3,604 +3,875 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Details | Wellbeing Assistant</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css"> 
+    <title>Student Details | Therapist Portal</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
-
     <style>
-        {% if settings and settings.theme_mode == 'dark' %}
-        /* Dark mode styles */
-        body {
-            background-color: #121212 !important;
-            color: #e0e0e0 !important;
-        }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         
-        .bg-white {
-            background-color: #1e1e1e !important;
-        }
-        
-        .text-gray-700, .text-gray-800, .text-gray-900 {
-            color: #e0e0e0 !important;
-        }
-        
-        .text-gray-500, .text-gray-600 {
-            color: #a0a0a0 !important;
-        }
-        
-        .bg-gray-50, .bg-gray-100, .bg-gray-200 {
-            background-color: #2a2a2a !important;
-        }
-        
-        .border-gray-200, .border-gray-300 {
-            border-color: #333 !important;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
         }
 
-        .hover\:bg-gray-100:hover {
-            background-color: #333333 !important;
-        }
-
-        /* Additional dark mode styles for stats cards */
-        .bg-blue-50 {
-            background-color: #0f172a !important;
-        }
-        
-        .bg-red-50 {
-            background-color: #2c1216 !important;
-        }
-        
-        .bg-orange-50 {
-            background-color: #2c180f !important;
-        }
-        
-        .bg-green-50 {
-            background-color: #0f2817 !important;
-        }
-        {% endif %}
-        
-        {% if settings and settings.contrast == 'high' %}
-        /* High contrast styles */
         body {
-            background-color: #ffffff !important;
-            color: #000000 !important;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 50%, #2d1b69 100%);
+            color: #e0e7ff;
+            min-height: 100vh;
         }
         
-        .text-gray-500, .text-gray-600, .text-gray-700, .text-gray-800, .text-gray-900 {
-            color: #000000 !important;
+        .sidebar {
+            background: rgba(15, 15, 35, 0.9);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 260px;
+            z-index: 1000;
         }
         
-        .bg-gray-800 {
-            background-color: #000000 !important;
+        .sidebar-nav a {
+            color: #a78bfa;
+            padding: 0.75rem 1.5rem;
+            display: flex;
+            align-items: center;
+            transition: all 0.3s ease;
+            border-radius: 0 20px 20px 0;
+            margin-right: 1rem;
         }
         
-        .text-gray-200 {
-            color: #ffffff !important;
+        .sidebar-nav a:hover {
+            background: rgba(139, 92, 246, 0.2);
+            color: #c4b5fd;
+            transform: translateX(8px);
         }
         
-        /* Additional high contrast styles */
-        .bg-blue-50, .bg-red-50, .bg-orange-50, .bg-green-50 {
-            background-color: #ffffff !important;
-            border: 2px solid #000000 !important;
+        .sidebar-nav a.active {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            color: white;
+            box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4);
         }
         
-        .text-blue-500, .text-red-500, .text-orange-500, .text-green-500 {
-            color: #000000 !important;
+        .main-content {
+            margin-left: 260px;
+            min-height: 100vh;
+            padding: 2rem;
         }
         
-        .text-blue-700, .text-red-700, .text-orange-700, .text-green-700 {
-            color: #000000 !important;
-        }
-        {% endif %}
-        
-        {% if settings and settings.text_size == 'lg' %}
-        /* Large text */
-        body {
-            font-size: 1.125rem !important;
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
         }
         
-        .text-sm {
-            font-size: 0.9375rem !important;
+        .crisis-alert {
+            background: linear-gradient(135deg, #7f1d1d, #991b1b);
+            border: 1px solid #ef4444;
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            animation: pulseWarning 2s infinite;
         }
         
-        .text-lg, .text-xl, .text-2xl, .text-3xl {
-            font-size: 1.3125rem !important;
-        }
-        {% elif settings and settings.text_size == 'xl' %}
-        /* Extra large text */
-        body {
-            font-size: 1.25rem !important;
+        @keyframes pulseWarning {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            50% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
         }
         
-        .text-sm {
-            font-size: 1.0625rem !important;
+        .session-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
         }
         
-        .text-lg, .text-xl {
-            font-size: 1.5rem !important;
+        .session-card:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: #8b5cf6;
         }
-
-        .text-2xl, .text-3xl {
-            font-size: 1.75rem !important;
+        
+        .session-upcoming {
+            border-left: 4px solid #10b981;
+            background: rgba(16, 185, 129, 0.1);
         }
-        {% endif %}
+        
+        .session-completed {
+            border-left: 4px solid #6b7280;
+            background: rgba(107, 114, 128, 0.05);
+        }
+        
+        .virtual-badge {
+            background: rgba(59, 130, 246, 0.2);
+            color: #60a5fa;
+            border: 1px solid rgba(59, 130, 246, 0.4);
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .crisis-badge {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            animation: pulse 2s infinite;
+        }
+        
+        .high-priority-badge {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .normal-badge {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(139, 92, 246, 0.4);
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #10b981, #059669);
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+        }
+        
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(16, 185, 129, 0.4);
+        }
+        
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            color: #e0e7ff;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: #8b5cf6;
+            transform: translateY(-2px);
+        }
+        
+        .stat-card {
+            text-align: center;
+            padding: 1.5rem;
+            border-radius: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .stat-card.primary {
+            background: linear-gradient(135deg, #10b981, #059669);
+        }
+        
+        .stat-card.secondary {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+        }
+        
+        .stat-card.warning {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+        }
+        
+        .stat-card.danger {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+        }
+        
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-label {
+            font-size: 0.875rem;
+            color: rgba(255, 255, 255, 0.8);
+            font-weight: 500;
+        }
+        
+        .meeting-link-box {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .copy-btn {
+            background: #3b82f6;
+            border: none;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .copy-btn:hover {
+            background: #2563eb;
+        }
+        
+        .tab-button {
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #a78bfa;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .tab-button.active {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            color: white;
+            box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4);
+        }
+        
+        .tab-button:hover:not(.active) {
+            background: rgba(139, 92, 246, 0.2);
+            color: #c4b5fd;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        @media (max-width: 1024px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+        }
     </style>
 </head>
-
-<body class="bg-gray-200 flex text-gray-900">
+<body>
     <!-- Sidebar Navigation -->
-    <aside class="w-64 h-screen bg-gray-800 text-gray-200 p-4 fixed">
-        <h1 class="text-2xl font-bold mb-6">Therapist Portal</h1>
-        <nav>
-            <ul class="space-y-4">
-                <li><a href="{{ url_for('therapist.index') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-chart-line"></i> Dashboard</a></li>
-                <li><a href="{{ url_for('therapist.appointments') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-calendar-alt"></i> Appointments</a></li>
-                <li><a href="{{ url_for('therapist.students') }}" class="block p-2 hover:bg-gray-700 rounded bg-gray-700"> <i class="fas fa-user-graduate"></i> My Students</a></li>
-                <li><a href="{{ url_for('therapist.calendar') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-calendar"></i> Calendar</a></li>
-                <li><a href="{{ url_for('therapist.resources') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-book-medical"></i> Resources</a></li>
-                <li><a href="{{ url_for('therapist.profile') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-user"></i> Profile</a></li>
-                <li><a href="{{ url_for('therapist.student_requests') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-user-plus"></i> Student Requests</a></li>
-                <li><a href="{{ url_for('therapist.reports') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-chart-bar"></i> Reports</a></li>
-                <li><a href="{{ url_for('auth.logout') }}" class="block p-2 hover:bg-gray-700 rounded mt-8"> <i class="fas fa-sign-out-alt"></i> Logout</a></li>
+    <aside class="sidebar">
+        <div class="p-6">
+            <h1 class="text-2xl font-bold mb-8 bg-gradient-to-r from-purple-400 to-pink-600 bg-clip-text text-transparent">
+                Therapist Portal
+            </h1>
+        </div>
+        <nav class="sidebar-nav">
+            <ul class="space-y-2">
+                <li><a href="{{ url_for('therapist.index') }}" class="flex items-center">
+                    <i class="fas fa-chart-line w-5 mr-3"></i> Dashboard
+                </a></li>
+                <li><a href="{{ url_for('therapist.students') }}" class="flex items-center active">
+                    <i class="fas fa-users w-5 mr-3"></i> My Students
+                </a></li>
+                <li><a href="{{ url_for('therapist.virtual_sessions') }}" class="flex items-center">
+                    <i class="fas fa-video w-5 mr-3"></i> Virtual Sessions
+                </a></li>
+                <li><a href="{{ url_for('therapist.availability') }}" class="flex items-center">
+                    <i class="fas fa-calendar-alt w-5 mr-3"></i> Availability
+                </a></li>
+                <li><a href="{{ url_for('therapist.resources') }}" class="flex items-center">
+                    <i class="fas fa-book w-5 mr-3"></i> Resources
+                </a></li>
+                <li><a href="{{ url_for('therapist.profile') }}" class="flex items-center">
+                    <i class="fas fa-user w-5 mr-3"></i> Profile
+                </a></li>
             </ul>
+            
+            <div class="mt-auto p-6">
+                <a href="{{ url_for('auth.logout') }}" class="flex items-center text-red-400 hover:text-red-300">
+                    <i class="fas fa-sign-out-alt w-5 mr-3"></i> Logout
+                </a>
+            </div>
         </nav>
     </aside>
 
     <!-- Main Content -->
-    <main class="ml-64 p-8 w-full">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="bg-{% if category == 'error' %}red{% else %}blue{% endif %}-100 border-l-4 border-{% if category == 'error' %}red{% else %}blue{% endif %}-500 text-{% if category == 'error' %}red{% else %}blue{% endif %}-700 p-4 mb-6" role="alert">
-                        <p>{{ message }}</p>
-                    </div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
-    
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-            <div>
-                <h2 class="text-3xl font-bold text-gray-800">Student Details</h2>
-                <p class="text-gray-600">{{ student.first_name }} {{ student.last_name }}</p>
-            </div>
-            <div class="flex flex-wrap gap-3">
-                <a href="{{ url_for('therapist.students') }}" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded">
-                    <i class="fas fa-arrow-left mr-2"></i> Back to Students
-                </a>
-                <a href="{{ url_for('therapist.schedule_appointment', student_id=student._id) }}" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
-                    <i class="fas fa-calendar-plus mr-2"></i> Schedule Appointment
-                </a>
-                <a href="{{ url_for('therapist.chat', student_id=student._id) }}" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded">
-                    <i class="fas fa-comment mr-2"></i> Message
-                </a>
-            </div>
-        </div>
-        
-        <!-- Student Profile Card -->
-        <div class="bg-white rounded shadow mb-6 p-6">
-            <div class="flex flex-col md:flex-row">
-                <div class="md:w-1/4 mb-4 md:mb-0">
-                    <div class="bg-gray-100 h-48 w-48 mx-auto rounded-full flex items-center justify-center">
-                        <span class="text-5xl text-gray-500">{{ student.first_name[0] }}{{ student.last_name[0] }}</span>
-                    </div>
-                </div>
-                <div class="md:w-3/4">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <h3 class="text-xl font-bold mb-4">Personal Information</h3>
-                            <div class="mb-2">
-                                <span class="text-gray-600">Full Name:</span>
-                                <span class="font-medium">{{ student.first_name }} {{ student.last_name }}</span>
-                            </div>
-                            <div class="mb-2">
-                                <span class="text-gray-600">Email:</span>
-                                <span class="font-medium">{{ student.email }}</span>
-                            </div>
-                            <div class="mb-2">
-                                <span class="text-gray-600">Student ID:</span>
-                                <span class="font-medium">{{ student.student_id if student.student_id else 'N/A' }}</span>
-                            </div>
-                            <div class="mb-2">
-                                <span class="text-gray-600">Department:</span>
-                                <span class="font-medium">{{ student.department if student.department else 'N/A' }}</span>
-                            </div>
-                        </div>
-                        <div>
-                            <h3 class="text-xl font-bold mb-4">Assignment Details</h3>
-                            <div class="mb-2">
-                                <span class="text-gray-600">Assigned Since:</span>
-                                <span class="font-medium">{{ assignment.assigned_date.strftime('%B %d, %Y') if assignment and assignment.assigned_date else 'N/A' }}</span>
-                            </div>
-                            <div class="mb-2">
-                                <span class="text-gray-600">Assignment Type:</span>
-                                <span class="font-medium">{{ request_data.request_type if request_data and request_data.request_type else 'Standard' }}</span>
-                            </div>
-                            <div class="mb-2">
-                                <span class="text-gray-600">Status:</span>
-                                <span class="font-medium">Active</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Student Statistics -->
-                    <div class="mt-6">
-                        <h3 class="text-xl font-bold mb-4">Student Statistics</h3>
-                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            <div class="bg-blue-50 p-3 rounded">
-                                <div class="text-blue-500 font-bold text-2xl">{{ stats.total_sessions }}</div>
-                                <div class="text-sm text-blue-700">Sessions Completed</div>
-                            </div>
-                            <div class="bg-red-50 p-3 rounded">
-                                <div class="text-red-500 font-bold text-2xl">{{ stats.cancelled_sessions }}</div>
-                                <div class="text-sm text-red-700">Cancelled Sessions</div>
-                            </div>
-                            <div class="bg-orange-50 p-3 rounded">
-                                <div class="text-orange-500 font-bold text-2xl">{{ stats.rescheduled_sessions }}</div>
-                                <div class="text-sm text-orange-700">Rescheduled Sessions</div>
-                            </div>
-                            <div class="bg-green-50 p-3 rounded">
-                                <div class="text-green-500 font-bold text-2xl">{{ stats.days_since_last_session if stats.days_since_last_session is not none else 'N/A' }}</div>
-                                <div class="text-sm text-green-700">Days Since Last Session</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Tabs Navigation -->
-        <div class="mb-6 overflow-x-auto">
-            <ul class="flex border-b">
-                <li class="mr-1">
-                    <a href="#appointments" class="inline-block py-2 px-4 text-blue-500 border-b-2 border-blue-500 font-medium" onclick="showTab('appointments'); return false;">Appointments</a>
-                </li>
-                <li class="mr-1">
-                    <a href="#notes" class="inline-block py-2 px-4 text-gray-500 font-medium" onclick="showTab('notes'); return false;">Session Notes</a>
-                </li>
-                <li class="mr-1">
-                    <a href="#resources" class="inline-block py-2 px-4 text-gray-500 font-medium" onclick="showTab('resources'); return false;">Shared Resources</a>
-                </li>
-                <li class="mr-1">
-                    <a href="#messages" class="inline-block py-2 px-4 text-gray-500 font-medium" onclick="showTab('messages'); return false;">Recent Messages</a>
-                </li>
-            </ul>
-        </div>
-        
-        <!-- Appointments Tab -->
-        <div id="appointments" class="tab-content">
+    <main class="main-content">
+        <div class="max-w-7xl mx-auto">
+            
+            <!-- Back Button -->
             <div class="mb-6">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-xl font-bold">Upcoming Appointments</h3>
-                    <a href="{{ url_for('therapist.schedule_appointment', student_id=student._id) }}" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm">
-                        <i class="fas fa-plus mr-1"></i> New Appointment
-                    </a>
+                <a href="{{ url_for('therapist.students') }}" class="btn-secondary">
+                    <i class="fas fa-arrow-left mr-2"></i>
+                    Back to Students
+                </a>
+            </div>
+
+            <!-- Crisis Alert -->
+            {% if stats.crisis_level in ['critical', 'high'] %}
+            <div class="crisis-alert">
+                <div class="flex items-start">
+                    <i class="fas fa-exclamation-triangle text-red-300 mr-4 mt-1 text-xl"></i>
+                    <div>
+                        <h4 class="font-bold text-red-200 mb-2 text-lg">
+                            {% if stats.crisis_level == 'critical' %}
+                            🚨 Critical Priority Student
+                            {% else %}
+                            ⚠️ High Priority Student
+                            {% endif %}
+                        </h4>
+                        <p class="text-red-100 mb-4">
+                            This student requires immediate attention and priority support. 
+                            {% if stats.crisis_level == 'critical' %}
+                            Crisis-level intervention protocols are in effect.
+                            {% endif %}
+                        </p>
+                        <div class="flex space-x-4">
+                            {% if upcoming_appointments %}
+                            <a href="{{ upcoming_appointments[0].meeting_info.meet_link if upcoming_appointments[0].meeting_info else '#' }}" 
+                               target="_blank" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded transition-all">
+                                <i class="fas fa-video mr-2"></i>
+                                Join Emergency Session
+                            </a>
+                            {% endif %}
+                            <a href="{{ url_for('therapist.chat', student_id=student._id) }}" 
+                               class="bg-red-700 hover:bg-red-800 text-white px-4 py-2 rounded transition-all">
+                                <i class="fas fa-message mr-2"></i>
+                                Send Immediate Message
+                            </a>
+                        </div>
+                    </div>
                 </div>
-                
-                {% if upcoming_appointments %}
-                    <div class="bg-white rounded shadow overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date & Time</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
-                                {% for appointment in upcoming_appointments %}
-                                <tr>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="font-medium text-gray-900">{{ appointment.date.strftime('%B %d, %Y') }}</div>
-                                        <div class="text-sm text-gray-500">{{ appointment.time }}</div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <span class="text-gray-900">{{ appointment.session_type|title }}</span>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                                            {{ appointment.status|title }}
-                                        </span>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                        <a href="{{ url_for('therapist.appointments') }}" class="text-blue-600 hover:text-blue-900 mr-3">View</a>
-                                        <a href="{{ url_for('therapist.complete_appointment', appointment_id=appointment._id) }}" class="text-indigo-600 hover:text-indigo-900 mr-3" onclick="return confirm('Are you sure you want to mark this appointment as completed?')">Complete</a>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                {% else %}
-                    <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4">
-                        <div class="flex">
-                            <div class="flex-shrink-0">
-                                <i class="fas fa-exclamation-circle text-yellow-400"></i>
+            </div>
+            {% endif %}
+
+            <!-- Student Header -->
+            <div class="glass-card p-8 mb-8">
+                <div class="flex items-start justify-between">
+                    <div class="flex items-start space-x-6">
+                        <!-- Student Avatar -->
+                        <div class="w-24 h-24 rounded-full bg-gradient-to-r from-purple-500 to-pink-600 flex items-center justify-center text-white font-bold text-3xl">
+                            {{ student.first_name[0] }}{{ student.last_name[0] }}
+                        </div>
+                        
+                        <!-- Student Info -->
+                        <div>
+                            <div class="flex items-center space-x-3 mb-3">
+                                <h1 class="text-3xl font-bold text-white">
+                                    {{ student.first_name }} {{ student.last_name }}
+                                </h1>
+                                
+                                <!-- Crisis Level Badge -->
+                                {% if stats.crisis_level == 'critical' %}
+                                <span class="crisis-badge">
+                                    <i class="fas fa-exclamation-triangle mr-1"></i>Critical
+                                </span>
+                                {% elif stats.crisis_level == 'high' %}
+                                <span class="high-priority-badge">
+                                    <i class="fas fa-warning mr-1"></i>High Priority
+                                </span>
+                                {% else %}
+                                <span class="normal-badge">
+                                    <i class="fas fa-check-circle mr-1"></i>Normal
+                                </span>
+                                {% endif %}
+                                
+                                <!-- Auto-Assigned Badge -->
+                                {% if stats.auto_assigned %}
+                                <span class="bg-purple-600 text-white px-3 py-1 rounded-full text-sm font-semibold">
+                                    <i class="fas fa-robot mr-1"></i>AI-Matched
+                                </span>
+                                {% endif %}
                             </div>
-                            <div class="ml-3">
-                                <p class="text-sm text-yellow-700">
-                                    No upcoming appointments scheduled.
-                                    <a href="{{ url_for('therapist.schedule_appointment', student_id=student._id) }}" class="font-medium underline text-yellow-700 hover:text-yellow-600">
-                                        Schedule a new appointment
-                                    </a>
-                                </p>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                <div>
+                                    <p class="text-purple-300 mb-1">📧 Email</p>
+                                    <p class="font-semibold">{{ student.email }}</p>
+                                </div>
+                                <div>
+                                    <p class="text-purple-300 mb-1">📅 Assigned</p>
+                                    <p class="font-semibold">
+                                        {% if assignment.created_at %}
+                                        {{ assignment.created_at.strftime('%B %d, %Y') }}
+                                        {% if stats.days_since_assignment is not none %}
+                                        ({{ stats.days_since_assignment }} days ago)
+                                        {% endif %}
+                                        {% else %}
+                                        N/A
+                                        {% endif %}
+                                    </p>
+                                </div>
                             </div>
                         </div>
                     </div>
-                {% endif %}
-            </div>
-            
-            <div>
-                <h3 class="text-xl font-bold mb-4">Past Appointments</h3>
-                {% if past_appointments %}
-                    <div class="bg-white rounded shadow overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date & Time</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Session Notes</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
-                                {% for appointment in past_appointments %}
-                                <tr>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="font-medium text-gray-900">{{ appointment.date.strftime('%B %d, %Y') }}</div>
-                                        <div class="text-sm text-gray-500">{{ appointment.time }}</div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <span class="text-gray-900">{{ appointment.session_type|title }}</span>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
-                                            {{ appointment.status|title }}
-                                        </span>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        {% if session_notes and session_notes.get(appointment._id|string) %}
-                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                                                Added
-                                            </span>
-                                        {% else %}
-                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
-                                                Missing
-                                            </span>
-                                        {% endif %}
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                        <a href="{{ url_for('therapist.appointments') }}" class="text-blue-600 hover:text-blue-900 mr-3">View</a>
-                                        {% if session_notes and session_notes.get(appointment._id|string) %}
-                                            <a href="{{ url_for('therapist.add_session_notes', appointment_id=appointment._id) }}" class="text-indigo-600 hover:text-indigo-900">Edit Notes</a>
-                                        {% else %}
-                                            <a href="{{ url_for('therapist.add_session_notes', appointment_id=appointment._id) }}" class="text-green-600 hover:text-green-900">Add Notes</a>
-                                        {% endif %}
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                {% else %}
-                    <div class="bg-gray-50 border-l-4 border-gray-400 p-4">
-                        <div class="flex">
-                            <div class="flex-shrink-0">
-                                <i class="fas fa-info-circle text-gray-400"></i>
-                            </div>
-                            <div class="ml-3">
-                                <p class="text-sm text-gray-700">
-                                    No past appointments found.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                {% endif %}
-            </div>
-        </div>
-        
-        <!-- Session Notes Tab -->
-        <div id="notes" class="tab-content hidden">
-            <h3 class="text-xl font-bold mb-4">Session Notes</h3>
-            
-            {% if session_notes %}
-                {% for appointment_id, note in session_notes.items() %}
-                    {% set appointment = None %}
-                    {% for a in past_appointments %}
-                        {% if a._id|string == appointment_id %}
-                            {% set appointment = a %}
-                        {% endif %}
-                    {% endfor %}
                     
-                    {% if appointment %}
-                        <div class="bg-white rounded shadow p-6 mb-4">
-                            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
-                                <div>
-                                    <h4 class="text-lg font-semibold">Session on {{ appointment.date.strftime('%B %d, %Y') }}</h4>
-                                    <p class="text-sm text-gray-500">{{ appointment.time }} - {{ appointment.session_type|title }}</p>
-                                </div>
-                                <a href="{{ url_for('therapist.add_session_notes', appointment_id=appointment._id) }}" class="text-blue-600 hover:text-blue-800 mt-2 sm:mt-0">
-                                    <i class="fas fa-edit"></i> Edit
-                                </a>
-                            </div>
-                            
-                            <div class="mb-4">
-                                <h5 class="font-medium text-gray-700 mb-2">Session Summary</h5>
-                                <p class="text-gray-800">{{ note.summary }}</p>
-                            </div>
-                            
-                            <div class="mb-4">
-                                <h5 class="font-medium text-gray-700 mb-2">Progress Notes</h5>
-                                <p class="text-gray-800">{{ note.progress_notes if note.progress_notes else note.progress }}</p>
-                            </div>
-                            
-                            {% if note.action_items %}
-                                <div class="mb-4">
-                                    <h5 class="font-medium text-gray-700 mb-2">Action Items</h5>
-                                    <ul class="list-disc pl-5 text-gray-800">
-                                        {% if note.action_items is string %}
-                                            {% for item in note.action_items.split('\n') %}
-                                                {% if item.strip() %}
-                                                    <li>{{ item }}</li>
-                                                {% endif %}
-                                            {% endfor %}
-                                        {% else %}
-                                            {% for item in note.action_items %}
-                                                {% if item %}
-                                                    <li>{{ item }}</li>
-                                                {% endif %}
-                                            {% endfor %}
-                                        {% endif %}
-                                    </ul>
-                                </div>
-                            {% endif %}
-                            
-                            {% if note.follow_up or note.next_steps %}
-                                <div>
-                                    <h5 class="font-medium text-gray-700 mb-2">Follow-up Plan</h5>
-                                    <p class="text-gray-800">{{ note.follow_up if note.follow_up else note.next_steps }}</p>
-                                </div>
-                            {% endif %}
-                        </div>
-                    {% endif %}
-                {% endfor %}
-            {% else %}
-                <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4">
-                    <div class="flex">
-                        <div class="flex-shrink-0">
-                            <i class="fas fa-exclamation-circle text-yellow-400"></i>
-                        </div>
-                        <div class="ml-3">
-                            <p class="text-sm text-yellow-700">
-                                No session notes have been added yet.
-                            </p>
-                        </div>
+                    <!-- Quick Actions -->
+                    <div class="flex flex-col space-y-2">
+                        <a href="{{ url_for('therapist.chat', student_id=student._id) }}" class="btn-primary">
+                            <i class="fas fa-message mr-2"></i>
+                            Chat
+                        </a>
+                        {% if upcoming_appointments and upcoming_appointments[0].meeting_info %}
+                        <a href="{{ upcoming_appointments[0].meeting_info.meet_link }}" 
+                           target="_blank" class="btn-success">
+                            <i class="fas fa-video mr-2"></i>
+                            Join Session
+                        </a>
+                        {% endif %}
                     </div>
                 </div>
-            {% endif %}
-        </div>
-        
-        <!-- Shared Resources Tab -->
-        <div id="resources" class="tab-content hidden">
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3">
-                <h3 class="text-xl font-bold">Shared Resources</h3>
-                <a href="{{ url_for('therapist.resources') }}" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
-                    <i class="fas fa-plus mr-2"></i> Share New Resource
-                </a>
             </div>
-            
-            {% if shared_resources %}
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {% for resource in shared_resources %}
-                        <div class="bg-white rounded shadow p-4">
-                            <div class="flex justify-between items-start mb-2">
-                                <h4 class="font-semibold text-lg text-gray-800">{{ resource.title }}</h4>
-                                <div class="text-sm text-gray-500">{{ resource.shared_at.strftime('%b %d, %Y') }}</div>
-                            </div>
-                            <div class="mb-3 text-gray-700">
-                                <p>{{ resource.description|truncate(100) }}</p>
-                            </div>
-                            <div class="flex justify-between items-center">
-                                <a href="{{ resource.url }}" target="_blank" class="text-blue-600 hover:text-blue-800">
-                                    <i class="fas fa-external-link-alt mr-1"></i> View Resource
-                                </a>
-                            </div>
-                        </div>
-                    {% endfor %}
-                </div>
-            {% else %}
-                <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4">
-                    <div class="flex">
-                        <div class="flex-shrink-0">
-                            <i class="fas fa-exclamation-circle text-yellow-400"></i>
-                        </div>
-                        <div class="ml-3">
-                            <p class="text-sm text-yellow-700">
-                                No resources have been shared with this student yet.
-                                <a href="{{ url_for('therapist.resources') }}" class="font-medium underline text-yellow-700 hover:text-yellow-600">
-                                    Share a resource
-                                </a>
-                            </p>
-                        </div>
+
+            <!-- Statistics Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="stat-card primary">
+                    <div class="stat-number">{{ stats.total_virtual_sessions }}</div>
+                    <div class="stat-label">
+                        <i class="fas fa-video mr-1"></i>
+                        Virtual Sessions
                     </div>
                 </div>
-            {% endif %}
-        </div>
-        
-        <!-- Recent Messages Tab -->
-        <div id="messages" class="tab-content hidden">
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3">
-                <h3 class="text-xl font-bold">Recent Messages</h3>
-                <a href="{{ url_for('therapist.chat', student_id=student._id) }}" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded">
-                    <i class="fas fa-comment mr-2"></i> View Full Chat
-                </a>
+                <div class="stat-card secondary">
+                    <div class="stat-number">
+                        {% if stats.days_since_last_session is not none %}
+                        {{ stats.days_since_last_session }}
+                        {% else %}
+                        N/A
+                        {% endif %}
+                    </div>
+                    <div class="stat-label">
+                        <i class="fas fa-calendar mr-1"></i>
+                        Days Since Last Session
+                    </div>
+                </div>
+                <div class="stat-card warning">
+                    <div class="stat-number">{{ stats.cancelled_sessions }}</div>
+                    <div class="stat-label">
+                        <i class="fas fa-times mr-1"></i>
+                        Cancelled Sessions
+                    </div>
+                </div>
+                <div class="stat-card danger">
+                    <div class="stat-number">
+                        {% if stats.days_since_assignment is not none %}
+                        {{ stats.days_since_assignment }}
+                        {% else %}
+                        N/A
+                        {% endif %}
+                    </div>
+                    <div class="stat-label">
+                        <i class="fas fa-user-plus mr-1"></i>
+                        Days Since Assignment
+                    </div>
+                </div>
             </div>
-            
-            {% if recent_messages %}
-                <div class="bg-white rounded shadow overflow-hidden">
-                    <div class="p-4 space-y-4">
-                        {% for message in recent_messages %}
-                            <div class="flex {% if message.sender_id == therapist_id or message.sender == 'therapist' %}justify-end{% endif %}">
-                                <div class="max-w-xs sm:max-w-md md:max-w-lg rounded-lg p-3 {% if message.sender_id == therapist_id or message.sender == 'therapist' %}bg-blue-100 text-blue-800{% else %}bg-gray-100 text-gray-800{% endif %}">
-                                    <p class="mb-1">{{ message.message }}</p>
-                                    <p class="text-xs text-gray-500 text-right">{{ message.timestamp.strftime('%b %d, %Y %I:%M %p') }}</p>
+
+            <!-- Main Content Tabs -->
+            <div class="glass-card p-6 mb-8">
+                <div class="flex space-x-4 mb-6">
+                    <button class="tab-button active" onclick="showTab('sessions')">
+                        <i class="fas fa-video mr-2"></i>
+                        Virtual Sessions
+                    </button>
+                    <button class="tab-button" onclick="showTab('intake')">
+                        <i class="fas fa-clipboard-list mr-2"></i>
+                        Intake Information
+                    </button>
+                    <button class="tab-button" onclick="showTab('resources')">
+                        <i class="fas fa-share mr-2"></i>
+                        Shared Resources
+                    </button>
+                    <button class="tab-button" onclick="showTab('messages')">
+                        <i class="fas fa-message mr-2"></i>
+                        Recent Messages
+                    </button>
+                </div>
+
+                <!-- Virtual Sessions Tab -->
+                <div id="sessions-tab" class="tab-content active">
+                    <h3 class="text-xl font-bold mb-4 text-white">
+                        <i class="fas fa-video mr-2 text-purple-400"></i>
+                        Virtual Sessions History
+                    </h3>
+                    
+                    <!-- Upcoming Sessions -->
+                    {% if upcoming_appointments %}
+                    <div class="mb-6">
+                        <h4 class="text-lg font-semibold text-green-400 mb-3">
+                            <i class="fas fa-calendar-plus mr-2"></i>
+                            Upcoming Virtual Sessions
+                        </h4>
+                        {% for appointment in upcoming_appointments %}
+                        <div class="session-card session-upcoming">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-4">
+                                    <div class="w-12 h-12 bg-green-600 rounded-full flex items-center justify-center">
+                                        <i class="fas fa-video text-white"></i>
+                                    </div>
+                                    <div>
+                                        <h5 class="font-semibold text-white">
+                                            {{ appointment.datetime.strftime('%A, %B %d at %I:%M %p') }}
+                                        </h5>
+                                        <p class="text-green-300 text-sm">
+                                            <span class="virtual-badge">Virtual Session</span>
+                                            {% if appointment.auto_scheduled %}
+                                            <span class="ml-2 text-yellow-400 text-xs">
+                                                <i class="fas fa-magic mr-1"></i>Auto-Scheduled
+                                            </span>
+                                            {% endif %}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="flex space-x-2">
+                                    {% if appointment.meeting_info %}
+                                    <a href="{{ appointment.meeting_info.meet_link }}" 
+                                       target="_blank" class="btn-success">
+                                        <i class="fas fa-video mr-2"></i>
+                                        Join Session
+                                    </a>
+                                    {% endif %}
                                 </div>
                             </div>
+                            
+                            {% if appointment.meeting_info %}
+                            <div class="meeting-link-box">
+                                <p class="text-blue-300 text-sm font-medium mb-2">
+                                    <i class="fas fa-link mr-1"></i>
+                                    Meeting Link:
+                                </p>
+                                <div class="flex items-center space-x-2">
+                                    <input type="text" 
+                                           value="{{ appointment.meeting_info.meet_link }}" 
+                                           id="link-{{ appointment._id }}" 
+                                           class="bg-transparent text-blue-200 text-sm flex-1 p-2 border border-blue-400 rounded font-mono" 
+                                           readonly>
+                                    <button onclick="copyLink('{{ appointment._id }}')" class="copy-btn">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
                         {% endfor %}
                     </div>
-                </div>
-            {% else %}
-                <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4">
-                    <div class="flex">
-                        <div class="flex-shrink-0">
-                            <i class="fas fa-exclamation-circle text-yellow-400"></i>
+                    {% endif %}
+                    
+                    <!-- Past Sessions -->
+                    <div>
+                        <h4 class="text-lg font-semibold text-gray-400 mb-3">
+                            <i class="fas fa-history mr-2"></i>
+                            Completed Virtual Sessions
+                        </h4>
+                        {% if past_appointments %}
+                        <div class="space-y-4">
+                            {% for appointment in past_appointments %}
+                            <div class="session-card session-completed">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center space-x-4">
+                                        <div class="w-12 h-12 bg-gray-600 rounded-full flex items-center justify-center">
+                                            <i class="fas fa-check text-white"></i>
+                                        </div>
+                                        <div>
+                                            <h5 class="font-semibold text-white">
+                                                {{ appointment.datetime.strftime('%A, %B %d at %I:%M %p') }}
+                                            </h5>
+                                            <p class="text-gray-400 text-sm">
+                                                <span class="virtual-badge">Virtual Session</span>
+                                                <span class="ml-2">Duration: 60 minutes</span>
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div class="flex space-x-2">
+                                        {% if session_notes[appointment._id|string] %}
+                                        <span class="bg-green-600 text-white px-3 py-1 rounded-full text-xs">
+                                            <i class="fas fa-notes-medical mr-1"></i>Notes Added
+                                        </span>
+                                        {% endif %}
+                                        <a href="{{ url_for('therapist.add_session_notes', appointment_id=appointment._id) }}" 
+                                           class="btn-primary">
+                                            <i class="fas fa-notes-medical mr-2"></i>
+                                            {% if session_notes[appointment._id|string] %}Edit Notes{% else %}Add Notes{% endif %}
+                                        </a>
+                                    </div>
+                                </div>
+                                
+                                {% if session_notes[appointment._id|string] %}
+                                <div class="mt-4 p-4 bg-gray-800 bg-opacity-30 rounded-lg">
+                                    <h6 class="font-semibold text-white mb-2">Session Summary:</h6>
+                                    <p class="text-gray-300 text-sm">{{ session_notes[appointment._id|string].summary[:150] }}...</p>
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
                         </div>
-                        <div class="ml-3">
-                            <p class="text-sm text-yellow-700">
-                                No messages have been exchanged with this student yet.
-                                <a href="{{ url_for('therapist.chat', student_id=student._id) }}" class="font-medium underline text-yellow-700 hover:text-yellow-600">
-                                    Start a conversation
-                                </a>
-                            </p>
+                        {% else %}
+                        <div class="text-center py-8">
+                            <i class="fas fa-video text-4xl text-purple-400 mb-4 opacity-50"></i>
+                            <p class="text-purple-300">No completed virtual sessions yet</p>
                         </div>
+                        {% endif %}
                     </div>
                 </div>
-            {% endif %}
+
+                <!-- Intake Information Tab -->
+                <div id="intake-tab" class="tab-content">
+                    <h3 class="text-xl font-bold mb-4 text-white">
+                        <i class="fas fa-clipboard-list mr-2 text-purple-400"></i>
+                        Intake Assessment Information
+                    </h3>
+                    
+                    {% if intake_data %}
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-4">
+                            <div>
+                                <h4 class="font-semibold text-purple-300 mb-2">Primary Concern</h4>
+                                <p class="text-white">{{ intake_data.primary_concern.replace('_', ' ').title() if intake_data.primary_concern else 'Not specified' }}</p>
+                            </div>
+                            
+                            <div>
+                                <h4 class="font-semibold text-purple-300 mb-2">Severity Level</h4>
+                                <p class="text-white">{{ intake_data.severity }}/10</p>
+                            </div>
+                            
+                            <div>
+                                <h4 class="font-semibold text-purple-300 mb-2">Duration</h4>
+                                <p class="text-white">{{ intake_data.duration.replace('_', ' ').title() if intake_data.duration else 'Not specified' }}</p>
+                            </div>
+                            
+                            <div>
+                                <h4 class="font-semibold text-purple-300 mb-2">Previous Therapy</h4>
+                                <p class="text-white">{{ intake_data.previous_therapy.replace('_', ' ').title() if intake_data.previous_therapy else 'Not specified' }}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <div>
+                                <h4 class="font-semibold text-purple-300 mb-2">Crisis Level</h4>
+                                <p class="text-white">{{ intake_data.crisis_level.title() if intake_data.crisis_level else 'Normal' }}</p>
+                            </div>
+                            
+                            <div>
+                                <h4 class="font-semibold text-purple-300 mb-2">Assessment Date</h4>
+                                <p class="text-white">{{ intake_data.created_at.strftime('%B %d, %Y') if intake_data.created_at else 'Not available' }}</p>
+                            </div>
+                            
+                            {% if intake_data.emergency_contact_name %}
+                            <div>
+                                <h4 class="font-semibold text-purple-300 mb-2">Emergency Contact</h4>
+                                <p class="text-white">{{ intake_data.emergency_contact_name }}</p>
+                                <p class="text-gray-400 text-sm">{{ intake_data.emergency_contact_relationship }} - {{ intake_data.emergency_contact_phone }}</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    {% if intake_data.description %}
+                    <div class="mt-6">
+                        <h4 class="font-semibold text-purple-300 mb-2">Detailed Description</h4>
+                        <div class="bg-gray-800 bg-opacity-30 rounded-lg p-4">
+                            <p class="text-white">{{ intake_data.description }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% else %}
+                    <div class="text-center py-8">
+                        <i class="fas fa-clipboard-list text-4xl text-purple-400 mb-4 opacity-50"></i>
+                        <p class="text-purple-300">No intake assessment data available</p>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Shared Resources Tab -->
+                <div id="resources-tab" class="tab-content">
+                    <h3 class="text-xl font-bold mb-4 text-white">
+                        <i class="fas fa-share mr-2 text-purple-400"></i>
+                        Shared Resources
+                    </h3>
+                    
+                    {% if shared_resources %}
+                    <div class="space-y-4">
+                        {% for resource in shared_resources %}
+                        <div class="session-card">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h5 class="font-semibold text-white mb-1">{{ resource.title }}</h5>
+                                    <p class="text-purple-300 text-sm mb-2">{{ resource.description }}</p>
+                                    <div class="flex items-center space-x-2 text-xs">
+                                        <span class="bg-purple-600 text-white px-2 py-1 rounded">{{ resource.type.title() }}</span>
+                                        <span class="text-gray-400">Shared {{ resource.shared_at.strftime('%b %d, %Y') }}</span>
+                                    </div>
+                                </div>
+                                <a href="{{ resource.url }}" target="_blank" class="btn-primary">
+                                    <i class="fas fa-external-link-alt mr-2"></i>
+                                    View Resource
+                                </a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-8">
+                        <i class="fas fa-share text-4xl text-purple-400 mb-4 opacity-50"></i>
+                        <p class="text-purple-300 mb-4">No resources shared yet</p>
+                        <a href="{{ url_for('therapist.resources') }}" class="btn-primary">
+                            <i class="fas fa-plus mr-2"></i>
+                            Share Resources
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Recent Messages Tab -->
+                <div id="messages-tab" class="tab-content">
+                    <h3 class="text-xl font-bold mb-4 text-white">
+                        <i class="fas fa-message mr-2 text-purple-400"></i>
+                        Recent Messages
+                    </h3>
+                    
+                    {% if recent_messages %}
+                    <div class="space-y-4">
+                        {% for message in recent_messages %}
+                        <div class="session-card">
+                            <div class="flex items-start space-x-4">
+                                <div class="w-10 h-10 rounded-full bg-{{ 'purple' if message.sender == 'therapist' else 'blue' }}-600 flex items-center justify-center">
+                                    <i class="fas fa-{{ 'user-md' if message.sender == 'therapist' else 'user' }} text-white text-sm"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <div class="flex items-center space-x-2 mb-1">
+                                        <span class="font-semibold text-white">
+                                            {{ 'You' if message.sender == 'therapist' else student.first_name }}
+                                        </span>
+                                        <span class="text-gray-400 text-xs">
+                                            {{ message.timestamp.strftime('%b %d, %Y at %I:%M %p') }}
+                                        </span>
+                                    </div>
+                                    <p class="text-gray-300">{{ message.message }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="mt-6 text-center">
+                        <a href="{{ url_for('therapist.chat', student_id=student._id) }}" class="btn-primary">
+                            <i class="fas fa-message mr-2"></i>
+                            Open Chat
+                        </a>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-8">
+                        <i class="fas fa-message text-4xl text-purple-400 mb-4 opacity-50"></i>
+                        <p class="text-purple-300 mb-4">No messages yet</p>
+                        <a href="{{ url_for('therapist.chat', student_id=student._id) }}" class="btn-primary">
+                            <i class="fas fa-plus mr-2"></i>
+                            Start Conversation
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
         </div>
     </main>
 
-    <!-- JavaScript for tab switching -->
     <script>
-        function showTab(tabId) {
-            // Hide all tab content
+        // Tab switching
+        function showTab(tabName) {
+            // Hide all tabs
             document.querySelectorAll('.tab-content').forEach(tab => {
-                tab.classList.add('hidden');
+                tab.classList.remove('active');
             });
             
-            // Show the selected tab content
-            document.getElementById(tabId).classList.remove('hidden');
-            
-            // Update active tab styles
-            document.querySelectorAll('.flex.border-b a').forEach(link => {
-                link.classList.remove('text-blue-500', 'border-b-2', 'border-blue-500');
-                link.classList.add('text-gray-500');
+            // Remove active class from all buttons
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
             });
             
-            // Set active tab style
-            document.querySelector(`a[href="#${tabId}"]`).classList.remove('text-gray-500');
-            document.querySelector(`a[href="#${tabId}"]`).classList.add('text-blue-500', 'border-b-2', 'border-blue-500');
+            // Show selected tab
+            document.getElementById(tabName + '-tab').classList.add('active');
             
-            // Store active tab in sessionStorage
-            sessionStorage.setItem('activeStudentTab', tabId);
+            // Add active class to clicked button
+            event.target.classList.add('active');
         }
         
-        // Set default tab or restore from sessionStorage
+        // Copy meeting link
+        function copyLink(appointmentId) {
+            const linkInput = document.getElementById('link-' + appointmentId);
+            linkInput.select();
+            linkInput.setSelectionRange(0, 99999);
+            
+            navigator.clipboard.writeText(linkInput.value).then(() => {
+                const copyBtn = event.target.closest('button');
+                const originalHTML = copyBtn.innerHTML;
+                copyBtn.innerHTML = '<i class="fas fa-check"></i>';
+                copyBtn.style.background = 'rgba(16, 185, 129, 0.7)';
+                
+                setTimeout(() => {
+                    copyBtn.innerHTML = originalHTML;
+                    copyBtn.style.background = '';
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy text: ', err);
+                alert('Failed to copy link. Please copy manually.');
+            });
+        }
+        
+        // Initialize page
         document.addEventListener('DOMContentLoaded', function() {
-            const savedTab = sessionStorage.getItem('activeStudentTab');
-            if (savedTab && document.getElementById(savedTab)) {
-                showTab(savedTab);
-            } else if (!document.querySelector('.tab-content:not(.hidden)')) {
-                showTab('appointments');
+            console.log('Student details page loaded');
+            
+            // Check for crisis level and show appropriate alerts
+            const crisisLevel = '{{ stats.crisis_level }}';
+            if (crisisLevel === 'critical' || crisisLevel === 'high') {
+                console.log(`⚠️ ${crisisLevel.toUpperCase()} priority student - special attention required`);
             }
         });
     </script>

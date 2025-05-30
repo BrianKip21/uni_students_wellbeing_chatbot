@@ -3,411 +3,656 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Students | Wellbeing Assistant</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css"> 
+    <title>My Students | Therapist Portal</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
-
     <style>
-        {% if settings.theme_mode == 'dark' %}
-        /* Dark mode styles */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
         body {
-            background-color: #121212 !important;
-            color: #e0e0e0 !important;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 50%, #2d1b69 100%);
+            color: #e0e7ff;
+            min-height: 100vh;
         }
         
-        .bg-white {
-            background-color: #1e1e1e !important;
+        .sidebar {
+            background: rgba(15, 15, 35, 0.9);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 260px;
+            z-index: 1000;
         }
         
-        .text-gray-700, .text-gray-800, .text-gray-900 {
-            color: #e0e0e0 !important;
+        .sidebar-nav a {
+            color: #a78bfa;
+            padding: 0.75rem 1.5rem;
+            display: flex;
+            align-items: center;
+            transition: all 0.3s ease;
+            border-radius: 0 20px 20px 0;
+            margin-right: 1rem;
         }
         
-        .text-gray-500, .text-gray-600 {
-            color: #a0a0a0 !important;
+        .sidebar-nav a:hover {
+            background: rgba(139, 92, 246, 0.2);
+            color: #c4b5fd;
+            transform: translateX(8px);
         }
         
-        .bg-gray-50, .bg-gray-100, .bg-gray-200 {
-            background-color: #2a2a2a !important;
+        .sidebar-nav a.active {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            color: white;
+            box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4);
         }
         
-        .border-gray-200, .border-gray-300 {
-            border-color: #333 !important;
-        }
-
-        .hover\:bg-gray-100:hover {
-            background-color: #333333 !important;
-        }
-
-        .hover\:bg-gray-200:hover {
-            background-color: #444444 !important;
-        }
-
-        .hover\:bg-green-200:hover {
-            background-color: #0d503c !important;
-        }
-
-        .hover\:bg-blue-200:hover {
-            background-color: #0d365e !important;
-        }
-
-        .bg-green-100 {
-            background-color: #064e3b !important;
-        }
-
-        .bg-blue-100 {
-            background-color: #0c4a6e !important;
-        }
-        {% endif %}
-        
-        {% if settings.contrast == 'high' %}
-        /* High contrast styles */
-        body {
-            background-color: #ffffff !important;
-            color: #000000 !important;
+        .main-content {
+            margin-left: 260px;
+            min-height: 100vh;
+            padding: 2rem;
         }
         
-        .text-gray-500, .text-gray-600, .text-gray-700, .text-gray-800, .text-gray-900 {
-            color: #000000 !important;
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
         }
         
-        .bg-gray-800 {
-            background-color: #000000 !important;
-        }
-        
-        .text-gray-200 {
-            color: #ffffff !important;
-        }
-        
-        input, select, button {
-            border: 2px solid #000000 !important;
-        }
-
-        .bg-green-100, .bg-blue-100, .bg-gray-100 {
-            background-color: #ffffff !important;
-            border: 2px solid #000000 !important;
-        }
-
-        .text-green-500, .text-blue-500, .text-purple-500 {
-            color: #000000 !important;
-        }
-        {% endif %}
-        
-        {% if settings.text_size == 'lg' %}
-        /* Large text */
-        body {
-            font-size: 1.125rem !important;
-        }
-        
-        .text-sm {
-            font-size: 0.9375rem !important;
-        }
-        
-        .text-lg, .text-xl, .text-2xl, .text-3xl {
-            font-size: 1.3125rem !important;
-        }
-        {% elif settings.text_size == 'xl' %}
-        /* Extra large text */
-        body {
-            font-size: 1.25rem !important;
-        }
-        
-        .text-sm {
-            font-size: 1.0625rem !important;
-        }
-        
-        .text-lg, .text-xl {
-            font-size: 1.5rem !important;
-        }
-
-        .text-2xl, .text-3xl {
-            font-size: 1.75rem !important;
-        }
-        {% endif %}
-
-        /* Custom styles for student cards */
         .student-card {
-            transition: transform 0.2s;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
         }
         
         .student-card:hover {
-            transform: translateY(-4px);
+            background: rgba(255, 255, 255, 0.06);
+            border-color: #8b5cf6;
+            transform: translateY(-2px);
         }
         
-        .student-badge {
-            display: inline-block;
-            padding: 2px 8px;
-            border-radius: 9999px;
+        .crisis-card {
+            border-left: 4px solid #ef4444;
+            background: rgba(239, 68, 68, 0.1);
+        }
+        
+        .high-priority-card {
+            border-left: 4px solid #f59e0b;
+            background: rgba(245, 158, 11, 0.1);
+        }
+        
+        .normal-card {
+            border-left: 4px solid #10b981;
+            background: rgba(16, 185, 129, 0.05);
+        }
+        
+        .crisis-badge {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
             font-size: 0.75rem;
+            font-weight: 600;
+            animation: pulse 2s infinite;
+        }
+        
+        .high-priority-badge {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .normal-badge {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .auto-assigned-badge {
+            background: rgba(139, 92, 246, 0.2);
+            color: #c4b5fd;
+            border: 1px solid rgba(139, 92, 246, 0.4);
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .virtual-badge {
+            background: rgba(59, 130, 246, 0.2);
+            color: #60a5fa;
+            border: 1px solid rgba(59, 130, 246, 0.4);
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .unread-badge {
+            background: #ef4444;
+            color: white;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 600;
+            animation: pulse 2s infinite;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(139, 92, 246, 0.4);
+        }
+        
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            color: #e0e7ff;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: #8b5cf6;
+            transform: translateY(-2px);
+        }
+        
+        .filter-button {
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #a78bfa;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .filter-button.active {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            color: white;
+            box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4);
+        }
+        
+        .filter-button:hover:not(.active) {
+            background: rgba(139, 92, 246, 0.2);
+            color: #c4b5fd;
+        }
+        
+        .search-input {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #e0e7ff;
+            border-radius: 12px;
+            padding: 1rem;
+            width: 100%;
+            transition: all 0.3s ease;
+        }
+        
+        .search-input:focus {
+            border-color: #8b5cf6;
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.25);
+            background: rgba(255, 255, 255, 0.12);
+            outline: none;
+        }
+        
+        .stat-card {
+            text-align: center;
+            padding: 1.5rem;
+            border-radius: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .stat-card.primary {
+            background: linear-gradient(135deg, #10b981, #059669);
+        }
+        
+        .stat-card.secondary {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+        }
+        
+        .stat-card.warning {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+        }
+        
+        .stat-card.danger {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+        }
+        
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-label {
+            font-size: 0.875rem;
+            color: rgba(255, 255, 255, 0.8);
             font-weight: 500;
         }
         
-        .badge-active {
-            background-color: #dcfce7;
-            color: #15803d;
+        @media (max-width: 1024px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
         }
-        
-        .badge-inactive {
-            background-color: #fee2e2;
-            color: #b91c1c;
-        }
-        
-        .badge-new {
-            background-color: #dbeafe;
-            color: #1e40af;
-        }
-
-        {% if settings.theme_mode == 'dark' %}
-        .badge-active {
-            background-color: #064e3b;
-            color: #dcfce7;
-        }
-        
-        .badge-inactive {
-            background-color: #7f1d1d;
-            color: #fee2e2;
-        }
-        
-        .badge-new {
-            background-color: #1e3a8a;
-            color: #dbeafe;
-        }
-        {% endif %}
     </style>
 </head>
-
-<body class="bg-gray-200 flex text-gray-900">
+<body>
     <!-- Sidebar Navigation -->
-    <aside class="w-64 h-screen bg-gray-800 text-gray-200 p-4 fixed">
-        <h1 class="text-2xl font-bold mb-6">Therapist Portal</h1>
-        <nav>
-            <ul class="space-y-4">
-                <li><a href="{{ url_for('therapist.index') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-chart-line"></i> Dashboard</a></li>
-                <li><a href="{{ url_for('therapist.appointments') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-calendar-alt"></i> Appointments</a></li>
-                <li><a href="{{ url_for('therapist.students') }}" class="block p-2 bg-gray-700 rounded"> <i class="fas fa-user-graduate"></i> My Students</a></li>
-                <li><a href="{{ url_for('therapist.calendar') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-calendar"></i> Calendar</a></li>
-                <li><a href="{{ url_for('therapist.resources') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-book-medical"></i> Resources</a></li>
-                <li><a href="{{ url_for('therapist.profile') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-user"></i> Profile</a></li>
-                <li><a href="{{ url_for('therapist.student_requests') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-user-plus"></i> Student Requests</a></li>
-                <li><a href="{{ url_for('therapist.reports') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-chart-bar"></i> Reports</a></li>
-                <li><a href="{{ url_for('auth.logout') }}" class="block p-2 hover:bg-gray-700 rounded mt-8"> <i class="fas fa-sign-out-alt"></i> Logout</a></li>
+    <aside class="sidebar">
+        <div class="p-6">
+            <h1 class="text-2xl font-bold mb-8 bg-gradient-to-r from-purple-400 to-pink-600 bg-clip-text text-transparent">
+                Therapist Portal
+            </h1>
+        </div>
+        <nav class="sidebar-nav">
+            <ul class="space-y-2">
+                <li><a href="{{ url_for('therapist.index') }}" class="flex items-center">
+                    <i class="fas fa-chart-line w-5 mr-3"></i> Dashboard
+                </a></li>
+                <li><a href="{{ url_for('therapist.students') }}" class="flex items-center active">
+                    <i class="fas fa-users w-5 mr-3"></i> My Students
+                </a></li>
+                <li><a href="{{ url_for('therapist.virtual_sessions') }}" class="flex items-center">
+                    <i class="fas fa-video w-5 mr-3"></i> Virtual Sessions
+                </a></li>
+                <li><a href="{{ url_for('therapist.availability') }}" class="flex items-center">
+                    <i class="fas fa-calendar-alt w-5 mr-3"></i> Availability
+                </a></li>
+                <li><a href="{{ url_for('therapist.resources') }}" class="flex items-center">
+                    <i class="fas fa-book w-5 mr-3"></i> Resources
+                </a></li>
+                <li><a href="{{ url_for('therapist.profile') }}" class="flex items-center">
+                    <i class="fas fa-user w-5 mr-3"></i> Profile
+                </a></li>
             </ul>
+            
+            <div class="mt-auto p-6">
+                <a href="{{ url_for('auth.logout') }}" class="flex items-center text-red-400 hover:text-red-300">
+                    <i class="fas fa-sign-out-alt w-5 mr-3"></i> Logout
+                </a>
+            </div>
         </nav>
     </aside>
 
     <!-- Main Content -->
-    <main class="ml-64 p-8 w-full">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="bg-{% if category == 'error' %}red{% else %}blue{% endif %}-100 border-l-4 border-{% if category == 'error' %}red{% else %}blue{% endif %}-500 text-{% if category == 'error' %}red{% else %}blue{% endif %}-700 p-4 mb-6" role="alert">
-                        <p>{{ message }}</p>
+    <main class="main-content">
+        <div class="max-w-7xl mx-auto">
+            
+            <!-- Header -->
+            <div class="mb-8">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h1 class="text-4xl font-bold mb-2 bg-gradient-to-r from-purple-400 to-pink-600 bg-clip-text text-transparent">
+                            My Students
+                        </h1>
+                        <p class="text-purple-300">
+                            <i class="fas fa-robot mr-2"></i>
+                            AI-Matched Students • Virtual-Only Sessions • Auto-Assigned
+                        </p>
                     </div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
-    
-        <div class="flex justify-between items-center mb-6">
-            <h2 class="text-3xl font-bold text-gray-800">My Students</h2>
-            <div class="flex space-x-2">
-                <a href="{{ url_for('therapist.student_requests') }}" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded">
-                    <i class="fas fa-user-plus mr-2"></i> Student Requests
-                </a>
-            </div>
-        </div>
-        
-        <!-- Search and Filter -->
-        <div class="bg-white p-4 rounded shadow mb-6">
-            <div class="flex flex-wrap items-center">
-                <div class="w-full md:w-1/3 mb-4 md:mb-0 md:pr-2">
-                    <div class="relative">
-                        <input type="text" id="searchInput" placeholder="Search students..." class="w-full border border-gray-300 rounded pl-10 pr-3 py-2 focus:outline-none focus:border-blue-500" oninput="filterStudents()">
-                        <div class="absolute left-3 top-2 text-gray-500">
-                            <i class="fas fa-search"></i>
-                        </div>
+                    <div class="text-right">
+                        <p class="text-sm text-purple-300">Total Students</p>
+                        <p class="text-3xl font-bold">{{ students_data|length }}</p>
                     </div>
                 </div>
-                
-                <div class="w-full md:w-2/3 flex flex-wrap md:justify-end space-x-2">
-                    <button type="button" onclick="filterByStatus('all')" class="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 mb-2 filter-btn active-filter" data-filter="all">
-                        All Students
-                    </button>
-                    <button type="button" onclick="filterByStatus('active')" class="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 mb-2 filter-btn" data-filter="active">
-                        Active
-                    </button>
-                    <button type="button" onclick="filterByStatus('inactive')" class="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 mb-2 filter-btn" data-filter="inactive">
-                        Inactive
-                    </button>
-                    <button type="button" onclick="filterByStatus('new')" class="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 mb-2 filter-btn" data-filter="new">
-                        New Students
-                    </button>
+            </div>
+
+            <!-- Statistics Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="stat-card primary">
+                    <div class="stat-number">{{ students_data|length }}</div>
+                    <div class="stat-label">
+                        <i class="fas fa-users mr-1"></i>
+                        Total Students
+                    </div>
+                </div>
+                <div class="stat-card danger">
+                    <div class="stat-number">{{ students_data|selectattr('crisis_level', 'in', ['critical', 'high'])|list|length }}</div>
+                    <div class="stat-label">
+                        <i class="fas fa-exclamation-triangle mr-1"></i>
+                        Crisis/High Priority
+                    </div>
+                </div>
+                <div class="stat-card secondary">
+                    <div class="stat-number">{{ students_data|selectattr('next_appointment')|list|length }}</div>
+                    <div class="stat-label">
+                        <i class="fas fa-video mr-1"></i>
+                        Upcoming Sessions
+                    </div>
+                </div>
+                <div class="stat-card warning">
+                    <div class="stat-number">{{ students_data|map(attribute='unread_messages')|sum }}</div>
+                    <div class="stat-label">
+                        <i class="fas fa-message mr-1"></i>
+                        Unread Messages
+                    </div>
                 </div>
             </div>
-        </div>
-        
-        <!-- Students Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {% for student_data in students_data %}
-                {% if student_data.student %}
-                <div class="bg-white p-6 rounded shadow student-card" data-status="{% if student_data.total_sessions == 0 %}new{% else %}active{% endif %}">
-                    <div class="flex justify-between items-start mb-4">
-                        <div class="flex items-center">
-                            <div class="w-12 h-12 rounded-full bg-blue-100 text-blue-500 flex items-center justify-center font-bold text-lg mr-3">
-                                {% if student_data.student.first_name %}{{ student_data.student.first_name[0] }}{% endif %}{% if student_data.student.last_name %}{{ student_data.student.last_name[0] }}{% endif %}
+
+            <!-- Search and Filters -->
+            <div class="glass-card p-6 mb-8">
+                <div class="flex flex-col md:flex-row gap-4 mb-6">
+                    <div class="flex-1">
+                        <input type="text" 
+                               id="student-search" 
+                               class="search-input" 
+                               placeholder="🔍 Search students by name..."
+                               onkeyup="filterStudents()">
+                    </div>
+                    <div class="flex space-x-2">
+                        <button class="filter-button active" onclick="filterByPriority('all')">
+                            <i class="fas fa-users mr-2"></i>All
+                        </button>
+                        <button class="filter-button" onclick="filterByPriority('critical')">
+                            <i class="fas fa-exclamation-triangle mr-2"></i>Critical
+                        </button>
+                        <button class="filter-button" onclick="filterByPriority('high')">
+                            <i class="fas fa-warning mr-2"></i>High
+                        </button>
+                        <button class="filter-button" onclick="filterByPriority('normal')">
+                            <i class="fas fa-check-circle mr-2"></i>Normal
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Students List -->
+            <div class="space-y-4" id="students-container">
+                {% if students_data %}
+                    {% for student_data in students_data %}
+                    <div class="student-card 
+                        {% if student_data.crisis_level == 'critical' %}crisis-card
+                        {% elif student_data.crisis_level == 'high' %}high-priority-card
+                        {% else %}normal-card{% endif %}" 
+                        data-student-name="{{ student_data.student.first_name }} {{ student_data.student.last_name }}" 
+                        data-crisis-level="{{ student_data.crisis_level }}">
+                        
+                        <div class="flex items-start justify-between">
+                            <div class="flex items-start space-x-4 flex-1">
+                                <!-- Student Avatar -->
+                                <div class="w-16 h-16 rounded-full bg-gradient-to-r from-purple-500 to-pink-600 flex items-center justify-center text-white font-bold text-xl">
+                                    {{ student_data.student.first_name[0] }}{{ student_data.student.last_name[0] }}
+                                </div>
+                                
+                                <!-- Student Info -->
+                                <div class="flex-1">
+                                    <div class="flex items-center space-x-2 mb-2">
+                                        <h3 class="text-xl font-bold text-white">
+                                            {{ student_data.student.first_name }} {{ student_data.student.last_name }}
+                                        </h3>
+                                        
+                                        <!-- Crisis Level Badge -->
+                                        {% if student_data.crisis_level == 'critical' %}
+                                        <span class="crisis-badge">
+                                            <i class="fas fa-exclamation-triangle mr-1"></i>Critical
+                                        </span>
+                                        {% elif student_data.crisis_level == 'high' %}
+                                        <span class="high-priority-badge">
+                                            <i class="fas fa-warning mr-1"></i>High Priority
+                                        </span>
+                                        {% else %}
+                                        <span class="normal-badge">
+                                            <i class="fas fa-check-circle mr-1"></i>Normal
+                                        </span>
+                                        {% endif %}
+                                        
+                                        <!-- Auto-Assigned Badge -->
+                                        {% if student_data.auto_assigned %}
+                                        <span class="auto-assigned-badge">
+                                            <i class="fas fa-robot mr-1"></i>AI-Matched
+                                        </span>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                                        <!-- Assignment Info -->
+                                        <div>
+                                            <p class="text-purple-300 mb-1">📅 Assigned</p>
+                                            <p class="font-semibold">
+                                                {{ student_data.assigned_at.strftime('%b %d, %Y') if student_data.assigned_at else 'N/A' }}
+                                            </p>
+                                        </div>
+                                        
+                                        <!-- Session Stats -->
+                                        <div>
+                                            <p class="text-purple-300 mb-1">📊 Virtual Sessions</p>
+                                            <p class="font-semibold">{{ student_data.total_sessions }} completed</p>
+                                        </div>
+                                        
+                                        <!-- Messages -->
+                                        <div>
+                                            <p class="text-purple-300 mb-1">💬 Messages</p>
+                                            <div class="flex items-center space-x-2">
+                                                {% if student_data.unread_messages > 0 %}
+                                                <span class="unread-badge">{{ student_data.unread_messages }}</span>
+                                                <span class="font-semibold text-red-400">Unread</span>
+                                                {% else %}
+                                                <span class="font-semibold text-gray-400">All read</span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Upcoming Session -->
+                                    {% if student_data.next_appointment %}
+                                    <div class="mt-4 p-3 bg-blue-900 bg-opacity-30 rounded-lg border border-blue-400 border-opacity-30">
+                                        <p class="text-blue-300 text-sm font-medium mb-1">
+                                            <i class="fas fa-video mr-1"></i>Next Virtual Session:
+                                        </p>
+                                        <p class="text-white font-semibold">
+                                            {{ student_data.next_appointment.datetime.strftime('%A, %B %d at %I:%M %p') }}
+                                        </p>
+                                        <div class="flex items-center mt-2 space-x-2">
+                                            <span class="virtual-badge">Virtual Session</span>
+                                            {% if student_data.next_appointment.auto_scheduled %}
+                                            <span class="text-green-400 text-xs">
+                                                <i class="fas fa-magic mr-1"></i>Auto-Scheduled
+                                            </span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    {% else %}
+                                    <div class="mt-4 p-3 bg-gray-800 bg-opacity-30 rounded-lg">
+                                        <p class="text-gray-400 text-sm">
+                                            <i class="fas fa-calendar mr-1"></i>No upcoming virtual sessions scheduled
+                                        </p>
+                                    </div>
+                                    {% endif %}
+                                    
+                                    <!-- Latest Session -->
+                                    {% if student_data.latest_appointment %}
+                                    <div class="mt-2 text-sm text-gray-400">
+                                        <i class="fas fa-history mr-1"></i>
+                                        Last session: {{ student_data.latest_appointment.datetime.strftime('%b %d, %Y') }}
+                                    </div>
+                                    {% endif %}
+                                </div>
                             </div>
-                            <div>
-                                <h3 class="font-semibold text-lg">
-                                    {{ student_data.student.first_name }} {{ student_data.student.last_name }}
-                                </h3>
-                                <p class="text-sm text-gray-600">{{ student_data.student.email }}</p>
+                            
+                            <!-- Action Buttons -->
+                            <div class="flex flex-col space-y-2 ml-4">
+                                <a href="{{ url_for('therapist.student_details', student_id=student_data.student._id) }}" 
+                                   class="btn-primary">
+                                    <i class="fas fa-user mr-2"></i>
+                                    View Details
+                                </a>
+                                
+                                <a href="{{ url_for('therapist.chat', student_id=student_data.student._id) }}" 
+                                   class="btn-secondary">
+                                    <i class="fas fa-message mr-2"></i>
+                                    Chat
+                                    {% if student_data.unread_messages > 0 %}
+                                    <span class="unread-badge ml-2">{{ student_data.unread_messages }}</span>
+                                    {% endif %}
+                                </a>
+                                
+                                {% if student_data.next_appointment and student_data.next_appointment.meeting_info %}
+                                <a href="{{ student_data.next_appointment.meeting_info.meet_link }}" 
+                                   target="_blank" 
+                                   class="btn-secondary">
+                                    <i class="fas fa-video mr-2"></i>
+                                    Join Session
+                                </a>
+                                {% endif %}
                             </div>
                         </div>
-                        <span class="student-badge {% if student_data.total_sessions == 0 %}badge-new{% else %}badge-active{% endif %}">
-                            {% if student_data.total_sessions == 0 %}New{% else %}Active{% endif %}
-                        </span>
                     </div>
-                    
-                    <div class="mb-4">
-                        <div class="flex justify-between mb-1">
-                            <span class="text-gray-700">Total Sessions</span>
-                            <span class="font-medium">{{ student_data.total_sessions }}</span>
-                        </div>
-                        
-                        {% if student_data.latest_appointment %}
-                            <div class="flex justify-between mb-1">
-                                <span class="text-gray-700">Last Session</span>
-                                <span class="font-medium">
-                                    {% if student_data.latest_appointment and student_data.latest_appointment.date %}
-                                        {{ student_data.latest_appointment.date.strftime('%b %d, %Y') }}
-                                    {% else %}
-                                        No date available
-                                    {% endif %}
-                                </span>
-                            </div>
-                        {% endif %}
-                        
-                        {% if student_data.next_appointment %}
-                            <div class="flex justify-between">
-                                <span class="text-gray-700">Next Appointment</span>
-                                <span class="font-medium">
-                                    {% if student_data.next_appointment and student_data.next_appointment.date %}
-                                        {{ student_data.next_appointment.date.strftime('%b %d') }} | 
-                                        {{ student_data.next_appointment.time }}
-                                    {% else %}
-                                        No date available
-                                    {% endif %}
-                                </span>
-                            </div>
-                        {% endif %}
-                    </div>
-                    
-                    <div class="flex justify-between space-x-2">
-                        <a href="{{ url_for('therapist.student_details', student_id=student_data.student._id) }}" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded text-sm flex-1 text-center">
-                            View Details
-                        </a>
-                        <a href="{{ url_for('therapist.chat', student_id=student_data.student._id) }}" class="bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded text-sm flex-1 text-center flex items-center justify-center">
-                            <i class="fas fa-comment mr-1"></i> Chat
-                            {% if student_data.unread_messages > 0 %}
-                                <span class="bg-white text-green-500 rounded-full h-5 w-5 flex items-center justify-center text-xs ml-1">{{ student_data.unread_messages }}</span>
-                            {% endif %}
-                        </a>
-                    </div>
+                    {% endfor %}
+                {% else %}
+                <div class="text-center py-12">
+                    <i class="fas fa-users text-6xl text-purple-400 mb-4 opacity-50"></i>
+                    <h3 class="text-2xl font-bold text-white mb-2">No Students Assigned Yet</h3>
+                    <p class="text-purple-300 mb-6">Students will be automatically assigned based on AI matching and your availability settings.</p>
+                    <a href="{{ url_for('therapist.availability') }}" class="btn-primary">
+                        <i class="fas fa-cog mr-2"></i>
+                        Configure Availability
+                    </a>
                 </div>
                 {% endif %}
-            {% endfor %}
-        </div>
-        
-        <!-- Empty State -->
-        {% if not students_data %}
-            <div class="bg-white p-8 rounded shadow text-center">
-                <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 text-gray-500 mb-4">
-                    <i class="fas fa-user-graduate text-2xl"></i>
-                </div>
-                <h3 class="text-xl font-medium mb-2">No Students Assigned</h3>
-                <p class="text-gray-600 mb-4">You don't have any students assigned to you yet.</p>
-                <a href="{{ url_for('therapist.student_requests') }}" class="inline-block bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
-                    Check Student Requests
-                </a>
             </div>
-        {% endif %}
+
+            {% if students_data %}
+            <!-- Quick Actions -->
+            <div class="glass-card p-6 mt-8">
+                <h3 class="text-xl font-bold text-white mb-4">
+                    <i class="fas fa-lightning-bolt mr-2 text-yellow-400"></i>
+                    Quick Actions
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <a href="{{ url_for('therapist.virtual_sessions') }}" class="btn-primary text-center">
+                        <i class="fas fa-video mr-2"></i>
+                        View All Virtual Sessions
+                    </a>
+                    <a href="#" onclick="exportStudentList()" class="btn-secondary text-center">
+                        <i class="fas fa-download mr-2"></i>
+                        Export Student List
+                    </a>
+                    <a href="{{ url_for('therapist.resources') }}" class="btn-secondary text-center">
+                        <i class="fas fa-share mr-2"></i>
+                        Share Resources
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+
+        </div>
     </main>
 
-    <!-- JavaScript for filtering -->
     <script>
-        // Filter students by search term
+        // Filter students by name
         function filterStudents() {
-            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-            const students = document.querySelectorAll('.student-card');
-            const activeFilter = document.querySelector('.active-filter').dataset.filter;
+            const searchValue = document.getElementById('student-search').value.toLowerCase();
+            const studentCards = document.querySelectorAll('.student-card');
             
-            students.forEach(student => {
-                const nameElement = student.querySelector('h3');
-                const emailElement = student.querySelector('p');
-                
-                if (!nameElement || !emailElement) return;
-                
-                const studentName = nameElement.textContent.toLowerCase();
-                const studentEmail = emailElement.textContent.toLowerCase();
-                const studentStatus = student.dataset.status;
-                
-                // Check if matches search term
-                const matchesSearch = studentName.includes(searchTerm) || studentEmail.includes(searchTerm);
-                
-                // Check if matches active filter
-                const matchesFilter = activeFilter === 'all' || activeFilter === studentStatus;
-                
-                // Show student if matches both search and filter
-                if (matchesSearch && matchesFilter) {
-                    student.style.display = 'block';
+            studentCards.forEach(card => {
+                const studentName = card.getAttribute('data-student-name').toLowerCase();
+                if (studentName.includes(searchValue)) {
+                    card.style.display = 'block';
                 } else {
-                    student.style.display = 'none';
+                    card.style.display = 'none';
                 }
             });
         }
         
-        // Filter students by status
-        function filterByStatus(status) {
-            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-            const students = document.querySelectorAll('.student-card');
-            const filterButtons = document.querySelectorAll('.filter-btn');
+        // Filter students by priority level
+        function filterByPriority(priority) {
+            const studentCards = document.querySelectorAll('.student-card');
+            const filterButtons = document.querySelectorAll('.filter-button');
             
-            // Update active filter button
-            filterButtons.forEach(button => {
-                if (button.dataset.filter === status) {
-                    button.classList.add('active-filter', 'bg-blue-500', 'text-white');
-                    button.classList.remove('bg-gray-200', 'text-gray-700');
-                } else {
-                    button.classList.remove('active-filter', 'bg-blue-500', 'text-white');
-                    button.classList.add('bg-gray-200', 'text-gray-700');
-                }
-            });
+            // Update active button
+            filterButtons.forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
             
-            // Filter students
-            students.forEach(student => {
-                const nameElement = student.querySelector('h3');
-                const emailElement = student.querySelector('p');
+            // Filter cards
+            studentCards.forEach(card => {
+                const crisisLevel = card.getAttribute('data-crisis-level');
                 
-                if (!nameElement || !emailElement) return;
-                
-                const studentName = nameElement.textContent.toLowerCase();
-                const studentEmail = emailElement.textContent.toLowerCase();
-                const studentStatus = student.dataset.status;
-                
-                // Check if matches search term
-                const matchesSearch = studentName.includes(searchTerm) || studentEmail.includes(searchTerm);
-                
-                // Check if matches selected status
-                const matchesStatus = status === 'all' || status === studentStatus;
-                
-                // Show student if matches both search and status
-                if (matchesSearch && matchesStatus) {
-                    student.style.display = 'block';
+                if (priority === 'all') {
+                    card.style.display = 'block';
+                } else if (priority === 'critical' && crisisLevel === 'critical') {
+                    card.style.display = 'block';
+                } else if (priority === 'high' && crisisLevel === 'high') {
+                    card.style.display = 'block';
+                } else if (priority === 'normal' && crisisLevel === 'normal') {
+                    card.style.display = 'block';
                 } else {
-                    student.style.display = 'none';
+                    card.style.display = 'none';
                 }
             });
         }
+        
+        // Export student list (placeholder)
+        function exportStudentList() {
+            alert('📊 Student list export feature coming soon!\n\nThis will generate a CSV file with student information and session statistics.');
+        }
+        
+        // Auto-refresh page every 5 minutes to update student statuses
+        setInterval(() => {
+            location.reload();
+        }, 300000);
+        
+        // Initialize tooltips or other interactive elements
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Students page loaded with {{ students_data|length }} students');
+            
+            // Highlight crisis students on page load
+            const crisisCards = document.querySelectorAll('.crisis-card');
+            if (crisisCards.length > 0) {
+                console.log(`⚠️ ${crisisCards.length} critical students require attention`);
+            }
+        });
     </script>
 </body>
 </html>

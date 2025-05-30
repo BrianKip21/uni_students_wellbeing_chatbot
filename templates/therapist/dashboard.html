@@ -4,530 +4,657 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Therapist Dashboard | Wellbeing Assistant</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css"> 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
-
     <style>
-        {% if settings.theme_mode == 'dark' %}
-        /* Dark mode styles */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
         body {
-            background-color: #121212 !important;
-            color: #e0e0e0 !important;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 50%, #2d1b69 100%);
+            color: #e0e7ff;
+            min-height: 100vh;
         }
         
-        .bg-white {
-            background-color: #1e1e1e !important;
+        .sidebar {
+            background: rgba(15, 15, 35, 0.9);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 260px;
+            z-index: 1000;
         }
         
-        .text-gray-700, .text-gray-800, .text-gray-900 {
-            color: #e0e0e0 !important;
+        .sidebar-nav a {
+            color: #a78bfa;
+            padding: 0.75rem 1.5rem;
+            display: flex;
+            align-items: center;
+            transition: all 0.3s ease;
+            border-radius: 0 20px 20px 0;
+            margin-right: 1rem;
         }
         
-        .text-gray-500, .text-gray-600 {
-            color: #a0a0a0 !important;
+        .sidebar-nav a:hover {
+            background: rgba(139, 92, 246, 0.2);
+            color: #c4b5fd;
+            transform: translateX(8px);
         }
         
-        .bg-gray-50, .bg-gray-100, .bg-gray-200 {
-            background-color: #2a2a2a !important;
+        .sidebar-nav a.active {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            color: white;
+            box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4);
         }
         
-        .border-gray-200, .border-gray-300 {
-            border-color: #333 !important;
-        }
-
-        .hover\:bg-gray-100:hover {
-            background-color: #333333 !important;
-        }
-
-        .hover\:bg-gray-200:hover {
-            background-color: #444444 !important;
-        }
-
-        .hover\:bg-green-200:hover {
-            background-color: #0d503c !important;
-        }
-
-        .hover\:bg-blue-200:hover {
-            background-color: #0d365e !important;
-        }
-
-        .bg-green-100 {
-            background-color: #064e3b !important;
-        }
-
-        .bg-blue-100 {
-            background-color: #0c4a6e !important;
-        }
-        {% endif %}
-        
-        {% if settings.contrast == 'high' %}
-        /* High contrast styles */
-        body {
-            background-color: #ffffff !important;
-            color: #000000 !important;
+        .main-content {
+            margin-left: 260px;
+            min-height: 100vh;
+            padding: 2rem;
         }
         
-        .text-gray-500, .text-gray-600, .text-gray-700, .text-gray-800, .text-gray-900 {
-            color: #000000 !important;
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
         }
         
-        .bg-gray-800 {
-            background-color: #000000 !important;
+        .glass-card:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateY(-2px);
         }
         
-        .text-gray-200 {
-            color: #ffffff !important;
+        .stat-card {
+            text-align: center;
+            padding: 1.5rem;
+            border-radius: 16px;
+            transition: all 0.3s ease;
         }
         
-        input, select, button {
-            border: 2px solid #000000 !important;
-        }
-
-        .bg-green-100, .bg-blue-100, .bg-gray-100 {
-            background-color: #ffffff !important;
-            border: 2px solid #000000 !important;
-        }
-
-        .text-green-500, .text-blue-500, .text-purple-500 {
-            color: #000000 !important;
-        }
-        {% endif %}
-        
-        {% if settings.text_size == 'lg' %}
-        /* Large text */
-        body {
-            font-size: 1.125rem !important;
+        .stat-card.primary {
+            background: linear-gradient(135deg, #10b981, #059669);
         }
         
-        .text-sm {
-            font-size: 0.9375rem !important;
+        .stat-card.secondary {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
         }
         
-        .text-lg, .text-xl, .text-2xl, .text-3xl {
-            font-size: 1.3125rem !important;
-        }
-        {% elif settings.text_size == 'xl' %}
-        /* Extra large text */
-        body {
-            font-size: 1.25rem !important;
+        .stat-card.warning {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
         }
         
-        .text-sm {
-            font-size: 1.0625rem !important;
+        .stat-card.danger {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
         }
         
-        .text-lg, .text-xl {
-            font-size: 1.5rem !important;
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 0.5rem;
         }
-
-        .text-2xl, .text-3xl {
-            font-size: 1.75rem !important;
-        }
-        {% endif %}
-
-        /* Custom styles for therapist dashboard */
-        .status-badge {
-            display: inline-block;
-            padding: 2px 8px;
-            border-radius: 9999px;
-            font-size: 0.75rem;
+        
+        .stat-label {
+            font-size: 0.875rem;
+            color: rgba(255, 255, 255, 0.8);
             font-weight: 500;
         }
         
-        .status-active {
-            background-color: #dcfce7;
-            color: #15803d;
-        }
-        
-        .status-pending {
-            background-color: #fef3c7;
-            color: #b45309;
-        }
-        
-        .status-completed {
-            background-color: #dbeafe;
-            color: #1e40af;
-        }
-        
-        .status-cancelled {
-            background-color: #fee2e2;
-            color: #b91c1c;
-        }
-
         .appointment-card {
-            transition: transform 0.2s;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
         }
         
         .appointment-card:hover {
-            transform: translateY(-4px);
-        }
-
-        {% if settings.theme_mode == 'dark' %}
-        .status-active {
-            background-color: #064e3b;
-            color: #dcfce7;
+            background: rgba(255, 255, 255, 0.06);
+            border-color: #8b5cf6;
         }
         
-        .status-pending {
-            background-color: #78350f;
-            color: #fef3c7;
+        .crisis-card {
+            border-left: 4px solid #ef4444;
+            background: rgba(239, 68, 68, 0.1);
         }
         
-        .status-completed {
-            background-color: #1e3a8a;
-            color: #dbeafe;
+        .virtual-badge {
+            background: rgba(59, 130, 246, 0.2);
+            color: #60a5fa;
+            border: 1px solid rgba(59, 130, 246, 0.4);
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
         }
         
-        .status-cancelled {
-            background-color: #7f1d1d;
-            color: #fee2e2;
+        .btn-primary {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
         }
-        {% endif %}
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(139, 92, 246, 0.4);
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #10b981, #059669);
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(16, 185, 129, 0.4);
+        }
+        
+        .btn-emergency {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            animation: emergencyPulse 2s infinite;
+        }
+        
+        @keyframes emergencyPulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            50% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+        }
+        
+        .auto-schedule-indicator {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+            50% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+        }
+        
+        .auto-action-btn {
+            background: rgba(245, 158, 11, 0.2);
+            border: 1px solid rgba(245, 158, 11, 0.4);
+            color: #fbbf24;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .auto-action-btn:hover {
+            background: rgba(245, 158, 11, 0.3);
+            transform: translateY(-1px);
+        }
+        
+        .suggest-btn {
+            background: rgba(59, 130, 246, 0.2);
+            border: 1px solid rgba(59, 130, 246, 0.4);
+            color: #60a5fa;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .suggest-btn:hover {
+            background: rgba(59, 130, 246, 0.3);
+            transform: translateY(-1px);
+        }
+        
+        @media (max-width: 1024px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+        }
     </style>
 </head>
-
-<body class="bg-gray-200 flex text-gray-900">
+<body>
     <!-- Sidebar Navigation -->
-    <aside class="w-64 h-screen bg-gray-800 text-gray-200 p-4 fixed">
-        <h1 class="text-2xl font-bold mb-6">Therapist Portal</h1>
-        <nav>
-            <ul class="space-y-4">
-                <li><a href="{{ url_for('therapist.index') }}" class="block p-2 bg-gray-700 rounded"> <i class="fas fa-chart-line"></i> Dashboard</a></li>
-                <li><a href="{{ url_for('therapist.appointments') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-calendar-alt"></i> Appointments</a></li>
-                <li><a href="{{ url_for('therapist.students') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-user-graduate"></i> My Students</a></li>
-                <li><a href="{{ url_for('therapist.calendar') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-calendar"></i> Calendar</a></li>
-                <li><a href="{{ url_for('therapist.resources') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-book-medical"></i> Resources</a></li>
-                <li><a href="{{ url_for('therapist.profile') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-user"></i> Profile</a></li>
-                <li><a href="{{ url_for('therapist.student_requests') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-user-plus"></i> Student Requests</a></li>
-                <li><a href="{{ url_for('therapist.reports') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-chart-bar"></i> Reports</a></li>
-                <li><a href="{{ url_for('auth.logout') }}" class="block p-2 hover:bg-gray-700 rounded mt-8"> <i class="fas fa-sign-out-alt"></i> Logout</a></li>
+    <aside class="sidebar">
+        <div class="p-6">
+            <h1 class="text-2xl font-bold mb-8 bg-gradient-to-r from-purple-400 to-pink-600 bg-clip-text text-transparent">
+                Therapist Portal
+            </h1>
+        </div>
+        <nav class="sidebar-nav">
+            <ul class="space-y-2">
+                <li><a href="{{ url_for('therapist.index') }}" class="flex items-center active">
+                    <i class="fas fa-chart-line w-5 mr-3"></i> Dashboard
+                </a></li>
+                <li><a href="{{ url_for('therapist.students') }}" class="flex items-center">
+                    <i class="fas fa-users w-5 mr-3"></i> My Students
+                </a></li>
+                <li><a href="{{ url_for('therapist.virtual_sessions') }}" class="flex items-center">
+                    <i class="fas fa-video w-5 mr-3"></i> Virtual Sessions
+                </a></li>
+                <li><a href="{{ url_for('therapist.availability') }}" class="flex items-center">
+                    <i class="fas fa-calendar-alt w-5 mr-3"></i> Availability
+                </a></li>
+                <li><a href="{{ url_for('therapist.resources') }}" class="flex items-center">
+                    <i class="fas fa-book w-5 mr-3"></i> Resources
+                </a></li>
+                <li><a href="{{ url_for('therapist.profile') }}" class="flex items-center">
+                    <i class="fas fa-user w-5 mr-3"></i> Profile
+                </a></li>
             </ul>
+            
+            <div class="mt-auto p-6">
+                <a href="{{ url_for('auth.logout') }}" class="flex items-center text-red-400 hover:text-red-300">
+                    <i class="fas fa-sign-out-alt w-5 mr-3"></i> Logout
+                </a>
+            </div>
         </nav>
     </aside>
 
     <!-- Main Content -->
-    <main class="ml-64 p-8 w-full">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="bg-{% if category == 'error' %}red{% else %}blue{% endif %}-100 border-l-4 border-{% if category == 'error' %}red{% else %}blue{% endif %}-500 text-{% if category == 'error' %}red{% else %}blue{% endif %}-700 p-4 mb-6" role="alert">
-                        <p>{{ message }}</p>
-                    </div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
-    
-        <h2 class="text-3xl font-bold text-gray-800">Welcome, Dr. {{ therapist.last_name }}!</h2>
-        <p class="text-gray-700 mb-6">Here's an overview of your therapy activities</p>
-        
-        <!-- Stats Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-            <!-- Total Students -->
-            <div class="bg-white p-6 rounded shadow dashboard-card">
-                <div class="flex items-center">
-                    <div class="p-3 rounded-full bg-blue-100 text-blue-500 mr-4">
-                        <i class="fas fa-users text-xl"></i>
-                    </div>
+    <main class="main-content">
+        <div class="max-w-7xl mx-auto">
+            
+            <!-- Header -->
+            <div class="mb-8">
+                <div class="flex items-center justify-between mb-4">
                     <div>
-                        <p class="text-gray-500 text-sm">Total Students</p>
-                        <h3 class="text-2xl font-bold">{{ stats.total_students }}</h3>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Total Sessions -->
-            <div class="bg-white p-6 rounded shadow dashboard-card">
-                <div class="flex items-center">
-                    <div class="p-3 rounded-full bg-green-100 text-green-500 mr-4">
-                        <i class="fas fa-calendar-check text-xl"></i>
-                    </div>
-                    <div>
-                        <p class="text-gray-500 text-sm">Total Sessions</p>
-                        <h3 class="text-2xl font-bold">{{ stats.total_sessions }}</h3>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- This Week's Sessions -->
-            <div class="bg-white p-6 rounded shadow dashboard-card">
-                <div class="flex items-center">
-                    <div class="p-3 rounded-full bg-purple-100 text-purple-500 mr-4">
-                        <i class="fas fa-calendar-week text-xl"></i>
-                    </div>
-                    <div>
-                        <p class="text-gray-500 text-sm">This Week</p>
-                        <h3 class="text-2xl font-bold">{{ stats.sessions_this_week }}</h3>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Pending Requests -->
-            <div class="bg-white p-6 rounded shadow dashboard-card">
-                <div class="flex items-center">
-                    <div class="p-3 rounded-full bg-yellow-100 text-yellow-500 mr-4">
-                        <i class="fas fa-clock text-xl"></i>
-                    </div>
-                    <div>
-                        <p class="text-gray-500 text-sm">Pending Requests</p>
-                        <h3 class="text-2xl font-bold">{{ stats.pending_requests }}</h3>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Today's Appointments and Pending Requests -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-            <!-- Today's Appointments -->
-            <div class="bg-white p-6 rounded shadow dashboard-card">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-xl font-semibold">Today's Appointments</h3>
-                    <a href="{{ url_for('therapist.calendar') }}" class="text-blue-500 hover:underline text-sm">View Calendar</a>
-                </div>
-                
-                {% if today_appointments %}
-                    {% for appt in today_appointments %}
-                        <div class="bg-gray-50 p-4 rounded mb-3 appointment-card">
-                            <div class="flex justify-between">
-                                <div>
-                                    <h4 class="font-medium">{{ appt.student_name }}</h4>
-                                    <p class="text-sm text-gray-600">{{ appt.time }}</p>
-                                </div>
-                                <div class="flex items-center">
-                                    <span class="status-badge status-{{ appt.status }} mr-2">{{ appt.status }}</span>
-                                    <a href="{{ url_for('therapist.student_details', student_id=appt.student_id) }}" class="text-blue-500 hover:text-blue-700">
-                                        <i class="fas fa-external-link-alt"></i>
-                                    </a>
-                                </div>
-                            </div>
+                        <h1 class="text-4xl font-bold mb-2 bg-gradient-to-r from-purple-400 to-pink-600 bg-clip-text text-transparent">
+                            Welcome back, {{ therapist.name }}
+                        </h1>
+                        <p class="text-purple-300">
+                            <i class="fas fa-video mr-2"></i>
+                            Virtual-First Therapy Platform • AI-Powered Auto-Scheduling
+                        </p>
+                        {% if availability.auto_schedule_enabled %}
+                        <div class="auto-schedule-indicator mt-2">
+                            <i class="fas fa-magic"></i>
+                            Auto-Scheduling Active
                         </div>
-                    {% endfor %}
-                {% else %}
-                    <p class="text-gray-600">No appointments scheduled for today.</p>
-                {% endif %}
+                        {% endif %}
+                    </div>
+                    <div class="text-right">
+                        <p class="text-sm text-purple-300">Today's Date</p>
+                        <p class="text-xl font-semibold">{{ current_date }}</p>
+                    </div>
+                </div>
             </div>
-            
-            <!-- Pending Requests -->
-            <div class="bg-white p-6 rounded shadow dashboard-card">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-xl font-semibold">Pending Requests</h3>
-                    <a href="{{ url_for('therapist.appointments') }}?status=pending" class="text-blue-500 hover:underline text-sm">View All</a>
+
+            <!-- Statistics Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="stat-card primary">
+                    <div class="stat-number">{{ stats.total_students }}</div>
+                    <div class="stat-label">
+                        <i class="fas fa-users mr-1"></i>
+                        Active Students
+                    </div>
+                </div>
+                <div class="stat-card secondary">
+                    <div class="stat-number">{{ stats.virtual_sessions_today }}</div>
+                    <div class="stat-label">
+                        <i class="fas fa-video mr-1"></i>
+                        Virtual Sessions Today
+                    </div>
+                </div>
+                <div class="stat-card warning">
+                    <div class="stat-number">{{ stats.recent_auto_scheduled }}</div>
+                    <div class="stat-label">
+                        <i class="fas fa-robot mr-1"></i>
+                        Recent Auto-Scheduled
+                    </div>
+                </div>
+                <div class="stat-card danger">
+                    <div class="stat-number">{{ stats.crisis_sessions }}</div>
+                    <div class="stat-label">
+                        <i class="fas fa-exclamation-triangle mr-1"></i>
+                        Crisis Sessions
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Stats Row -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="glass-card p-6">
+                    <h3 class="text-xl font-bold mb-4 text-white">
+                        <i class="fas fa-bolt mr-2 text-yellow-400"></i>
+                        Auto-Scheduling Stats
+                    </h3>
+                    <div class="space-y-3">
+                        <div class="flex justify-between">
+                            <span class="text-purple-300">This Week:</span>
+                            <span class="font-semibold">{{ stats.virtual_sessions_this_week }} sessions</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-purple-300">Auto-Rescheduled Today:</span>
+                            <span class="font-semibold">{{ stats.rescheduled_today }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-purple-300">Status:</span>
+                            {% if availability.auto_schedule_enabled %}
+                            <span class="text-green-400 font-semibold">
+                                <i class="fas fa-check-circle mr-1"></i>Active
+                            </span>
+                            {% else %}
+                            <span class="text-red-400 font-semibold">
+                                <i class="fas fa-pause-circle mr-1"></i>Paused
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
                 </div>
                 
-                {% if pending_appointment_requests %}
-                    <h4 class="font-medium text-gray-700 mb-2">Appointment Requests</h4>
-                    {% for req in pending_appointment_requests %}
-                        <div class="bg-gray-50 p-4 rounded mb-3">
-                            <div class="flex justify-between">
-                                <div>
-                                    <h4 class="font-medium">{{ req.student_name }}</h4>
-                                    <p class="text-sm text-gray-600">{{ req.date.strftime('%A, %B %d') }} at {{ req.time }}</p>
-                                </div>
-                                <div class="flex space-x-2">
-                                    <form method="POST" action="{{ url_for('therapist.approve_appointment', request_id=req._id) }}" class="inline">
-                                        <button type="submit" class="bg-green-500 hover:bg-green-600 text-white p-1 rounded">
-                                            <i class="fas fa-check"></i>
-                                        </button>
-                                    </form>
-                                    <button type="button" onclick="openRejectModal('appointment', '{{ req._id }}')" class="bg-red-500 hover:bg-red-600 text-white p-1 rounded">
-                                        <i class="fas fa-times"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    {% endfor %}
-                {% endif %}
-                
-                {% if pending_reschedules %}
-                    <h4 class="font-medium text-gray-700 mt-4 mb-2">Reschedule Requests</h4>
-                    {% for req in pending_reschedules %}
-                        <div class="bg-gray-50 p-4 rounded mb-3">
-                            <div class="flex justify-between">
-                                <div>
-                                    <h4 class="font-medium">{{ req.student_name }}</h4>
-                                    <p class="text-sm text-gray-600">From: {{ req.original_date.strftime('%b %d') }} at {{ req.original_time }}</p>
-                                    <p class="text-sm text-gray-600">To: {{ req.requested_date.strftime('%b %d') }} at {{ req.requested_time }}</p>
-                                </div>
-                                <div class="flex space-x-2">
-                                    <form method="POST" action="{{ url_for('therapist.approve_reschedule', request_id=req._id) }}" class="inline">
-                                        <button type="submit" class="bg-green-500 hover:bg-green-600 text-white p-1 rounded">
-                                            <i class="fas fa-check"></i>
-                                        </button>
-                                    </form>
-                                    <button type="button" onclick="openRejectModal('reschedule', '{{ req._id }}')" class="bg-red-500 hover:bg-red-600 text-white p-1 rounded">
-                                        <i class="fas fa-times"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    {% endfor %}
-                {% endif %}
-                
-                {% if pending_cancellations %}
-                    <h4 class="font-medium text-gray-700 mt-4 mb-2">Cancellation Requests</h4>
-                    {% for req in pending_cancellations %}
-                        <div class="bg-gray-50 p-4 rounded mb-3">
-                            <div class="flex justify-between">
-                                <div>
-                                    <h4 class="font-medium">{{ req.student_name }}</h4>
-                                    <p class="text-sm text-gray-600">{{ req.appointment_date.strftime('%A, %B %d') }} at {{ req.appointment_time }}</p>
-                                    <p class="text-sm text-gray-600">Reason: {{ req.reason }}</p>
-                                </div>
-                                <div class="flex space-x-2">
-                                    <form method="POST" action="{{ url_for('therapist.approve_cancellation', request_id=req._id) }}" class="inline">
-                                        <button type="submit" class="bg-green-500 hover:bg-green-600 text-white p-1 rounded">
-                                            <i class="fas fa-check"></i>
-                                        </button>
-                                    </form>
-                                    <button type="button" onclick="openRejectModal('cancellation', '{{ req._id }}')" class="bg-red-500 hover:bg-red-600 text-white p-1 rounded">
-                                        <i class="fas fa-times"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    {% endfor %}
-                {% endif %}
-                
-                {% if not pending_appointment_requests and not pending_reschedules and not pending_cancellations %}
-                    <p class="text-gray-600">No pending requests.</p>
-                {% endif %}
-            </div>
-        </div>
-        
-        <!-- New Student Assignments and Messages -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-            <!-- New Student Assignments -->
-            <div class="bg-white p-6 rounded shadow dashboard-card">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-xl font-semibold">New Student Assignments</h3>
-                    <a href="{{ url_for('therapist.student_requests') }}" class="text-blue-500 hover:underline text-sm">View All</a>
-                </div>
-                
-                {% if new_student_requests %}
-                    {% for req in new_student_requests %}
-                        <div class="bg-gray-50 p-4 rounded mb-3">
-                            <div class="flex justify-between">
-                                <div>
-                                    <h4 class="font-medium">{{ req.student_name }}</h4>
-                                    <p class="text-sm text-gray-600">Requested: {{ req.created_at.strftime('%b %d, %Y') }}</p>
-                                </div>
-                                <div class="flex space-x-2">
-                                    <form method="POST" action="{{ url_for('therapist.approve_student', request_id=req._id) }}" class="inline">
-                                        <button type="submit" class="bg-green-500 hover:bg-green-600 text-white p-1 rounded">
-                                            <i class="fas fa-check"></i>
-                                        </button>
-                                    </form>
-                                    <button type="button" onclick="openRejectModal('student', '{{ req._id }}')" class="bg-red-500 hover:bg-red-600 text-white p-1 rounded">
-                                        <i class="fas fa-times"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    {% endfor %}
-                {% else %}
-                    <p class="text-gray-600">No new student assignment requests.</p>
-                {% endif %}
-            </div>
-            
-            <!-- Unread Messages -->
-            <div class="bg-white p-6 rounded shadow dashboard-card">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-xl font-semibold">Messages</h3>
-                </div>
-                
-                {% if unread_messages > 0 %}
-                    <div class="p-6 text-center">
-                        <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 text-blue-500 mb-4">
-                            <i class="fas fa-envelope text-2xl"></i>
-                        </div>
-                        <h4 class="font-medium text-lg">You have {{ unread_messages }} unread message{% if unread_messages != 1 %}s{% endif %}</h4>
-                        <p class="text-gray-600 mb-4">Check your student conversations</p>
-                        <a href="{{ url_for('therapist.students') }}" class="inline-block bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
+                <div class="glass-card p-6">
+                    <h3 class="text-xl font-bold mb-4 text-white">
+                        <i class="fas fa-message mr-2 text-blue-400"></i>
+                        Messages
+                    </h3>
+                    <div class="text-center">
+                        <div class="text-3xl font-bold text-blue-400 mb-2">{{ unread_messages }}</div>
+                        <p class="text-purple-300 mb-4">Unread Messages</p>
+                        <a href="#" class="btn-primary">
+                            <i class="fas fa-envelope mr-2"></i>
                             View Messages
                         </a>
                     </div>
-                {% else %}
-                    <div class="p-6 text-center">
-                        <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 text-gray-500 mb-4">
-                            <i class="fas fa-envelope-open text-2xl"></i>
-                        </div>
-                        <h4 class="font-medium text-lg">No unread messages</h4>
-                        <p class="text-gray-600">You're all caught up!</p>
+                </div>
+                
+                <div class="glass-card p-6">
+                    <h3 class="text-xl font-bold mb-4 text-white">
+                        <i class="fas fa-user-plus mr-2 text-green-400"></i>
+                        New Assignments
+                    </h3>
+                    <div class="text-center">
+                        <div class="text-3xl font-bold text-green-400 mb-2">{{ new_student_assignments|length }}</div>
+                        <p class="text-purple-300 mb-4">Today's New Students</p>
+                        <a href="{{ url_for('therapist.students') }}" class="btn-success">
+                            <i class="fas fa-users mr-2"></i>
+                            View Students
+                        </a>
                     </div>
+                </div>
+            </div>
+
+            <!-- Today's Virtual Sessions -->
+            <div class="glass-card p-6 mb-8">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-2xl font-bold text-white">
+                        <i class="fas fa-video mr-3 text-purple-400"></i>
+                        Today's Virtual Sessions
+                    </h3>
+                    <a href="{{ url_for('therapist.virtual_sessions') }}" class="btn-primary">
+                        <i class="fas fa-eye mr-2"></i>
+                        View All Sessions
+                    </a>
+                </div>
+                
+                {% if today_appointments %}
+                <div class="space-y-4">
+                    {% for appointment in today_appointments %}
+                    <div class="appointment-card {% if appointment.crisis_level in ['high', 'critical'] %}crisis-card{% endif %}">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-4">
+                                <div class="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-video text-white"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold text-white">
+                                        {{ appointment.student_name }}
+                                        {% if appointment.crisis_level in ['high', 'critical'] %}
+                                        <span class="ml-2 px-2 py-1 bg-red-600 text-white text-xs rounded-full">
+                                            <i class="fas fa-exclamation-triangle mr-1"></i>Priority
+                                        </span>
+                                        {% endif %}
+                                    </h4>
+                                    <p class="text-purple-300">
+                                        {{ appointment.datetime.strftime('%I:%M %p') }} • 
+                                        <span class="virtual-badge">Virtual Session</span>
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="flex space-x-2">
+                                {% if appointment.meeting_info %}
+                                <a href="{{ appointment.meeting_info.meet_link }}" target="_blank" class="btn-success">
+                                    <i class="fas fa-video mr-2"></i>
+                                    Join Session
+                                </a>
+                                {% endif %}
+                                <a href="{{ url_for('therapist.student_details', student_id=appointment.user_id) }}" class="btn-primary">
+                                    <i class="fas fa-user mr-2"></i>
+                                    View Student
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-8">
+                    <i class="fas fa-calendar-check text-6xl text-purple-400 mb-4 opacity-50"></i>
+                    <h4 class="text-xl font-semibold text-white mb-2">No virtual sessions scheduled for today</h4>
+                    <p class="text-purple-300">Enjoy your day! Auto-scheduling will handle new bookings.</p>
+                </div>
                 {% endif %}
             </div>
-        </div>
-        
-        <!-- Quick Actions -->
-        <div class="bg-white p-6 rounded shadow dashboard-card">
-            <h3 class="text-xl font-semibold mb-4">Quick Actions</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <a href="{{ url_for('therapist.calendar') }}" class="bg-blue-50 hover:bg-blue-100 p-4 rounded text-center transition duration-200">
-                    <i class="fas fa-calendar-plus text-blue-500 text-2xl mb-2"></i>
-                    <p class="text-gray-800">Schedule Appointment</p>
-                </a>
-                <a href="{{ url_for('therapist.students') }}" class="bg-green-50 hover:bg-green-100 p-4 rounded text-center transition duration-200">
-                    <i class="fas fa-user-plus text-green-500 text-2xl mb-2"></i>
-                    <p class="text-gray-800">View Students</p>
-                </a>
-                <a href="{{ url_for('therapist.resources') }}" class="bg-purple-50 hover:bg-purple-100 p-4 rounded text-center transition duration-200">
-                    <i class="fas fa-book-medical text-purple-500 text-2xl mb-2"></i>
-                    <p class="text-gray-800">Manage Resources</p>
-                </a>
-                <a href="{{ url_for('therapist.reports') }}" class="bg-yellow-50 hover:bg-yellow-100 p-4 rounded text-center transition duration-200">
-                    <i class="fas fa-chart-bar text-yellow-500 text-2xl mb-2"></i>
-                    <p class="text-gray-800">View Reports</p>
-                </a>
+
+            <!-- Recent Auto-Scheduled Sessions -->
+            {% if recent_auto_appointments %}
+            <div class="glass-card p-6 mb-8">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-2xl font-bold text-white">
+                        <i class="fas fa-robot mr-3 text-green-400"></i>
+                        Recent Auto-Scheduled Sessions
+                    </h3>
+                    <span class="bg-green-600 text-white px-3 py-1 rounded-full text-sm font-semibold">
+                        {{ recent_auto_appointments|length }} This Week
+                    </span>
+                </div>
+                
+                <div class="space-y-4">
+                    {% for appointment in recent_auto_appointments %}
+                    <div class="appointment-card {% if appointment.crisis_level in ['high', 'critical'] %}crisis-card{% endif %}">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-4">
+                                <div class="w-12 h-12 bg-green-600 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-magic text-white"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold text-white">
+                                        {{ appointment.student_name }}
+                                        {% if appointment.crisis_level in ['high', 'critical'] %}
+                                        <span class="ml-2 px-2 py-1 bg-red-600 text-white text-xs rounded-full">
+                                            <i class="fas fa-exclamation-triangle mr-1"></i>Priority
+                                        </span>
+                                        {% endif %}
+                                    </h4>
+                                    <p class="text-green-300">
+                                        {{ appointment.formatted_time or 'Time confirmed' }} • 
+                                        <span class="virtual-badge">Virtual Session</span>
+                                        <span class="ml-2 text-green-400 text-sm">
+                                            <i class="fas fa-check-circle mr-1"></i>Auto-Confirmed
+                                        </span>
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button onclick="autoReschedule('{{ appointment._id }}')" class="auto-action-btn">
+                                    <i class="fas fa-sync mr-1"></i>
+                                    Auto-Reschedule
+                                </button>
+                                <button onclick="suggestAlternative('{{ appointment._id }}')" class="suggest-btn">
+                                    <i class="fas fa-user-friends mr-1"></i>
+                                    Suggest Alternative
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
             </div>
+            {% endif %}
+
+            <!-- Crisis Sessions Alert -->
+            {% if crisis_appointments %}
+            <div class="glass-card p-6 mb-8 border-2 border-red-500">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-2xl font-bold text-red-400">
+                        <i class="fas fa-exclamation-triangle mr-3"></i>
+                        Priority Crisis Sessions
+                    </h3>
+                    <span class="bg-red-600 text-white px-3 py-1 rounded-full text-sm font-semibold animate-pulse">
+                        {{ crisis_appointments|length }} High Priority
+                    </span>
+                </div>
+                
+                <div class="space-y-4">
+                    {% for appointment in crisis_appointments %}
+                    <div class="appointment-card crisis-card">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-4">
+                                <div class="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-exclamation-triangle text-white"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold text-white">
+                                        {{ appointment.student_name }}
+                                        <span class="ml-2 px-2 py-1 bg-red-600 text-white text-xs rounded-full">
+                                            Crisis Level: {{ appointment.crisis_level.title() }}
+                                        </span>
+                                    </h4>
+                                    <p class="text-red-300">
+                                        {{ appointment.formatted_time or 'ASAP' }} • 
+                                        <span class="virtual-badge">Virtual Session</span>
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="flex space-x-2">
+                                {% if appointment.meeting_info %}
+                                <a href="{{ appointment.meeting_info.meet_link }}" target="_blank" class="btn-emergency">
+                                    <i class="fas fa-video mr-2"></i>
+                                    Join Now
+                                </a>
+                                {% endif %}
+                                <a href="{{ url_for('therapist.student_details', student_id=appointment.user_id) }}" class="btn-primary">
+                                    <i class="fas fa-file-medical mr-2"></i>
+                                    View Case
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
         </div>
     </main>
 
-    <!-- Rejection Modal -->
-    <div id="rejectModal" class="fixed inset-0 bg-gray-500 bg-opacity-75 hidden flex items-center justify-center z-50">
-        <div class="bg-white rounded-lg p-6 max-w-md w-full">
-            <h3 class="text-xl font-semibold mb-4" id="rejectModalTitle">Reject Request</h3>
-            <form id="rejectForm" method="POST" action="">
-                <div class="mb-4">
-                    <label for="reason" class="block text-gray-700 mb-2">Reason for Rejection</label>
-                    <textarea id="reason" name="reason" rows="3" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500" required></textarea>
-                </div>
-                <div class="flex justify-end space-x-2">
-                    <button type="button" onclick="closeRejectModal()" class="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300">Cancel</button>
-                    <button type="submit" class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600">Reject</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- JavaScript for modals -->
     <script>
-        function openRejectModal(type, id) {
-            const modal = document.getElementById('rejectModal');
-            const form = document.getElementById('rejectForm');
-            const title = document.getElementById('rejectModalTitle');
-            
-            // Set the form action based on type
-            if (type === 'appointment') {
-                form.action = "{{ url_for('therapist.reject_appointment', request_id='REPLACE') }}".replace('REPLACE', id);
-                title.textContent = 'Reject Appointment Request';
-            } else if (type === 'reschedule') {
-                form.action = "{{ url_for('therapist.reject_reschedule', request_id='REPLACE') }}".replace('REPLACE', id);
-                title.textContent = 'Reject Reschedule Request';
-            } else if (type === 'cancellation') {
-                form.action = "{{ url_for('therapist.reject_cancellation', request_id='REPLACE') }}".replace('REPLACE', id);
-                title.textContent = 'Reject Cancellation Request';
-            } else if (type === 'student') {
-                form.action = "{{ url_for('therapist.reject_student', request_id='REPLACE') }}".replace('REPLACE', id);
-                title.textContent = 'Reject Student Assignment';
+        // Auto-reschedule appointment
+        function autoReschedule(appointmentId) {
+            if (confirm('Auto-reschedule this virtual session to the next available slot?')) {
+                fetch(`/therapist/auto-reschedule-appointment/${appointmentId}`, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(`✅ Session auto-rescheduled successfully!\n\nNew time: ${data.new_time}`);
+                        location.reload();
+                    } else {
+                        alert('❌ Failed to auto-reschedule: ' + (data.error || 'Unknown error'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('❌ Failed to auto-reschedule session. Please try again.');
+                });
             }
-            
-            modal.classList.remove('hidden');
         }
         
-        function closeRejectModal() {
-            const modal = document.getElementById('rejectModal');
-            modal.classList.add('hidden');
+        // Suggest alternative therapist
+        function suggestAlternative(appointmentId) {
+            if (confirm('Suggest alternative therapist options to the student?\n\nThis will cancel the current appointment and provide the student with compatible therapist alternatives.')) {
+                fetch(`/therapist/suggest-alternative-therapist/${appointmentId}`, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(`✅ Alternative therapist options sent to student!\n\n${data.alternatives_count} compatible therapists found.`);
+                        location.reload();
+                    } else {
+                        alert('❌ Failed to suggest alternatives: ' + (data.error || 'Unknown error'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('❌ Failed to suggest alternatives. Please try again.');
+                });
+            }
         }
+        
+        // Auto-refresh dashboard every 3 minutes
+        setInterval(() => {
+            location.reload();
+        }, 180000);
+        
+        // Real-time notifications (placeholder for WebSocket implementation)
+        function setupRealTimeNotifications() {
+            // TODO: Implement WebSocket connection for real-time updates
+            console.log('Real-time notifications initialized');
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            setupRealTimeNotifications();
+        });
     </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
+
 </body>
 </html>

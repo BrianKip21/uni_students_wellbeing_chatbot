@@ -3,222 +3,763 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Resources - Wellbeing Assistant</title>
+    <title>Student Resources | Wellbeing Assistant</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css"> 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
 
     <style>
-        {% if settings.theme_mode == 'dark' %}
-        /* Dark mode styles */
-        body {
-            background-color: #121212 !important;
-            color: #e0e0e0 !important;
-        }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         
-        .bg-white, .bg-gray-300 {
-            background-color: #1e1e1e !important;
-        }
-        
-        .text-gray-700, .text-gray-800, .text-gray-900 {
-            color: #e0e0e0 !important;
-        }
-        
-        .text-gray-500, .text-gray-600 {
-            color: #a0a0a0 !important;
-        }
-        
-        .bg-gray-50, .bg-gray-100, .bg-gray-200 {
-            background-color: #2a2a2a !important;
-        }
-        
-        .border-gray-200, .border-gray-300 {
-            border-color: #333 !important;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
         }
 
-        .hover\:bg-gray-100:hover {
-            background-color: #333333 !important;
+        body {
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 50%, #2d1b69 100%);
+            color: #e0e7ff;
+            min-height: 100vh;
+        }
+        
+        /* Sidebar styling to match dashboard */
+        .sidebar {
+            background: rgba(15, 15, 35, 0.9);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 260px;
+            z-index: 1000;
+        }
+        
+        .sidebar-nav a {
+            color: #a78bfa;
+            padding: 0.75rem 1.5rem;
+            display: flex;
+            align-items: center;
+            transition: all 0.3s ease;
+            border-radius: 0 20px 20px 0;
+            margin-right: 1rem;
+            text-decoration: none;
+        }
+        
+        .sidebar-nav a:hover {
+            background: rgba(139, 92, 246, 0.2);
+            color: #c4b5fd;
+            transform: translateX(8px);
+        }
+        
+        .sidebar-nav a.active {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            color: white;
+            box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4);
+        }
+        
+        /* Main content area */
+        .main-content {
+            margin-left: 260px;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        
+        /* Glass card effect */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+            padding: 1.5rem;
+            animation: fadeInSlide 0.6s ease-out;
+        }
+        
+        .glass-card:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateY(-2px);
+        }
+        
+        /* Flash messages styling */
+        .flash-message {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-left: 4px solid #3b82f6;
+            color: #93c5fd;
+            padding: 1rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+        }
+        
+        .flash-message.success {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: rgba(16, 185, 129, 0.3);
+            border-left-color: #10b981;
+            color: #6ee7b7;
+        }
+        
+        .flash-message.error {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: rgba(239, 68, 68, 0.3);
+            border-left-color: #ef4444;
+            color: #fca5a5;
+        }
+        
+        /* Search bar styling */
+        .search-container {
+            position: relative;
+            margin-bottom: 2rem;
+        }
+        
+        .search-input {
+            width: 100%;
+            padding: 1rem 1rem 1rem 3rem;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            color: #e0e7ff;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .search-input:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 0.08);
+            border-color: #8b5cf6;
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.25);
+        }
+        
+        .search-input::placeholder {
+            color: #a78bfa;
+            opacity: 0.7;
+        }
+        
+        .search-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #a78bfa;
+            font-size: 1.125rem;
+        }
+        
+        .search-button {
+            position: absolute;
+            right: 0.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            border: none;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.875rem;
+        }
+        
+        .search-button:hover {
+            transform: translateY(-50%) translateY(-2px);
+            box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4);
+        }
+        
+        /* Filter buttons */
+        .filter-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-bottom: 2rem;
+        }
+        
+        .filter-button {
+            padding: 0.75rem 1.5rem;
+            border-radius: 24px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            text-decoration: none;
+            font-size: 0.875rem;
+        }
+        
+        .filter-button.active {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            color: white;
+            border-color: transparent;
+            box-shadow: 0 8px 25px rgba(139, 92, 246, 0.3);
+        }
+        
+        .filter-button:not(.active) {
+            background: rgba(255, 255, 255, 0.05);
+            color: #a78bfa;
+        }
+        
+        .filter-button:not(.active):hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #c4b5fd;
+            transform: translateY(-2px);
+            border-color: #8b5cf6;
+        }
+        
+        /* Resource cards */
+        .resources-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .resource-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            animation: fadeInSlide 0.6s ease-out;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .resource-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .resource-card:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(139, 92, 246, 0.2);
+        }
+        
+        .resource-card:hover::before {
+            opacity: 1;
+        }
+        
+        .resource-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .resource-icon.video {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+        }
+        
+        .resource-icon.article {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+        }
+        
+        .resource-icon.link {
+            background: linear-gradient(135deg, #10b981, #059669);
+        }
+        
+        .resource-icon.default {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+        }
+        
+        .resource-card:hover .resource-icon {
+            transform: scale(1.1) rotate(5deg);
+        }
+        
+        .resource-title {
+            color: #e0e7ff;
+            font-weight: 600;
+            font-size: 1.125rem;
+            margin-bottom: 0.75rem;
+            line-height: 1.4;
+        }
+        
+        .resource-description {
+            color: #a78bfa;
+            font-size: 0.875rem;
+            line-height: 1.5;
+            margin-bottom: 1.5rem;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        .resource-link {
+            color: #c4b5fd;
+            font-weight: 600;
+            font-size: 0.875rem;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+        }
+        
+        .resource-link:hover {
+            color: #e0e7ff;
+            transform: translateX(4px);
+        }
+        
+        /* Empty state */
+        .empty-state {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 3rem 2rem;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            border-style: dashed;
+        }
+        
+        .empty-state-icon {
+            font-size: 3rem;
+            color: #6b7280;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+        
+        .empty-state-title {
+            color: #e0e7ff;
+            font-weight: 600;
+            font-size: 1.25rem;
+            margin-bottom: 0.75rem;
+        }
+        
+        .empty-state-description {
+            color: #a78bfa;
+            font-size: 0.875rem;
+            line-height: 1.5;
+        }
+        
+        /* Section headers */
+        .section-header {
+            background: linear-gradient(135deg, #8b5cf6, #ec4899);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 700;
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .section-subtitle {
+            color: #a78bfa;
+            font-size: 1.125rem;
+            margin-bottom: 2rem;
+        }
+        
+        /* Animations */
+        @keyframes fadeInSlide {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes staggerIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* Stagger animation for resource cards */
+        .resource-card:nth-child(1) { animation-delay: 0.1s; }
+        .resource-card:nth-child(2) { animation-delay: 0.2s; }
+        .resource-card:nth-child(3) { animation-delay: 0.3s; }
+        .resource-card:nth-child(4) { animation-delay: 0.4s; }
+        .resource-card:nth-child(5) { animation-delay: 0.5s; }
+        .resource-card:nth-child(6) { animation-delay: 0.6s; }
+        
+        /* Responsive design */
+        @media (max-width: 1024px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            
+            .main-content {
+                margin-left: 0;
+                padding: 1rem;
+            }
+            
+            .resources-grid {
+                grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+                gap: 1rem;
+            }
+        }
+        
+        @media (max-width: 640px) {
+            .filter-container {
+                gap: 0.5rem;
+            }
+            
+            .filter-button {
+                padding: 0.5rem 1rem;
+                font-size: 0.8rem;
+            }
+            
+            .resources-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* Accessibility - Theme modes */
+        {% if settings.theme_mode == 'dark' %}
+        body {
+            background: linear-gradient(135deg, #000000 0%, #1a1a3e 50%, #2d1b69 100%);
+        }
+        
+        .glass-card, .resource-card {
+            background: rgba(0, 0, 0, 0.3);
+        }
+        
+        .sidebar {
+            background: rgba(0, 0, 0, 0.9);
         }
         {% endif %}
         
         {% if settings.contrast == 'high' %}
-        /* High contrast styles */
         body {
-            background-color: #ffffff !important;
-            color: #000000 !important;
-        }
-        
-        .text-gray-500, .text-gray-600, .text-gray-700, .text-gray-800, .text-gray-900 {
-            color: #000000 !important;
-        }
-        
-        .bg-gray-800, .bg-gray-700 {
-            background-color: #000000 !important;
-        }
-        
-        .text-gray-200, .text-white {
+            background: #000000 !important;
             color: #ffffff !important;
         }
         
-        input, select, button {
-            border: 2px solid #000000 !important;
+        .glass-card, .resource-card {
+            background: rgba(255, 255, 255, 0.1) !important;
+            border: 2px solid #ffffff !important;
         }
-
-        .bg-gray-50, .bg-gray-100, .bg-gray-200, .bg-gray-300 {
-            background-color: #ffffff !important;
-            border: 2px solid #000000 !important;
+        
+        .section-header {
+            color: #ffffff !important;
+            -webkit-text-fill-color: #ffffff !important;
         }
-
-        .resource-card {
-            border: 2px solid #000000 !important;
+        
+        .resource-title, .resource-description, .resource-link {
+            color: #ffffff !important;
+        }
+        
+        .search-input {
+            border: 2px solid #ffffff !important;
+            color: #ffffff !important;
+        }
+        
+        .filter-button {
+            border: 2px solid #ffffff !important;
+            color: #ffffff !important;
         }
         {% endif %}
         
         {% if settings.text_size == 'lg' %}
-        /* Large text */
         body {
             font-size: 1.125rem !important;
         }
         
-        .text-sm {
-            font-size: 0.9375rem !important;
+        .resource-title {
+            font-size: 1.25rem !important;
         }
         
-        .text-lg, .text-xl, .text-2xl, .text-3xl {
-            font-size: 1.3125rem !important;
+        .section-header {
+            font-size: 2.25rem !important;
+        }
+        
+        .search-input {
+            font-size: 1.125rem !important;
         }
         {% elif settings.text_size == 'xl' %}
-        /* Extra large text */
         body {
             font-size: 1.25rem !important;
         }
         
-        .text-sm {
-            font-size: 1.0625rem !important;
+        .resource-title {
+            font-size: 1.375rem !important;
         }
         
-        .text-lg, .text-xl {
-            font-size: 1.5rem !important;
+        .section-header {
+            font-size: 2.5rem !important;
         }
-
-        .text-2xl, .text-3xl {
-            font-size: 1.75rem !important;
+        
+        .search-input {
+            font-size: 1.25rem !important;
         }
         {% endif %}
-
-        /* Resource card hover effect */
-        .resource-card {
-            transition: transform 0.2s ease-in-out;
-        }
-        .resource-card:hover {
-            transform: translateY(-5px);
-        }
     </style>
 </head>
 
-<body class="bg-gray-200 flex text-gray-900">
+<body>
     <!-- Sidebar Navigation -->
-    <aside class="w-64 h-screen bg-gray-800 text-gray-200 p-4 fixed">
-        <h1 class="text-2xl font-bold mb-6">Wellbeing Assistant</h1>
-        <nav>
-            <ul class="space-y-4">
-                <li><a href="{{ url_for('dashboard.index') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-chart-line"></i> Dashboard</a></li>
-                <li><a href="{{ url_for('tracking.index') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-chart-bar"></i> Wellness Tracker</a></li>
-                <li><a href="{{ url_for('chatbot.chatbot_page') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-comments"></i> Chat</a></li>
-                <li><a href="{{ url_for('dashboard.therapist_info') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-calendar-alt"></i> Therapist</a></li>
-                <li><a href="{{ url_for('dashboard.profile') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-user"></i> Profile</a></li>
-                <li><a href="{{ url_for('dashboard.student_resources') }}" class="block p-2 bg-gray-700 rounded"> <i class="fas fa-book"></i> Resources</a></li>
-                <li><a href="{{ url_for('dashboard.settings') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-cog"></i> Settings</a></li>
-                <li><a href="{{ url_for('auth.logout') }}" class="block p-2 hover:bg-gray-700 rounded mt-8"> <i class="fas fa-sign-out-alt"></i> Logout</a></li>
+    <aside class="sidebar">
+        <div class="p-6">
+            <h1 class="text-2xl font-bold mb-8 bg-gradient-to-r from-purple-400 to-pink-600 bg-clip-text text-transparent">
+                Wellbeing Assistant
+            </h1>
+        </div>
+        <nav class="sidebar-nav">
+            <ul class="space-y-2">
+                <li><a href="{{ url_for('dashboard.index') }}" class="flex items-center">
+                    <i class="fas fa-chart-line w-5 mr-3"></i> Dashboard
+                </a></li>
+                <li><a href="{{ url_for('tracking.index') }}" class="flex items-center">
+                    <i class="fas fa-chart-bar w-5 mr-3"></i> Wellness Tracker
+                </a></li>
+                <li><a href="{{ url_for('chatbot.chatbot_page') }}" class="flex items-center">
+                    <i class="fas fa-comments w-5 mr-3"></i> AI Chat
+                </a></li>
+                <li><a href="{{ url_for('dashboard.therapist_info') }}" class="flex items-center">
+                    <i class="fas fa-user-md w-5 mr-3"></i> Your Therapist
+                </a></li>
+                <li><a href="{{ url_for('dashboard.profile') }}" class="flex items-center">
+                    <i class="fas fa-user w-5 mr-3"></i> Profile
+                </a></li>
+                <li><a href="{{ url_for('dashboard.student_resources') }}" class="flex items-center active">
+                    <i class="fas fa-book w-5 mr-3"></i> Resources
+                </a></li>
+                <li><a href="{{ url_for('dashboard.settings') }}" class="flex items-center">
+                    <i class="fas fa-cog w-5 mr-3"></i> Settings
+                </a></li>
             </ul>
+            
+            <div class="mt-auto p-6">
+                <a href="{{ url_for('auth.logout') }}" class="flex items-center text-red-400 hover:text-red-300">
+                    <i class="fas fa-sign-out-alt w-5 mr-3"></i> Logout
+                </a>
+            </div>
         </nav>
     </aside>
 
     <!-- Main Content -->
-    <main class="ml-64 p-8 w-full">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="{% if category == 'error' %}bg-red-100 border-l-4 border-red-500 text-red-700{% elif category == 'success' %}bg-green-100 border-l-4 border-green-500 text-green-700{% else %}bg-blue-100 border-l-4 border-blue-500 text-blue-700{% endif %} p-4 mb-6" role="alert">
-                        <p>{{ message }}</p>
+    <main class="main-content">
+        <div class="max-w-7xl mx-auto">
+            
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="flash-message {% if category == 'error' %}error{% elif category == 'success' %}success{% endif %}" role="alert">
+                            <p>{{ message }}</p>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        
+            <!-- Header Section -->
+            <div class="mb-8">
+                <h2 class="section-header">Student Resources</h2>
+                <p class="section-subtitle">
+                    <i class="fas fa-lightbulb mr-2"></i>
+                    Discover curated resources to support your mental health and wellbeing journey.
+                </p>
+            </div>
+
+            <!-- Search Bar -->
+            <div class="search-container">
+                <form action="{{ url_for('dashboard.student_resources') }}" method="get">
+                    <div class="relative">
+                        <i class="fas fa-search search-icon"></i>
+                        <input type="text" name="query" class="search-input" 
+                            placeholder="Search for articles, videos, guides..." 
+                            value="{{ search_query|default('') }}">
+                        <button type="submit" class="search-button">
+                            <i class="fas fa-search mr-1"></i>Search
+                        </button>
                     </div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
-    
-        <div class="mb-6">
-            <h2 class="text-3xl font-bold text-gray-800">Student Resources</h2>
-            <p class="text-gray-700">Find the right support and guidance for your wellbeing.</p>
-        </div>
+                </form>
+            </div>
 
-        <!-- Search Bar -->
-        <div class="relative mb-6">
-            <form action="{{ url_for('dashboard.student_resources') }}" method="get">
-                <input type="text" name="query" class="w-full p-3 pl-10 bg-white border border-gray-300 text-gray-900 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" 
-                    placeholder="Search for resources..." value="{{ search_query|default('') }}">
-                <button type="submit" class="absolute left-3 top-3 text-gray-600">
-                    <i class="fas fa-search"></i>
-                </button>
-            </form>
-        </div>
-
-        <!-- Resource Type Filters -->
-        {% if resource_types and resource_types|length > 0 %}
-        <div class="flex flex-wrap gap-2 mb-6">
-            <a href="{{ url_for('dashboard.student_resources') }}" class="px-4 py-2 bg-{% if not selected_type %}blue-500 text-white{% else %}gray-200 text-gray-700 hover:bg-gray-300{% endif %} rounded-full transition">
-                All
-            </a>
-            {% for type in resource_types %}
-                <a href="{{ url_for('dashboard.student_resources', type=type) }}" 
-                    class="px-4 py-2 bg-{% if selected_type == type %}blue-500 text-white{% else %}gray-200 text-gray-700 hover:bg-gray-300{% endif %} rounded-full transition">
-                    {{ type|title }}
+            <!-- Resource Type Filters -->
+            {% if resource_types and resource_types|length > 0 %}
+            <div class="filter-container">
+                <a href="{{ url_for('dashboard.student_resources') }}" 
+                   class="filter-button {% if not selected_type %}active{% endif %}">
+                    <i class="fas fa-th-large mr-2"></i>All Resources
                 </a>
-            {% endfor %}
-        </div>
-        {% endif %}
+                {% for type in resource_types %}
+                    <a href="{{ url_for('dashboard.student_resources', type=type) }}" 
+                       class="filter-button {% if selected_type == type %}active{% endif %}">
+                        {% if type == 'video' %}
+                            <i class="fas fa-video mr-2"></i>
+                        {% elif type == 'article' %}
+                            <i class="fas fa-newspaper mr-2"></i>
+                        {% elif type == 'link' %}
+                            <i class="fas fa-link mr-2"></i>
+                        {% else %}
+                            <i class="fas fa-book mr-2"></i>
+                        {% endif %}
+                        {{ type|title }}
+                    </a>
+                {% endfor %}
+            </div>
+            {% endif %}
 
-        <!-- Resources Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {% if resources and resources|length > 0 %}
-                {% for resource in resources %}
-                    <div class="bg-gray-300 p-6 rounded shadow resource-card">
-                        <div class="text-2xl bg-gray-700 text-white p-3 rounded inline-block mb-4">
-                            {% if resource.resource_type == 'video' %}
-                                <i class="fas fa-video"></i>
-                            {% elif resource.resource_type == 'article' %}
-                                <i class="fas fa-newspaper"></i>
-                            {% elif resource.resource_type == 'link' %}
-                                <i class="fas fa-link"></i>
+            <!-- Resources Grid -->
+            <div class="resources-grid">
+                {% if resources and resources|length > 0 %}
+                    {% for resource in resources %}
+                        <div class="resource-card">
+                            <div class="resource-icon {% if resource.resource_type == 'video' %}video{% elif resource.resource_type == 'article' %}article{% elif resource.resource_type == 'link' %}link{% else %}default{% endif %}">
+                                {% if resource.resource_type == 'video' %}
+                                    <i class="fas fa-play"></i>
+                                {% elif resource.resource_type == 'article' %}
+                                    <i class="fas fa-newspaper"></i>
+                                {% elif resource.resource_type == 'link' %}
+                                    <i class="fas fa-external-link-alt"></i>
+                                {% else %}
+                                    <i class="fas fa-book-open"></i>
+                                {% endif %}
+                            </div>
+                            
+                            <h3 class="resource-title">{{ resource.title }}</h3>
+                            <p class="resource-description">{{ resource.description }}</p>
+                            
+                            <a href="{{ url_for('dashboard.student_resource_detail', resource_id=resource._id) }}" 
+                               class="resource-link">
+                                <span>Learn More</span>
+                                <i class="fas fa-arrow-right"></i>
+                            </a>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state">
+                        <div class="empty-state-icon">
+                            {% if search_query %}
+                                <i class="fas fa-search"></i>
+                            {% elif selected_type %}
+                                <i class="fas fa-filter"></i>
                             {% else %}
                                 <i class="fas fa-book"></i>
                             {% endif %}
                         </div>
-                        <h3 class="text-xl font-semibold mb-2">{{ resource.title }}</h3>
-                        <p class="text-gray-700 mb-4">{{ resource.description }}</p>
-                        <a href="{{ url_for('dashboard.student_resource_detail', resource_id=resource._id) }}" class="text-blue-600 hover:underline">
-                            Learn More →
-                        </a>
-                    </div>
-                {% endfor %}
-            {% else %}
-                <div class="col-span-full bg-white p-8 rounded-lg shadow-md text-center">
-                    <i class="fas fa-exclamation-circle text-gray-400 text-4xl mb-4"></i>
-                    <h3 class="text-xl font-semibold mb-2">No resources found</h3>
-                    <p class="text-gray-600">
-                        {% if search_query %}
-                            No resources match your search "{{ search_query }}". Try different keywords.
-                        {% elif selected_type %}
-                            No resources available in this category at the moment.
-                        {% else %}
-                            No resources are available at this time. Please check back later.
+                        <h3 class="empty-state-title">
+                            {% if search_query %}
+                                No results found
+                            {% elif selected_type %}
+                                No {{ selected_type }} resources
+                            {% else %}
+                                No resources available
+                            {% endif %}
+                        </h3>
+                        <p class="empty-state-description">
+                            {% if search_query %}
+                                No resources match your search "{{ search_query }}". Try different keywords or browse all resources.
+                            {% elif selected_type %}
+                                No {{ selected_type }} resources are available in this category at the moment. Check back later or explore other categories.
+                            {% else %}
+                                No resources are currently available. Our team is working to add helpful content. Please check back soon!
+                            {% endif %}
+                        </p>
+                        {% if search_query or selected_type %}
+                        <div class="mt-4">
+                            <a href="{{ url_for('dashboard.student_resources') }}" class="filter-button active">
+                                <i class="fas fa-th-large mr-2"></i>View All Resources
+                            </a>
+                        </div>
                         {% endif %}
-                    </p>
-                </div>
-            {% endif %}
+                    </div>
+                {% endif %}
+            </div>
         </div>
     </main>
 
-    <!-- Optional JavaScript -->
+    <!-- Enhanced JavaScript -->
     <script src="{{ url_for('static', filename='dashboard.js') }}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Enhanced search functionality
+            const searchInput = document.querySelector('.search-input');
+            const searchForm = document.querySelector('form');
+            
+            // Auto-focus search on page load
+            if (searchInput && !searchInput.value) {
+                searchInput.focus();
+            }
+            
+            // Search suggestions (could be enhanced with actual data)
+            const searchSuggestions = [
+                'stress management',
+                'anxiety relief',
+                'meditation',
+                'sleep tips',
+                'mindfulness',
+                'depression support',
+                'study techniques',
+                'breathing exercises'
+            ];
+            
+            // Add keyboard shortcuts
+            document.addEventListener('keydown', function(e) {
+                // Ctrl/Cmd + K to focus search
+                if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                    e.preventDefault();
+                    searchInput.focus();
+                    searchInput.select();
+                }
+                
+                // Escape to clear search
+                if (e.key === 'Escape' && document.activeElement === searchInput) {
+                    searchInput.value = '';
+                }
+            });
+            
+            // Animate resource cards on scroll
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            };
+            
+            const observer = new IntersectionObserver(function(entries) {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.opacity = '1';
+                        entry.target.style.transform = 'translateY(0)';
+                    }
+                });
+            }, observerOptions);
+            
+            // Observe all resource cards for scroll animations
+            document.querySelectorAll('.resource-card').forEach(card => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+                observer.observe(card);
+            });
+            
+            // Add loading state to search
+            searchForm.addEventListener('submit', function() {
+                const submitButton = document.querySelector('.search-button');
+                const originalText = submitButton.innerHTML;
+                
+                submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Searching...';
+                submitButton.disabled = true;
+                
+                // Re-enable after a delay (in case the search is very fast)
+                setTimeout(() => {
+                    submitButton.innerHTML = originalText;
+                    submitButton.disabled = false;
+                }, 2000);
+            });
+            
+            console.log('Student Resources page loaded with enhanced styling');
+        });
+    </script>
 </body>
 </html>

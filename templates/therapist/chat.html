@@ -3,498 +3,915 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chat | Wellbeing Assistant</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css"> 
+    <title>Chat with {{ student.first_name }} {{ student.last_name }} | Wellbeing Assistant</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
-
     <style>
-        {% if settings.theme_mode == 'dark' %}
-        /* Dark mode styles */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
         body {
-            background-color: #121212 !important;
-            color: #e0e0e0 !important;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 50%, #2d1b69 100%);
+            color: #e0e7ff;
+            min-height: 100vh;
         }
         
-        .bg-white {
-            background-color: #1e1e1e !important;
+        .sidebar {
+            background: rgba(15, 15, 35, 0.9);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 260px;
+            z-index: 1000;
         }
         
-        .text-gray-700, .text-gray-800, .text-gray-900 {
-            color: #e0e0e0 !important;
+        .sidebar-nav a {
+            color: #a78bfa;
+            padding: 0.75rem 1.5rem;
+            display: flex;
+            align-items: center;
+            transition: all 0.3s ease;
+            border-radius: 0 20px 20px 0;
+            margin-right: 1rem;
         }
         
-        .text-gray-500, .text-gray-600 {
-            color: #a0a0a0 !important;
+        .sidebar-nav a:hover {
+            background: rgba(139, 92, 246, 0.2);
+            color: #c4b5fd;
+            transform: translateX(8px);
         }
         
-        .bg-gray-50, .bg-gray-100, .bg-gray-200 {
-            background-color: #2a2a2a !important;
+        .sidebar-nav a.active {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            color: white;
+            box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4);
         }
         
-        .border-gray-200, .border-gray-300 {
-            border-color: #333 !important;
-        }
-
-        .hover\:bg-gray-100:hover {
-            background-color: #333333 !important;
-        }
-
-        .hover\:bg-gray-200:hover {
-            background-color: #444444 !important;
-        }
-
-        .hover\:bg-green-200:hover {
-            background-color: #0d503c !important;
-        }
-
-        .hover\:bg-blue-200:hover {
-            background-color: #0d365e !important;
-        }
-
-        .bg-green-100 {
-            background-color: #064e3b !important;
-        }
-
-        .bg-blue-100 {
-            background-color: #0c4a6e !important;
-        }
-        {% endif %}
-        
-        {% if settings.contrast == 'high' %}
-        /* High contrast styles */
-        body {
-            background-color: #ffffff !important;
-            color: #000000 !important;
+        .main-content {
+            margin-left: 260px;
+            min-height: 100vh;
+            padding: 2rem;
         }
         
-        .text-gray-500, .text-gray-600, .text-gray-700, .text-gray-800, .text-gray-900 {
-            color: #000000 !important;
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
         }
         
-        .bg-gray-800 {
-            background-color: #000000 !important;
-        }
-        
-        .text-gray-200 {
-            color: #ffffff !important;
-        }
-        
-        input, select, button {
-            border: 2px solid #000000 !important;
-        }
-
-        .bg-green-100, .bg-blue-100, .bg-gray-100 {
-            background-color: #ffffff !important;
-            border: 2px solid #000000 !important;
-        }
-
-        .text-green-500, .text-blue-500, .text-purple-500 {
-            color: #000000 !important;
-        }
-        {% endif %}
-        
-        {% if settings.text_size == 'lg' %}
-        /* Large text */
-        body {
-            font-size: 1.125rem !important;
-        }
-        
-        .text-sm {
-            font-size: 0.9375rem !important;
-        }
-        
-        .text-lg, .text-xl, .text-2xl, .text-3xl {
-            font-size: 1.3125rem !important;
-        }
-        {% elif settings.text_size == 'xl' %}
-        /* Extra large text */
-        body {
-            font-size: 1.25rem !important;
-        }
-        
-        .text-sm {
-            font-size: 1.0625rem !important;
-        }
-        
-        .text-lg, .text-xl {
-            font-size: 1.5rem !important;
-        }
-
-        .text-2xl, .text-3xl {
-            font-size: 1.75rem !important;
-        }
-        {% endif %}
-
-        /* Custom styles for chat */
         .chat-container {
-            height: calc(100vh - 240px);
-            min-height: 500px;
+            height: 600px;
+            display: flex;
+            flex-direction: column;
         }
         
         .chat-messages {
-            height: calc(100% - 80px);
+            flex: 1;
             overflow-y: auto;
-            padding-right: 8px;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .chat-messages::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .chat-messages::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+        }
+        
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: rgba(139, 92, 246, 0.5);
+            border-radius: 3px;
         }
         
         .message {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            max-width: 70%;
+            animation: messageSlideIn 0.3s ease-out;
+        }
+        
+        @keyframes messageSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .message.therapist {
+            align-self: flex-end;
+            flex-direction: row-reverse;
+        }
+        
+        .message.student {
+            align-self: flex-start;
+        }
+        
+        .message-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            flex-shrink: 0;
+            font-size: 0.875rem;
+        }
+        
+        .message.therapist .message-avatar {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            color: white;
+        }
+        
+        .message.student .message-avatar {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+        }
+        
+        .message-content {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 1rem;
+            position: relative;
+            word-wrap: break-word;
+        }
+        
+        .message.therapist .message-content {
+            background: rgba(139, 92, 246, 0.2);
+            border-color: rgba(139, 92, 246, 0.3);
+        }
+        
+        .message.student .message-content {
+            background: rgba(16, 185, 129, 0.2);
+            border-color: rgba(16, 185, 129, 0.3);
+        }
+        
+        .message-text {
+            color: white;
+            line-height: 1.5;
+            margin-bottom: 0.5rem;
+            white-space: pre-wrap;
+        }
+        
+        .message-time {
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.6);
+        }
+        
+        .resource-message {
+            background: rgba(59, 130, 246, 0.2);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 12px;
+            padding: 0.75rem;
+            margin-top: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .chat-input-container {
+            padding: 1.5rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.02);
+        }
+        
+        .chat-input-form {
+            display: flex;
+            gap: 1rem;
+            align-items: flex-end;
+        }
+        
+        .chat-input {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            padding: 0.75rem 1rem;
+            color: white;
+            font-size: 1rem;
+            resize: none;
+            min-height: 44px;
+            max-height: 120px;
+            font-family: inherit;
+        }
+        
+        .chat-input:focus {
+            outline: none;
+            border-color: #8b5cf6;
+            background: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
+        }
+        
+        .chat-input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+        
+        .btn-send {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            border: none;
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        
+        .btn-send:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(139, 92, 246, 0.4);
+        }
+        
+        .btn-send:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(139, 92, 246, 0.4);
+        }
+        
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            color: #c4b5fd;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+        }
+        
+        .appointment-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 1.5rem;
             margin-bottom: 1rem;
-            max-width: 80%;
+            transition: all 0.3s ease;
         }
         
-        .message-therapist {
-            margin-left: auto;
-            background-color: #e9f3ff;
-            border-radius: 1rem 0 1rem 1rem;
+        .appointment-card:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: #8b5cf6;
         }
         
-        .message-student {
-            margin-right: auto;
-            background-color: #f3f4f6;
-            border-radius: 0 1rem 1rem 1rem;
+        .resource-item {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            transition: all 0.3s ease;
         }
         
-        .resource-container {
-            background-color: #f9f9f9;
-            border-left: 4px solid #3b82f6;
-        }
-
-        {% if settings.theme_mode == 'dark' %}
-        .message-therapist {
-            background-color: #1e3a8a;
-            color: #e0e0e0;
+        .resource-item:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: #8b5cf6;
         }
         
-        .message-student {
-            background-color: #333333;
-            color: #e0e0e0;
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
         }
         
-        .resource-container {
-            background-color: #2a2a2a;
-            border-left: 4px solid #3b82f6;
+        .modal-content {
+            background: rgba(15, 15, 35, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            margin: 5% auto;
+            padding: 2rem;
+            width: 90%;
+            max-width: 600px;
+            position: relative;
+            max-height: 80vh;
+            overflow-y: auto;
         }
-        {% endif %}
+        
+        .modal-close {
+            position: absolute;
+            right: 1rem;
+            top: 1rem;
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+        
+        .modal-close:hover {
+            color: white;
+        }
+        
+        .typing-indicator {
+            display: none;
+            align-items: center;
+            gap: 0.5rem;
+            color: rgba(255, 255, 255, 0.6);
+            font-style: italic;
+            padding: 0.5rem 1rem;
+        }
+        
+        .typing-dots {
+            display: flex;
+            gap: 0.25rem;
+        }
+        
+        .typing-dot {
+            width: 6px;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 50%;
+            animation: typingBounce 1.4s infinite ease-in-out;
+        }
+        
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+        
+        @keyframes typingBounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: rgba(255, 255, 255, 0.6);
+        }
+        
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+        
+        @media (max-width: 1024px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+            
+            .message {
+                max-width: 85%;
+            }
+            
+            .chat-container {
+                height: calc(100vh - 200px);
+            }
+        }
     </style>
 </head>
-
-<body class="bg-gray-200 flex text-gray-900">
+<body>
     <!-- Sidebar Navigation -->
-    <aside class="w-64 h-screen bg-gray-800 text-gray-200 p-4 fixed">
-        <h1 class="text-2xl font-bold mb-6">Therapist Portal</h1>
-        <nav>
-            <ul class="space-y-4">
-                <li><a href="{{ url_for('therapist.index') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-chart-line"></i> Dashboard</a></li>
-                <li><a href="{{ url_for('therapist.appointments') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-calendar-alt"></i> Appointments</a></li>
-                <li><a href="{{ url_for('therapist.students') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-user-graduate"></i> My Students</a></li>
-                <li><a href="{{ url_for('therapist.calendar') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-calendar"></i> Calendar</a></li>
-                <li><a href="{{ url_for('therapist.resources') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-book-medical"></i> Resources</a></li>
-                <li><a href="{{ url_for('therapist.profile') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-user"></i> Profile</a></li>
-                <li><a href="{{ url_for('therapist.student_requests') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-user-plus"></i> Student Requests</a></li>
-                <li><a href="{{ url_for('therapist.reports') }}" class="block p-2 hover:bg-gray-700 rounded"> <i class="fas fa-chart-bar"></i> Reports</a></li>
-                <li><a href="{{ url_for('auth.logout') }}" class="block p-2 hover:bg-gray-700 rounded mt-8"> <i class="fas fa-sign-out-alt"></i> Logout</a></li>
+    <aside class="sidebar">
+        <div class="p-6">
+            <h1 class="text-2xl font-bold mb-8 bg-gradient-to-r from-purple-400 to-pink-600 bg-clip-text text-transparent">
+                Therapist Portal
+            </h1>
+        </div>
+        <nav class="sidebar-nav">
+            <ul class="space-y-2">
+                <li><a href="{{ url_for('therapist.index') }}" class="flex items-center">
+                    <i class="fas fa-chart-line w-5 mr-3"></i> Dashboard
+                </a></li>
+                <li><a href="{{ url_for('therapist.students') }}" class="flex items-center active">
+                    <i class="fas fa-users w-5 mr-3"></i> My Students
+                </a></li>
+                <li><a href="{{ url_for('therapist.virtual_sessions') }}" class="flex items-center">
+                    <i class="fas fa-video w-5 mr-3"></i> Virtual Sessions
+                </a></li>
+                <li><a href="{{ url_for('therapist.availability') }}" class="flex items-center">
+                    <i class="fas fa-calendar-alt w-5 mr-3"></i> Availability
+                </a></li>
+                <li><a href="{{ url_for('therapist.resources') }}" class="flex items-center">
+                    <i class="fas fa-book w-5 mr-3"></i> Resources
+                </a></li>
+                <li><a href="{{ url_for('therapist.profile') }}" class="flex items-center">
+                    <i class="fas fa-user w-5 mr-3"></i> Profile
+                </a></li>
             </ul>
+            
+            <div class="mt-auto p-6">
+                <a href="{{ url_for('auth.logout') }}" class="flex items-center text-red-400 hover:text-red-300">
+                    <i class="fas fa-sign-out-alt w-5 mr-3"></i> Logout
+                </a>
+            </div>
         </nav>
     </aside>
 
     <!-- Main Content -->
-    <main class="ml-64 p-8 w-full">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="bg-{% if category == 'error' %}red{% else %}blue{% endif %}-100 border-l-4 border-{% if category == 'error' %}red{% else %}blue{% endif %}-500 text-{% if category == 'error' %}red{% else %}blue{% endif %}-700 p-4 mb-6" role="alert">
-                        <p>{{ message }}</p>
+    <main class="main-content">
+        <div class="max-w-6xl mx-auto">
+            
+            <!-- Header -->
+            <div class="mb-8">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h1 class="text-4xl font-bold mb-2 bg-gradient-to-r from-purple-400 to-pink-600 bg-clip-text text-transparent">
+                            Chat with {{ student.first_name }} {{ student.last_name }}
+                        </h1>
+                        <p class="text-purple-300">
+                            <i class="fas fa-comments mr-2"></i>
+                            Secure messaging platform for therapeutic communication
+                        </p>
                     </div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
-        
-        <div class="flex items-center mb-6">
-            <a href="{{ url_for('therapist.student_details', student_id=student._id) }}" class="mr-4 text-gray-600 hover:text-gray-800">
-                <i class="fas fa-arrow-left"></i> Back to Student Profile
-            </a>
-        </div>
-        
-        <div class="flex flex-wrap md:flex-nowrap">
-            <!-- Chat Window -->
-            <div class="w-full md:w-3/4 md:pr-6 mb-6 md:mb-0">
-                <div class="bg-white rounded shadow chat-container">
-                    <!-- Chat Header -->
-                    <div class="p-4 border-b border-gray-200">
-                        <div class="flex items-center">
-                            <div class="w-10 h-10 rounded-full bg-blue-100 text-blue-500 flex items-center justify-center font-bold text-lg mr-3">
-                                {{ student.first_name[0] }}{{ student.last_name[0] }}
+                    <a href="{{ url_for('therapist.student_details', student_id=student._id) }}" class="btn-secondary">
+                        <i class="fas fa-arrow-left"></i>
+                        Back to Student Details
+                    </a>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                
+                <!-- Chat Section -->
+                <div class="lg:col-span-2">
+                    <div class="glass-card chat-container">
+                        
+                        <!-- Chat Messages -->
+                        <div class="chat-messages" id="chat-messages">
+                            {% if chat_history %}
+                                {% for message in chat_history %}
+                                <div class="message {{ message.sender }}">
+                                    <div class="message-avatar">
+                                        {% if message.sender == 'therapist' %}
+                                            <i class="fas fa-user-md"></i>
+                                        {% else %}
+                                            {{ student.first_name[0]|upper }}{{ student.last_name[0]|upper }}
+                                        {% endif %}
+                                    </div>
+                                    <div class="message-content">
+                                        <div class="message-text">{{ message.message }}</div>
+                                        {% if message.resource_id %}
+                                        <div class="resource-message">
+                                            <i class="fas fa-paperclip"></i>
+                                            <span>Resource shared</span>
+                                        </div>
+                                        {% endif %}
+                                        <div class="message-time">
+                                            {{ message.timestamp.strftime('%I:%M %p | %b %d') }}
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                                <div class="empty-state">
+                                    <i class="fas fa-comments"></i>
+                                    <h4 class="text-xl font-semibold text-white mb-2">Start the conversation</h4>
+                                    <p class="text-purple-300">Send your first message to {{ student.first_name }}</p>
+                                </div>
+                            {% endif %}
+                            
+                            <!-- Typing Indicator -->
+                            <div class="typing-indicator" id="typing-indicator">
+                                <span>{{ student.first_name }} is typing</span>
+                                <div class="typing-dots">
+                                    <div class="typing-dot"></div>
+                                    <div class="typing-dot"></div>
+                                    <div class="typing-dot"></div>
+                                </div>
                             </div>
-                            <div>
-                                <h2 class="text-lg font-semibold">{{ student.first_name }} {{ student.last_name }}</h2>
-                                <p class="text-sm text-gray-600">
-                                    {% if student.online_status == 'online' %}
-                                        <span class="inline-block w-2 h-2 rounded-full bg-green-500 mr-1"></span> Online
-                                    {% else %}
-                                        <span class="inline-block w-2 h-2 rounded-full bg-gray-500 mr-1"></span> Offline
-                                    {% endif %}
-                                </p>
+                        </div>
+
+                        <!-- Chat Input -->
+                        <div class="chat-input-container">
+                            <form class="chat-input-form" id="chat-form">
+                                <textarea 
+                                    class="chat-input" 
+                                    id="message-input" 
+                                    placeholder="Type your message... (Shift+Enter for new line)"
+                                    rows="1"
+                                    required
+                                ></textarea>
+                                <button type="submit" class="btn-send" id="send-button">
+                                    <i class="fas fa-paper-plane"></i>
+                                </button>
+                            </form>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Sidebar -->
+                <div class="space-y-6">
+                    
+                    <!-- Quick Actions -->
+                    <div class="glass-card p-6">
+                        <h3 class="text-xl font-bold mb-4 text-white">
+                            <i class="fas fa-bolt mr-2 text-yellow-400"></i>
+                            Quick Actions
+                        </h3>
+                        <div class="space-y-3">
+                            <button onclick="openResourceModal()" class="btn-primary w-full">
+                                <i class="fas fa-share"></i>
+                                Share Resource
+                            </button>
+                            {% if upcoming_appointments %}
+                            <a href="{{ upcoming_appointments[0].meeting_info.meet_link if upcoming_appointments[0].meeting_info else '#' }}" 
+                               target="_blank" class="btn-secondary w-full">
+                                <i class="fas fa-video"></i>
+                                Join Next Session
+                            </a>
+                            {% endif %}
+                            <button onclick="scheduleSession()" class="btn-secondary w-full">
+                                <i class="fas fa-calendar-plus"></i>
+                                Schedule Session
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Student Info -->
+                    <div class="glass-card p-6">
+                        <h3 class="text-xl font-bold mb-4 text-white">
+                            <i class="fas fa-user mr-2 text-blue-400"></i>
+                            Student Information
+                        </h3>
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center">
+                                <span class="text-purple-300">Name:</span>
+                                <span class="text-white font-semibold">{{ student.first_name }} {{ student.last_name }}</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-purple-300">Email:</span>
+                                <span class="text-white text-sm">{{ student.email }}</span>
+                            </div>
+                            {% if student.student_id %}
+                            <div class="flex justify-between items-center">
+                                <span class="text-purple-300">Student ID:</span>
+                                <span class="text-white font-semibold">{{ student.student_id }}</span>
+                            </div>
+                            {% endif %}
+                            <div class="flex justify-between items-center">
+                                <span class="text-purple-300">Status:</span>
+                                <span class="text-green-400 font-semibold">
+                                    <i class="fas fa-circle text-xs mr-1"></i>
+                                    Active
+                                </span>
                             </div>
                         </div>
                     </div>
-                    
-                    <!-- Chat Messages -->
-                    <div class="p-4 chat-messages" id="chatMessages">
-                        {% for message in chat_history %}
-                            <div class="message p-3 {% if message.sender == 'therapist' %}message-therapist{% else %}message-student{% endif %}">
-                                <div class="flex justify-between mb-1">
-                                    <span class="font-medium">{{ 'You' if message.sender == 'therapist' else student.first_name }}</span>
-                                    <span class="text-xs text-gray-500">{{ message.timestamp.strftime('%I:%M %p | %b %d') }}</span>
-                                </div>
-                                
-                                <p>{{ message.message }}</p>
-                                
-                                {% if message.resource_id %}
-                                    {% for resource in shared_resources %}
-                                        {% if resource._id == message.resource_id %}
-                                            <div class="resource-container mt-2 p-2 rounded">
-                                                <div class="flex justify-between">
-                                                    <div>
-                                                        <p class="font-medium">{{ resource.title }}</p>
-                                                        <p class="text-sm text-gray-600">{{ resource.type }}</p>
-                                                    </div>
-                                                    <a href="{{ resource.url }}" target="_blank" class="text-blue-500 hover:text-blue-700 ml-2">
-                                                        <i class="fas fa-external-link-alt"></i>
-                                                    </a>
-                                                </div>
-                                            </div>
-                                        {% endif %}
-                                    {% endfor %}
-                                {% endif %}
-                            </div>
-                        {% endfor %}
-                    </div>
-                    
-                    <!-- Chat Input -->
-                    <div class="p-4 border-t border-gray-200">
-                        <form id="messageForm" action="{{ url_for('therapist.send_message', student_id=student._id) }}" method="POST" class="flex">
-                            <input type="text" id="message" name="message" placeholder="Type a message..." class="flex-grow border border-gray-300 rounded-l px-4 py-2 focus:outline-none focus:border-blue-500" required>
-                            <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-r">
-                                <i class="fas fa-paper-plane"></i>
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Sidebar -->
-            <div class="w-full md:w-1/4">
-                <!-- Upcoming Appointments -->
-                <div class="bg-white p-4 rounded shadow mb-6">
-                    <h3 class="text-lg font-semibold mb-3">Upcoming Appointments</h3>
-                    
+
+                    <!-- Upcoming Sessions -->
                     {% if upcoming_appointments %}
-                        {% for appt in upcoming_appointments %}
-                            <div class="border-b border-gray-200 py-2 {% if not loop.last %}mb-2{% endif %}">
-                                <div class="font-medium">{{ appt.date.strftime('%A, %b %d') }}</div>
-                                <div class="text-sm text-gray-600">{{ appt.time }} | {{ appt.session_type|capitalize }}</div>
-                            </div>
-                        {% endfor %}
-                        
-                        <a href="{{ url_for('therapist.schedule_appointment', student_id=student._id) }}" class="block text-blue-500 hover:text-blue-700 text-sm mt-3">
-                            <i class="fas fa-plus-circle mr-1"></i> Schedule New
-                        </a>
-                    {% else %}
-                        <p class="text-gray-600 text-sm mb-3">No upcoming appointments</p>
-                        <a href="{{ url_for('therapist.schedule_appointment', student_id=student._id) }}" class="block text-blue-500 hover:text-blue-700 text-sm">
-                            <i class="fas fa-plus-circle mr-1"></i> Schedule Appointment
-                        </a>
-                    {% endif %}
-                </div>
-                
-                <!-- Share Resources -->
-                <div class="bg-white p-4 rounded shadow mb-6">
-                    <div class="flex justify-between items-center mb-3">
-                        <h3 class="text-lg font-semibold">Share Resources</h3>
-                        <button type="button" onclick="openShareResourceModal()" class="text-blue-500 hover:text-blue-700">
-                            <i class="fas fa-plus-circle"></i>
-                        </button>
-                    </div>
-                    
-                    <div class="mb-4">
-                        <p class="text-sm text-gray-600 mb-3">Quick Access</p>
-                        
-                        {% if available_resources %}
-                            <div class="space-y-2">
-                                {% for resource in available_resources[:5] %}
-                                    <div class="border border-gray-200 rounded p-2 hover:bg-gray-50">
-                                        <div class="flex justify-between">
-                                            <div>
-                                                <p class="font-medium">{{ resource.title }}</p>
-                                                <p class="text-xs text-gray-500">{{ resource.type }}</p>
-                                            </div>
-                                            <button type="button" onclick="quickShareResource('{{ resource._id }}')" class="text-blue-500 hover:text-blue-700 ml-2">
-                                                <i class="fas fa-share"></i>
-                                            </button>
-                                        </div>
+                    <div class="glass-card p-6">
+                        <h3 class="text-xl font-bold mb-4 text-white">
+                            <i class="fas fa-calendar mr-2 text-blue-400"></i>
+                            Upcoming Sessions
+                        </h3>
+                        <div class="space-y-3">
+                            {% for appointment in upcoming_appointments[:3] %}
+                            <div class="appointment-card">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="font-semibold text-white">
+                                            {{ appointment.datetime.strftime('%B %d') }}
+                                        </p>
+                                        <p class="text-purple-300 text-sm">
+                                            {{ appointment.datetime.strftime('%I:%M %p') }}
+                                        </p>
+                                        <p class="text-blue-400 text-xs mt-1">
+                                            <i class="fas fa-video mr-1"></i>
+                                            Virtual Session
+                                        </p>
                                     </div>
-                                {% endfor %}
-                            </div>
-                            
-                            {% if available_resources|length > 5 %}
-                                <p class="text-blue-500 hover:text-blue-700 text-sm mt-2 cursor-pointer" onclick="openShareResourceModal()">
-                                    See All Resources
-                                </p>
-                            {% endif %}
-                        {% else %}
-                            <p class="text-gray-600 text-sm">No resources available</p>
-                        {% endif %}
-                    </div>
-                </div>
-                
-                <!-- Recently Shared -->
-                {% if shared_resources %}
-                    <div class="bg-white p-4 rounded shadow">
-                        <h3 class="text-lg font-semibold mb-3">Recently Shared</h3>
-                        
-                        <div class="space-y-2">
-                            {% for resource in shared_resources %}
-                                <div class="border border-gray-200 rounded p-2">
-                                    <div class="flex justify-between">
-                                        <div>
-                                            <p class="font-medium">{{ resource.title }}</p>
-                                            <p class="text-xs text-gray-500">{{ resource.shared_at.strftime('%b %d, %Y') }}</p>
-                                        </div>
-                                        <a href="{{ resource.url }}" target="_blank" class="text-blue-500 hover:text-blue-700 ml-2">
-                                            <i class="fas fa-external-link-alt"></i>
-                                        </a>
-                                    </div>
+                                    {% if appointment.meeting_info %}
+                                    <a href="{{ appointment.meeting_info.meet_link }}" target="_blank" 
+                                       class="text-green-400 hover:text-green-300 text-xl">
+                                        <i class="fas fa-video"></i>
+                                    </a>
+                                    {% endif %}
                                 </div>
+                            </div>
                             {% endfor %}
                         </div>
                     </div>
-                {% endif %}
+                    {% endif %}
+
+                    <!-- Recently Shared Resources -->
+                    {% if shared_resources %}
+                    <div class="glass-card p-6">
+                        <h3 class="text-xl font-bold mb-4 text-white">
+                            <i class="fas fa-history mr-2 text-green-400"></i>
+                            Recently Shared
+                        </h3>
+                        <div class="space-y-2">
+                            {% for resource in shared_resources %}
+                            <div class="resource-item">
+                                <h4 class="font-semibold text-white text-sm">{{ resource.title }}</h4>
+                                <p class="text-purple-300 text-xs">
+                                    <i class="fas fa-clock mr-1"></i>
+                                    {{ resource.shared_at.strftime('%b %d') }}
+                                </p>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                </div>
+
             </div>
+
         </div>
     </main>
 
     <!-- Share Resource Modal -->
-    <div id="shareResourceModal" class="fixed inset-0 bg-gray-500 bg-opacity-75 hidden flex items-center justify-center z-50">
-        <div class="bg-white rounded-lg p-6 max-w-md w-full">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-xl font-semibold">Share Resource</h3>
-                <button type="button" onclick="closeShareResourceModal()" class="text-gray-500 hover:text-gray-700">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
+    <div id="resourceModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeResourceModal()">&times;</span>
+            <h2 class="text-2xl font-bold mb-6 text-white">
+                <i class="fas fa-share mr-2 text-blue-400"></i>
+                Share Resource with {{ student.first_name }}
+            </h2>
             
-            <form action="{{ url_for('therapist.share_resource') }}" method="POST">
+            <form method="POST" action="{{ url_for('therapist.share_resource') }}">
                 <input type="hidden" name="student_id" value="{{ student._id }}">
-                <input type="hidden" name="redirect" value="chat">
                 
                 <div class="mb-4">
-                    <label for="resource_id" class="block text-gray-700 mb-2">Select Resource</label>
-                    <select id="resource_id" name="resource_id" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500" required>
-                        <option value="">Select a resource</option>
+                    <label class="block text-purple-300 font-semibold mb-2">Select Resource:</label>
+                    <div class="max-h-64 overflow-y-auto space-y-2">
                         {% for resource in available_resources %}
-                            <option value="{{ resource._id }}">{{ resource.title }} ({{ resource.type }})</option>
+                        <label class="resource-item cursor-pointer block">
+                            <input type="radio" name="resource_id" value="{{ resource._id }}" class="mr-3">
+                            <div class="inline-block">
+                                <h4 class="font-semibold text-white">{{ resource.title }}</h4>
+                                <p class="text-purple-300 text-sm">{{ resource.description }}</p>
+                                <span class="inline-block mt-1 px-2 py-1 bg-blue-600 text-white text-xs rounded-full">
+                                    {{ resource.type.title() }}
+                                </span>
+                            </div>
+                        </label>
                         {% endfor %}
-                    </select>
+                    </div>
                 </div>
                 
-                <div class="mb-4">
-                    <label for="message" class="block text-gray-700 mb-2">Custom Message (Optional)</label>
-                    <textarea id="message" name="message" rows="3" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500"></textarea>
+                <div class="mb-6">
+                    <label class="block text-purple-300 font-semibold mb-2">Custom Message (Optional):</label>
+                    <textarea name="message" class="w-full bg-gray-700 text-white p-3 rounded-lg" rows="3"
+                              placeholder="Add a personal note about this resource..."></textarea>
                 </div>
                 
-                <div class="flex justify-end space-x-2">
-                    <button type="button" onclick="closeShareResourceModal()" class="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300">Cancel</button>
-                    <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">Share</button>
+                <div class="flex justify-end space-x-3">
+                    <button type="button" onclick="closeResourceModal()" class="btn-secondary">
+                        Cancel
+                    </button>
+                    <button type="submit" class="btn-primary">
+                        <i class="fas fa-share"></i>
+                        Share Resource
+                    </button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Quick Share Form (Hidden) -->
-    <form id="quickShareForm" action="{{ url_for('therapist.share_resource') }}" method="POST" class="hidden">
-        <input type="hidden" name="student_id" value="{{ student._id }}">
-        <input type="hidden" name="resource_id" id="quickShareResourceId">
-        <input type="hidden" name="redirect" value="chat">
-    </form>
-
-    <!-- JavaScript for modals, chat, and resource sharing -->
     <script>
-        // Scroll chat to bottom
-        function scrollToBottom() {
-            const chatMessages = document.getElementById('chatMessages');
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-        }
-        
-        // Call on page load
-        window.onload = function() {
-            scrollToBottom();
-        };
-        
-        // Share Resource Modal
-        function openShareResourceModal() {
-            document.getElementById('shareResourceModal').classList.remove('hidden');
-        }
-        
-        function closeShareResourceModal() {
-            document.getElementById('shareResourceModal').classList.add('hidden');
-        }
-        
-        // Quick share resource
-        function quickShareResource(resourceId) {
-            document.getElementById('quickShareResourceId').value = resourceId;
-            document.getElementById('quickShareForm').submit();
-        }
-        
-        // Handle message form submission via AJAX to avoid page reloads
-        document.getElementById('messageForm').addEventListener('submit', function(event) {
-            event.preventDefault();
+        // Auto-resize chat input
+        const messageInput = document.getElementById('message-input');
+        messageInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+        });
+
+        // Handle form submission
+        document.getElementById('chat-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            sendMessage();
+        });
+
+        // Handle Enter key (Shift+Enter for new line)
+        messageInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        function sendMessage() {
+            const input = document.getElementById('message-input');
+            const message = input.value.trim();
             
-            const message = document.getElementById('message').value;
-            if (!message.trim()) return;
+            if (!message) return;
             
-            // Create form data
-            const formData = new FormData();
-            formData.append('message', message);
+            const sendButton = document.getElementById('send-button');
+            sendButton.disabled = true;
             
-            // Send AJAX request
-            fetch(this.action, {
+            // Add message to chat immediately
+            addMessageToChat('therapist', message, 'Sending...');
+            
+            // Send message to server
+            fetch(`{{ url_for('therapist.send_message', student_id=student._id) }}`, {
                 method: 'POST',
-                body: formData,
                 headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `message=${encodeURIComponent(message)}`
             })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Add message to chat
-                    const chatMessages = document.getElementById('chatMessages');
-                    const messageElement = document.createElement('div');
-                    messageElement.className = 'message p-3 message-therapist';
-                    messageElement.innerHTML = `
-                        <div class="flex justify-between mb-1">
-                            <span class="font-medium">You</span>
-                            <span class="text-xs text-gray-500">${data.message.timestamp}</span>
-                        </div>
-                        <p>${data.message.content}</p>
-                    `;
-                    chatMessages.appendChild(messageElement);
+                    // Update the last message with proper timestamp
+                    const messages = document.querySelectorAll('.message.therapist');
+                    const lastMessage = messages[messages.length - 1];
+                    const timeElement = lastMessage.querySelector('.message-time');
+                    timeElement.textContent = data.message.timestamp;
                     
-                    // Clear input
-                    document.getElementById('message').value = '';
-                    
-                    // Scroll to bottom
-                    scrollToBottom();
+                    // Show success feedback
+                    showNotification('Message sent successfully', 'success');
                 } else {
-                    alert('Error: ' + data.error);
+                    console.error('Failed to send message:', data.error);
+                    // Remove the failed message
+                    const messages = document.querySelectorAll('.message.therapist');
+                    const lastMessage = messages[messages.length - 1];
+                    lastMessage.remove();
+                    showNotification('Failed to send message: ' + data.error, 'error');
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('An error occurred while sending the message.');
+                // Remove the failed message
+                const messages = document.querySelectorAll('.message.therapist');
+                const lastMessage = messages[messages.length - 1];
+                lastMessage.remove();
+                showNotification('Failed to send message. Please try again.', 'error');
+            })
+            .finally(() => {
+                sendButton.disabled = false;
+                input.value = '';
+                input.style.height = 'auto';
             });
+        }
+
+        function addMessageToChat(sender, message, time) {
+            const messagesContainer = document.getElementById('chat-messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+            
+            const avatar = sender === 'therapist' 
+                ? '<i class="fas fa-user-md"></i>' 
+                : '{{ student.first_name[0]|upper }}{{ student.last_name[0]|upper }}';
+            
+            messageDiv.innerHTML = `
+                <div class="message-avatar">${avatar}</div>
+                <div class="message-content">
+                    <div class="message-text">${message}</div>
+                    <div class="message-time">${time}</div>
+                </div>
+            `;
+            
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function showNotification(message, type) {
+            // Create a simple notification
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 p-4 rounded-lg z-50 ${
+                type === 'success' ? 'bg-green-600' : 'bg-red-600'
+            } text-white font-semibold`;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        function openResourceModal() {
+            document.getElementById('resourceModal').style.display = 'block';
+        }
+
+        function closeResourceModal() {
+            document.getElementById('resourceModal').style.display = 'none';
+        }
+
+        function scheduleSession() {
+            // Placeholder for scheduling functionality
+            showNotification('Session scheduling coming soon!', 'info');
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('resourceModal');
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        // Scroll to bottom of chat on load
+        document.addEventListener('DOMContentLoaded', function() {
+            const messagesContainer = document.getElementById('chat-messages');
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            
+            // Focus on input
+            document.getElementById('message-input').focus();
         });
+
+        // Auto-refresh messages every 30 seconds (optional)
+        let autoRefreshInterval;
+        function startAutoRefresh() {
+            autoRefreshInterval = setInterval(() => {
+                // This would typically fetch new messages via AJAX
+                // For now, we'll just check if there are new messages
+                console.log('Checking for new messages...');
+            }, 30000);
+        }
+
+        function stopAutoRefresh() {
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+            }
+        }
+
+        // Start auto-refresh when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            startAutoRefresh();
+        });
+
+        // Stop auto-refresh when page unloads
+        window.addEventListener('beforeunload', function() {
+            stopAutoRefresh();
+        });
+
+        // Simulate typing indicator (for future WebSocket implementation)
+        function showTypingIndicator() {
+            document.getElementById('typing-indicator').style.display = 'flex';
+            const messagesContainer = document.getElementById('chat-messages');
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function hideTypingIndicator() {
+            document.getElementById('typing-indicator').style.display = 'none';
+        }
+
+        // Message status indicators (for future implementation)
+        function updateMessageStatus(messageId, status) {
+            // This would update message status (sent, delivered, read)
+            console.log(`Message ${messageId} status: ${status}`);
+        }
     </script>
 </body>
 </html>

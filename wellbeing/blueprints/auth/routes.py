@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import secrets
 import os
 import re
@@ -12,10 +12,12 @@ from wellbeing.models.user import (
 from wellbeing import mongo, logger
 from wellbeing.utils.validators import validate_email, validate_password
 from wellbeing_modules import LicenseValidator, TestDataGenerator
+from wellbeing.utils.email import send_password_reset_email
 
 @auth_bp.route('/')
 def index():
     return redirect(url_for('auth.landing'))
+
 # =============================================================================
 # LOGIN ROUTE - ENHANCED WITH ROLE-BASED REDIRECTION
 # =============================================================================
@@ -126,6 +128,217 @@ def login():
 def landing():
     return render_template('landing.html')
 
+# =============================================================================
+# FORGOT PASSWORD ROUTES
+# =============================================================================
+
+@auth_bp.route('/forgot-password', methods=['GET', 'POST'])
+def forgot_password():
+    """Handle forgot password requests"""
+    
+    if request.method == 'POST':
+        try:
+            from flask import current_app
+            
+            # Handle both JSON and form data
+            if request.is_json:
+                data = request.get_json()
+                email = data.get('email', '').strip().lower()
+            else:
+                email = request.form.get('email', '').strip().lower()
+            
+            # Validate email
+            if not email:
+                error_msg = 'Email address is required'
+                if request.is_json:
+                    return jsonify({'error': error_msg}), 400
+                flash(error_msg, 'error')
+                return render_template('forgot_password.html')
+            
+            if not re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', email):
+                error_msg = 'Invalid email format'
+                if request.is_json:
+                    return jsonify({'error': error_msg}), 400
+                flash(error_msg, 'error')
+                return render_template('forgot_password.html')
+            
+            # Find user by email
+            user = mongo.db.users.find_one({'email': email})
+            
+            if not user:
+                # Don't reveal if email exists or not for security
+                success_msg = 'If an account with this email exists, a reset link has been sent.'
+                if request.is_json:
+                    return jsonify({'success': True, 'message': success_msg})
+                flash(success_msg, 'success')
+                return render_template('forgot_password.html')
+            
+            # Generate reset token
+            reset_token = secrets.token_urlsafe(32)
+            expires_at = datetime.now(timezone.utc) + current_app.config['PASSWORD_RESET_TOKEN_EXPIRY']
+            
+            # Store reset token in database
+            mongo.db.password_resets.delete_many({'email': email})  # Remove any existing tokens
+            mongo.db.password_resets.insert_one({
+                'email': email,
+                'token': reset_token,
+                'expires_at': expires_at,
+                'created_at': datetime.now(timezone.utc)
+            })
+            
+            # Send reset email
+            try:
+                success = send_password_reset_email(email, reset_token, user.get('name', email.split('@')[0]))
+                if success:
+                    success_msg = 'Password reset email sent! Check your inbox.'
+                    if request.is_json:
+                        return jsonify({'success': True, 'message': success_msg})
+                    flash(success_msg, 'success')
+                else:
+                    raise Exception("Failed to send email")
+            except Exception as e:
+                logger.error(f"Failed to send reset email to {email}: {str(e)}")
+                error_msg = 'Failed to send reset email. Please try again later.'
+                if request.is_json:
+                    return jsonify({'error': error_msg}), 500
+                flash(error_msg, 'error')
+            
+            return render_template('forgot_password.html')
+            
+        except Exception as e:
+            logging.error(f"Forgot password error: {str(e)}")
+            error_msg = 'An error occurred. Please try again.'
+            if request.is_json:
+                return jsonify({'error': error_msg}), 500
+            flash(error_msg, 'error')
+            return render_template('forgot_password.html')
+    
+    return render_template('forgot_password.html')
+
+@auth_bp.route('/reset-password', methods=['GET', 'POST'])
+@auth_bp.route('/reset-password/<token>', methods=['GET', 'POST'])
+def reset_password(token=None):
+    """Handle password reset with token"""
+    
+    if request.method == 'GET':
+        # Display reset password form
+        if not token:
+            flash('Invalid reset link', 'error')
+            return redirect(url_for('auth.forgot_password'))
+        
+        # Validate token
+        reset_request = mongo.db.password_resets.find_one({
+            'token': token,
+            'expires_at': {'$gt': datetime.now(timezone.utc)}
+        })
+        
+        if not reset_request:
+            flash('Invalid or expired reset link', 'error')
+            return redirect(url_for('auth.forgot_password'))
+        
+        return render_template('reset_password.html', token=token)
+    
+    if request.method == 'POST':
+        try:
+            # Handle both JSON and form data
+            if request.is_json:
+                data = request.get_json()
+                password = data.get('password', '')
+                confirm_password = data.get('confirm_password', '')
+                token = data.get('token', '')
+            else:
+                password = request.form.get('password', '')
+                confirm_password = request.form.get('confirm_password', '')
+                token = request.form.get('token', '')
+            
+            # Validate input
+            if not all([password, confirm_password, token]):
+                error_msg = 'All fields are required'
+                if request.is_json:
+                    return jsonify({'error': error_msg}), 400
+                flash(error_msg, 'error')
+                return render_template('reset_password.html', token=token)
+            
+            if password != confirm_password:
+                error_msg = 'Passwords do not match'
+                if request.is_json:
+                    return jsonify({'error': error_msg}), 400
+                flash(error_msg, 'error')
+                return render_template('reset_password.html', token=token)
+            
+            # Validate password strength
+            if len(password) < 8:
+                error_msg = 'Password must be at least 8 characters long'
+                if request.is_json:
+                    return jsonify({'error': error_msg}), 400
+                flash(error_msg, 'error')
+                return render_template('reset_password.html', token=token)
+            
+            if not re.search(r'[A-Z]', password):
+                error_msg = 'Password must contain at least one uppercase letter'
+                if request.is_json:
+                    return jsonify({'error': error_msg}), 400
+                flash(error_msg, 'error')
+                return render_template('reset_password.html', token=token)
+            
+            if not re.search(r'[a-z]', password):
+                error_msg = 'Password must contain at least one lowercase letter'
+                if request.is_json:
+                    return jsonify({'error': error_msg}), 400
+                flash(error_msg, 'error')
+                return render_template('reset_password.html', token=token)
+            
+            if not re.search(r'[0-9]', password):
+                error_msg = 'Password must contain at least one number'
+                if request.is_json:
+                    return jsonify({'error': error_msg}), 400
+                flash(error_msg, 'error')
+                return render_template('reset_password.html', token=token)
+            
+            # Validate token
+            reset_request = mongo.db.password_resets.find_one({
+                'token': token,
+                'expires_at': {'$gt': datetime.now(timezone.utc)}
+            })
+            
+            if not reset_request:
+                error_msg = 'Invalid or expired reset link'
+                if request.is_json:
+                    return jsonify({'error': error_msg}), 400
+                flash(error_msg, 'error')
+                return redirect(url_for('auth.forgot_password'))
+            
+            # Update user password
+            hashed_password = generate_password_hash(password)
+            result = mongo.db.users.update_one(
+                {'email': reset_request['email']},
+                {'$set': {'password': hashed_password, 'updated_at': datetime.now(timezone.utc)}}
+            )
+            
+            if result.modified_count == 0:
+                error_msg = 'Failed to update password'
+                if request.is_json:
+                    return jsonify({'error': error_msg}), 500
+                flash(error_msg, 'error')
+                return render_template('reset_password.html', token=token)
+            
+            # Delete the reset token
+            mongo.db.password_resets.delete_one({'_id': reset_request['_id']})
+            
+            success_msg = 'Password reset successfully! You can now log in with your new password.'
+            if request.is_json:
+                return jsonify({'success': True, 'message': success_msg})
+            
+            flash(success_msg, 'success')
+            return redirect(url_for('auth.login'))
+            
+        except Exception as e:
+            logging.error(f"Reset password error: {str(e)}")
+            error_msg = 'An error occurred. Please try again.'
+            if request.is_json:
+                return jsonify({'error': error_msg}), 500
+            flash(error_msg, 'error')
+            return render_template('reset_password.html', token=token)
 
 # =============================================================================
 # REGISTER ROUTE - ENHANCED WITH LICENSE VALIDATION
@@ -302,7 +515,6 @@ def register():
             return render_template('register.html')
     
     return render_template('register.html')
-
 
 # =============================================================================
 # LOGOUT ROUTE
@@ -491,7 +703,6 @@ def create_test_accounts():
             'error': str(e)
         }), 500
 
-
 @auth_bp.route('/csrf-token', methods=['GET'])
 def get_csrf_token():
     # Generate a new token
@@ -509,7 +720,7 @@ def make_session_permanent():
         session.permanent = True
         
         # Skip session management for static files and login/register routes
-        if request.endpoint in ['static', 'auth.login', 'auth.register']:
+        if request.endpoint in ['static', 'auth.login', 'auth.register', 'auth.forgot_password', 'auth.reset_password']:
             return
 
         # Check session expiration

@@ -143,6 +143,20 @@
             50% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
         }
         
+        .virtual-only-badge {
+            background: rgba(59, 130, 246, 0.2);
+            color: #60a5fa;
+            border: 1px solid rgba(59, 130, 246, 0.4);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-left: 1rem;
+        }
+        
         .appointment-card {
             background: rgba(255, 255, 255, 0.03);
             border: 1px solid rgba(255, 255, 255, 0.1);
@@ -165,6 +179,55 @@
         .appointment-suggested {
             border-left: 4px solid #f59e0b;
             background: rgba(245, 158, 11, 0.1);
+        }
+        
+        /* Auto-schedule button with enhanced animation */
+        .btn-autoschedule {
+            background: linear-gradient(135deg, #10b981, #059669);
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 16px;
+            color: white;
+            font-weight: 700;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3);
+            animation: autoSchedulePulse 3s infinite;
+        }
+        
+        @keyframes autoSchedulePulse {
+            0%, 100% { box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3); }
+            50% { box-shadow: 0 15px 40px rgba(16, 185, 129, 0.5); }
+        }
+        
+        .btn-autoschedule::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s ease;
+        }
+        
+        .btn-autoschedule:hover::before {
+            left: 100%;
+        }
+        
+        .btn-autoschedule:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(16, 185, 129, 0.5);
+        }
+        
+        .btn-autoschedule:active {
+            transform: translateY(-1px);
         }
         
         .btn-primary {
@@ -259,6 +322,92 @@
             color: #a78bfa;
         }
         
+        /* Auto-scheduling modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 9999;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+        }
+        
+        .modal-content {
+            background: rgba(15, 15, 35, 0.95);
+            backdrop-filter: blur(20px);
+            margin: 10% auto;
+            padding: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            width: 90%;
+            max-width: 500px;
+            text-align: center;
+        }
+        
+        .loading-spinner {
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 3px solid #10b981;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-bottom: 1rem;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Success animation */
+        .success-checkmark {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #10b981, #059669);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            animation: checkmarkBounce 0.8s ease-out;
+        }
+        
+        @keyframes checkmarkBounce {
+            0% { transform: scale(0); }
+            60% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+        
+        /* Auto-schedule highlight feature */
+        .auto-schedule-feature {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .auto-schedule-feature::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            animation: shimmer 3s ease-in-out infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+        }
+        
         @media (max-width: 1024px) {
             .sidebar {
                 transform: translateX(-100%);
@@ -324,6 +473,10 @@
                             Your Therapist
                         </h1>
                         <p class="text-purple-300">🤖 AI-matched to your specific needs • 🔒 Complete confidentiality</p>
+                        <div class="virtual-only-badge mt-2">
+                            <i class="fas fa-video"></i>
+                            Virtual Sessions Only - All meetings conducted online
+                        </div>
                     </div>
                     <div class="flex space-x-3">
                         <button onclick="showEmergencyModal()" class="btn-emergency">
@@ -333,6 +486,64 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Auto-Schedule Feature Highlight -->
+            {% set has_active_appointment = appointments and appointments|selectattr('status', 'in', ['confirmed', 'suggested'])|list|length > 0 %}
+            {% if not has_active_appointment %}
+            <div class="auto-schedule-feature">
+                <div class="text-center relative z-10">
+                    <div class="flex items-center justify-center mb-4">
+                        <div class="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center mr-4">
+                            <i class="fas fa-magic text-2xl text-white"></i>
+                        </div>
+                        <div class="text-left">
+                            <h2 class="text-2xl font-bold text-white mb-1">⚡ Instant AI Scheduling</h2>
+                            <p class="text-green-100">Get your next session booked in seconds with smart scheduling</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex flex-wrap gap-4 justify-center">
+                        <button onclick="autoScheduleSession()" class="btn-autoschedule">
+                            <i class="fas fa-bolt"></i>
+                            <span>Auto-Schedule Next Available</span>
+                            <i class="fas fa-arrow-right"></i>
+                        </button>
+                        <button onclick="showManualScheduling()" class="btn-secondary">
+                            <i class="fas fa-calendar-alt mr-2"></i>
+                            Choose Specific Time
+                        </button>
+                    </div>
+                    
+                    <div class="mt-4 text-sm text-green-100">
+                        <p><i class="fas fa-check mr-2"></i>Finds best available time automatically</p>
+                        <p><i class="fas fa-check mr-2"></i>Instant Google Meet link generation</p>
+                        <p><i class="fas fa-check mr-2"></i>Calendar invites & reminders included</p>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <!-- Already Scheduled Message -->
+            <div class="glass-card p-6 mb-8 border-2 border-blue-500">
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-calendar-check text-2xl text-white"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold text-white mb-2">✅ Session Already Scheduled</h2>
+                    <p class="text-blue-300 mb-4">You can only have one active appointment at a time</p>
+                    <div class="bg-blue-900 bg-opacity-30 rounded-lg p-4 mb-4">
+                        {% set active_appointments = appointments|selectattr('status', 'in', ['confirmed', 'suggested'])|list %}
+                        {% if active_appointments %}
+                            {% set first_appointment = active_appointments[0] %}
+                            <p class="text-white font-semibold">📅 {{ first_appointment.formatted_time }}</p>
+                            <p class="text-blue-200 text-sm">Status: {{ first_appointment.status.title() }}</p>
+                        {% endif %}
+                    </div>
+                    <p class="text-sm text-blue-200">
+                        To schedule a new session, please complete or cancel your existing appointment first.
+                    </p>
+                </div>
+            </div>
+            {% endif %}
 
             <!-- Main Therapist Card -->
             <div class="glass-card p-8 mb-8">
@@ -349,7 +560,7 @@
                         </div>
                         <div class="status-badge status-active">
                             <i class="fas fa-circle"></i>
-                            Active Match
+                            Online Available
                         </div>
                     </div>
                     
@@ -372,7 +583,7 @@
                                         {% endfor %}
                                     </div>
                                     <span class="text-yellow-400 font-semibold">{{ therapist.rating or 'New' }}</span>
-                                    <span class="text-purple-300 ml-2">({{ therapist.total_sessions or 0 }} sessions)</span>
+                                    <span class="text-purple-300 ml-2">({{ therapist.total_sessions or 0 }} virtual sessions)</span>
                                 </div>
                             </div>
                             
@@ -380,7 +591,7 @@
                             <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 text-center">
                                 <div class="stat-card">
                                     <div class="stat-number text-green-400">{{ therapist.total_sessions or 0 }}+</div>
-                                    <div class="stat-label">Sessions</div>
+                                    <div class="stat-label">Online Sessions</div>
                                 </div>
                                 <div class="stat-card">
                                     <div class="stat-number text-blue-400">{{ therapist.rating or 5.0 }}/5</div>
@@ -392,9 +603,9 @@
                                 </div>
                                 <div class="stat-card">
                                     <div class="stat-number text-yellow-400">
-                                        {% if therapist.emergency_hours %}24/7{% else %}Standard{% endif %}
+                                        <i class="fas fa-video text-lg"></i>
                                     </div>
-                                    <div class="stat-label">Available</div>
+                                    <div class="stat-label">Virtual Only</div>
                                 </div>
                             </div>
                         </div>
@@ -413,7 +624,7 @@
                                 <p class="text-purple-300 text-sm mb-1">Session Type</p>
                                 <p class="font-semibold">
                                     <i class="fas fa-video mr-2 text-blue-400"></i>
-                                    Virtual & In-Person
+                                    Virtual Sessions Only
                                 </p>
                             </div>
                         </div>
@@ -448,10 +659,6 @@
                                 <i class="fas fa-phone mr-2"></i>
                                 Request Call
                             </button>
-                            <button onclick="scheduleSession()" class="btn-secondary">
-                                <i class="fas fa-calendar-plus mr-2"></i>
-                                Schedule Session
-                            </button>
                             {% if therapist.emergency_hours %}
                             <button onclick="requestEmergencySession()" class="btn-emergency">
                                 <i class="fas fa-bolt mr-2"></i>
@@ -467,13 +674,26 @@
             <div class="glass-card p-6 mb-8">
                 <div class="flex items-center justify-between mb-6">
                     <h3 class="text-2xl font-bold text-white">
-                        <i class="fas fa-calendar-alt mr-3 text-purple-400"></i>
-                        Your Appointments
+                        <i class="fas fa-video mr-3 text-purple-400"></i>
+                        Your Virtual Sessions
                     </h3>
-                    <button onclick="scheduleSession()" class="btn-primary">
-                        <i class="fas fa-plus mr-2"></i>
-                        Schedule New
-                    </button>
+                    <div class="flex gap-3">
+                        <button onclick="refreshAppointments()" class="btn-secondary">
+                            <i class="fas fa-refresh mr-2"></i>
+                            Refresh
+                        </button>
+                        {% if not has_active_appointment %}
+                        <button onclick="autoScheduleSession()" class="btn-autoschedule">
+                            <i class="fas fa-bolt"></i>
+                            <span>Auto-Schedule</span>
+                        </button>
+                        {% else %}
+                        <button onclick="showAlreadyScheduledMessage()" class="btn-secondary" style="opacity: 0.6;">
+                            <i class="fas fa-calendar-check mr-2"></i>
+                            <span>Session Scheduled</span>
+                        </button>
+                        {% endif %}
+                    </div>
                 </div>
                 
                 {% if appointments and appointments|length > 0 %}
@@ -484,8 +704,8 @@
                             <div class="flex-grow">
                                 <div class="flex items-center space-x-4 mb-2">
                                     <div class="flex-shrink-0">
-                                        <div class="w-12 h-12 rounded-full bg-purple-600 flex items-center justify-center">
-                                            <i class="fas fa-{% if appointment.type == 'virtual' %}video{% elif appointment.type == 'phone' %}phone{% else %}building{% endif %} text-white"></i>
+                                        <div class="w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center">
+                                            <i class="fas fa-video text-white"></i>
                                         </div>
                                     </div>
                                     <div>
@@ -501,7 +721,8 @@
                                             {% endif %}
                                         </h4>
                                         <p class="text-purple-300">
-                                            {{ appointment.type.title() }} Session • 60 minutes
+                                            <i class="fas fa-video mr-1"></i>
+                                            Virtual Session • 60 minutes
                                         </p>
                                         {% if appointment.crisis_level and appointment.crisis_level in ['high', 'critical'] %}
                                         <span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-red-900 text-red-200 mt-1">
@@ -516,12 +737,28 @@
                                 <p class="text-gray-400 text-sm mt-2 ml-16">{{ appointment.notes }}</p>
                                 {% endif %}
                                 
-                                {% if appointment.meeting_info and appointment.type == 'virtual' %}
-                                <div class="mt-3 ml-16">
-                                    <p class="text-blue-400 text-sm">
+                                {% if appointment.meeting_info %}
+                                <div class="mt-3 ml-16 bg-blue-900 bg-opacity-30 p-3 rounded-lg">
+                                    <p class="text-blue-300 text-sm font-medium mb-2">
                                         <i class="fas fa-video mr-1"></i>
-                                        Meeting Link: {{ appointment.meeting_info.meet_link }}
+                                        Virtual Meeting Details:
                                     </p>
+                                    <div class="flex items-center space-x-2">
+                                        <input type="text" 
+                                               value="{{ appointment.meeting_info.meet_link }}" 
+                                               id="meet-link-{{ appointment._id }}" 
+                                               class="bg-transparent text-blue-200 text-sm flex-1 p-2 border border-blue-400 rounded font-mono" 
+                                               readonly>
+                                        <button onclick="copyMeetLink('{{ appointment._id }}')" 
+                                                class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded text-sm transition-all">
+                                            <i class="fas fa-copy"></i>
+                                        </button>
+                                    </div>
+                                    {% if appointment.meeting_info.dial_in %}
+                                    <p class="text-blue-300 text-xs mt-2">
+                                        📞 Dial-in: {{ appointment.meeting_info.dial_in }} | PIN: {{ appointment.meeting_info.dial_in_pin }}
+                                    </p>
+                                    {% endif %}
                                 </div>
                                 {% endif %}
                             </div>
@@ -537,18 +774,26 @@
                                     <i class="fas fa-calendar mr-1"></i>
                                     Reschedule
                                 </button>
+                                <button onclick="cancelAppointment('{{ appointment._id }}')" class="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded text-sm transition-all">
+                                    <i class="fas fa-times mr-1"></i>
+                                    Cancel
+                                </button>
                                 {% elif appointment.status == 'confirmed' %}
-                                    {% if appointment.type == 'virtual' and appointment.meeting_info %}
+                                    {% if appointment.meeting_info %}
                                     <a href="{{ appointment.meeting_info.meet_link }}" 
                                        target="_blank" 
                                        class="btn-primary">
                                         <i class="fas fa-video mr-1"></i>
-                                        Join Session
+                                        Join Virtual Session
                                     </a>
                                     {% endif %}
                                     <button onclick="rescheduleAppointment('{{ appointment._id }}')" class="btn-secondary">
                                         <i class="fas fa-calendar mr-1"></i>
                                         Reschedule
+                                    </button>
+                                    <button onclick="cancelAppointment('{{ appointment._id }}')" class="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded text-sm transition-all">
+                                        <i class="fas fa-times mr-1"></i>
+                                        Cancel
                                     </button>
                                 {% endif %}
                             </div>
@@ -558,44 +803,49 @@
                 </div>
                 {% else %}
                 <div class="text-center py-12">
-                    <i class="fas fa-calendar-times text-6xl text-purple-400 mb-4 opacity-50"></i>
-                    <h3 class="text-xl font-semibold text-white mb-2">No appointments scheduled yet</h3>
-                    <p class="text-purple-300 mb-6">Ready to start your healing journey?</p>
-                    <button onclick="scheduleSession()" class="btn-primary">
-                        <i class="fas fa-plus mr-2"></i>
-                        Schedule Your First Session
+                    <i class="fas fa-video text-6xl text-purple-400 mb-4 opacity-50"></i>
+                    <h3 class="text-xl font-semibold text-white mb-2">No virtual sessions scheduled yet</h3>
+                    <p class="text-purple-300 mb-6">Ready to start your online therapy journey?</p>
+                    {% if not has_active_appointment %}
+                    <button onclick="autoScheduleSession()" class="btn-autoschedule">
+                        <i class="fas fa-bolt"></i>
+                        <span>Auto-Schedule Your First Session</span>
+                        <i class="fas fa-arrow-right"></i>
                     </button>
+                    {% else %}
+                    <p class="text-blue-300">You already have a session scheduled. Check above for details.</p>
+                    {% endif %}
                 </div>
                 {% endif %}
             </div>
 
-            <!-- Session Preparation Tips -->
+            <!-- Virtual Session Preparation Tips -->
             <div class="glass-card p-6">
                 <h3 class="text-2xl font-bold text-white mb-6">
                     <i class="fas fa-lightbulb mr-3 text-yellow-400"></i>
-                    🚀 Maximize Your Session Success
+                    🚀 Virtual Session Success Tips
                 </h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <div class="text-center">
                         <div class="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <i class="fas fa-clipboard-list text-2xl text-white"></i>
+                            <i class="fas fa-wifi text-2xl text-white"></i>
                         </div>
-                        <h4 class="font-semibold text-white mb-2">Prepare Your Thoughts</h4>
-                        <p class="text-purple-300 text-sm">Jot down what you'd like to discuss and any questions you have</p>
+                        <h4 class="font-semibold text-white mb-2">Stable Internet</h4>
+                        <p class="text-purple-300 text-sm">Ensure you have a reliable internet connection for smooth video calls</p>
                     </div>
                     <div class="text-center">
                         <div class="w-16 h-16 bg-gradient-to-r from-green-500 to-teal-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <i class="fas fa-heart text-2xl text-white"></i>
+                            <i class="fas fa-home text-2xl text-white"></i>
                         </div>
-                        <h4 class="font-semibold text-white mb-2">Track Your Mood</h4>
-                        <p class="text-purple-300 text-sm">Use our mood tracker daily to share patterns with your therapist</p>
+                        <h4 class="font-semibold text-white mb-2">Private Space</h4>
+                        <p class="text-purple-300 text-sm">Find a quiet, private area where you can speak freely without interruptions</p>
                     </div>
                     <div class="text-center">
                         <div class="w-16 h-16 bg-gradient-to-r from-red-500 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <i class="fas fa-book-open text-2xl text-white"></i>
+                            <i class="fas fa-video text-2xl text-white"></i>
                         </div>
-                        <h4 class="font-semibold text-white mb-2">Review Resources</h4>
-                        <p class="text-purple-300 text-sm">Check out recommended materials and practice exercises</p>
+                        <h4 class="font-semibold text-white mb-2">Test Your Setup</h4>
+                        <p class="text-purple-300 text-sm">Join 5 minutes early to test your camera, microphone, and connection</p>
                     </div>
                 </div>
             </div>
@@ -620,6 +870,53 @@
             {% endif %}
         </div>
     </main>
+
+    <!-- Auto-Scheduling Modal -->
+    <div id="autoschedule-modal" class="modal">
+        <div class="modal-content">
+            <div id="scheduling-step-1">
+                <div class="loading-spinner"></div>
+                <h2 class="text-2xl font-bold text-white mb-4">⚡ Auto-Scheduling Your Session</h2>
+                <p class="text-purple-300 mb-6">Finding the perfect time slot for you...</p>
+                <div class="text-sm text-gray-400">
+                    <p>✓ Analyzing your calendar</p>
+                    <p>✓ Checking therapist availability</p>
+                    <p>✓ Finding optimal time slot</p>
+                </div>
+            </div>
+            
+            <div id="scheduling-step-2" style="display: none;">
+                <div class="success-checkmark">
+                    <i class="fas fa-check text-3xl text-white"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-white mb-4">🎉 Session Auto-Scheduled!</h2>
+                <div class="text-left bg-white bg-opacity-10 rounded-lg p-4 mb-6">
+                    <div class="flex items-center mb-2">
+                        <i class="fas fa-clock text-green-400 mr-3"></i>
+                        <span class="font-semibold text-white" id="scheduled-time">Loading...</span>
+                    </div>
+                    <div class="flex items-center mb-2">
+                        <i class="fas fa-video text-blue-400 mr-3"></i>
+                        <span class="text-purple-300">Virtual Session with {{ therapist.name if therapist else 'Your Therapist' }}</span>
+                    </div>
+                    <div class="flex items-center">
+                        <i class="fas fa-link text-purple-400 mr-3"></i>
+                        <span class="text-green-300">Google Meet link generated automatically</span>
+                    </div>
+                </div>
+                <div class="flex space-x-4 justify-center">
+                    <button onclick="viewSessionDetails()" class="btn-primary">
+                        <i class="fas fa-eye mr-2"></i>
+                        View Session Details
+                    </button>
+                    <button onclick="closeAutoScheduleModal()" class="btn-secondary">
+                        <i class="fas fa-times mr-2"></i>
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Emergency Support Modal -->
     <div id="emergency-modal" class="fixed inset-0 bg-black bg-opacity-75 hidden z-50 flex items-center justify-center p-4">
@@ -670,6 +967,181 @@
     </div>
 
     <script>
+        // Auto-scheduling functionality
+        function autoScheduleSession() {
+            // Check if therapist is available
+            {% if not therapist or not therapist._id %}
+            alert('❌ No therapist assigned yet. Please complete your assessment first.');
+            return;
+            {% endif %}
+            
+            document.getElementById('autoschedule-modal').style.display = 'block';
+            
+            // Simulate auto-scheduling process
+            setTimeout(() => {
+                // Step 1: Finding slot (2 seconds)
+                setTimeout(() => {
+                    // Step 2: Show success (after finding slot)
+                    document.getElementById('scheduling-step-1').style.display = 'none';
+                    document.getElementById('scheduling-step-2').style.display = 'block';
+                    
+                    // Generate a realistic next available time (demo data)
+                    const nextSlot = getNextAvailableSlot();
+                    document.getElementById('scheduled-time').textContent = nextSlot;
+                    
+                    // Auto-close after 3 seconds and create real appointment
+                    setTimeout(() => {
+                        closeAutoScheduleModal();
+                        // Create a real appointment
+                        autoScheduleAppointment();
+                    }, 3000);
+                }, 2000);
+            }, 500);
+        }
+        
+        function getNextAvailableSlot() {
+            // Simulate finding next available slot
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            tomorrow.setHours(14, 0, 0, 0); // 2:00 PM tomorrow
+            
+            return tomorrow.toLocaleDateString('en-US', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit'
+            });
+        }
+        
+        function closeAutoScheduleModal() {
+            document.getElementById('autoschedule-modal').style.display = 'none';
+            // Reset modal to first step
+            document.getElementById('scheduling-step-1').style.display = 'block';
+            document.getElementById('scheduling-step-2').style.display = 'none';
+        }
+        
+        function viewSessionDetails() {
+            closeAutoScheduleModal();
+            // Create a real appointment and redirect properly
+            autoScheduleAppointment();
+        }
+        
+        // Handle the actual auto-scheduling logic
+        function autoScheduleAppointment() {
+            console.log('🚀 Starting auto-scheduling...');
+            
+            // Check if we have a therapist ID
+            const therapistId = '{{ therapist._id if therapist else "" }}';
+            console.log('👨‍⚕️ Therapist ID:', therapistId);
+            
+            if (!therapistId) {
+                console.error('❌ No therapist ID available');
+                alert('❌ No therapist assigned. Please complete your assessment first.');
+                closeAutoScheduleModal();
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('therapist_id', therapistId);
+            formData.append('crisis_level', 'normal');
+            
+            console.log('📤 Sending request to /api/auto-schedule-appointment');
+            console.log('📋 Form data:', {
+                therapist_id: therapistId,
+                crisis_level: 'normal'
+            });
+            
+            // Make API call to create real appointment
+            fetch('/api/auto-schedule-appointment', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => {
+                console.log('📥 Response status:', response.status);
+                console.log('📥 Response headers:', response.headers);
+                
+                if (!response.ok) {
+                    return response.json().then(errorData => {
+                        console.error('❌ Error response:', errorData);
+                        throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('✅ Response data:', data);
+                if (data.success && data.appointment_id) {
+                    console.log('🎉 Appointment created with ID:', data.appointment_id);
+                    
+                    if (data.redirect_to_therapist) {
+                        // Show success message and refresh therapist page
+                        alert(`🎉 Session Auto-Scheduled Successfully!\n\nTime: ${data.formatted_time}\nAppointment ID: ${data.appointment_id}\n\nRefreshing page to show your appointment...`);
+                        setTimeout(() => {
+                            window.location.href = '/student/therapist-info';
+                        }, 1000);
+                    } else {
+                        // Redirect to confirmation page
+                        const confirmUrl = `/student/appointment-confirmed/${data.appointment_id}?crisis_level=normal`;
+                        console.log('🔗 Redirecting to:', confirmUrl);
+                        
+                        setTimeout(() => {
+                            window.location.href = confirmUrl;
+                        }, 1000);
+                    }
+                } else {
+                    console.error('❌ Invalid response:', data);
+                    throw new Error(data.error || 'Invalid response from server');
+                }
+            })
+            .catch(error => {
+                console.error('❌ Auto-scheduling error:', error);
+                console.error('❌ Full error object:', error);
+                
+                // Handle specific "already scheduled" error
+                if (error.message.includes('already have a session scheduled')) {
+                    alert('📅 You already have a session scheduled!\n\nYou can only have one active appointment at a time.\n\nTo schedule a new session, please cancel or complete your existing appointment first.');
+                } else if (error.message.includes('HTTP 4') || error.message.includes('HTTP 5')) {
+                    // Server error - real failure
+                    alert(`❌ Scheduling failed: ${error.message}\n\nCheck the browser console for details, or try refreshing the page.`);
+                } else {
+                    // Generic error handling
+                    const tryAgain = confirm(`❌ There was an issue: ${error.message}\n\nWould you like to:\n- OK: Refresh the page to see your current appointments\n- Cancel: Close this dialog`);
+                    if (tryAgain) {
+                        window.location.reload();
+                    }
+                }
+                closeAutoScheduleModal();
+            });
+        }
+        
+        function showManualScheduling() {
+            alert('📅 Manual scheduling modal would open here (existing functionality)');
+        }
+        
+        function showAlreadyScheduledMessage() {
+            alert('📅 You already have a session scheduled!\n\nYou can only have one active appointment at a time.\n\nTo schedule a new session, please complete or cancel your existing appointment first.');
+        }
+        
+        // Refresh appointments list
+        function refreshAppointments() {
+            console.log('🔄 Refreshing appointments...');
+            // Show loading state
+            const refreshBtn = event.target;
+            const originalHTML = refreshBtn.innerHTML;
+            refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Loading...';
+            refreshBtn.disabled = true;
+            
+            // Reload the page after a short delay
+            setTimeout(() => {
+                window.location.reload();
+            }, 500);
+        }
+        
         // Emergency modal functions
         function showEmergencyModal() {
             document.getElementById('emergency-modal').classList.remove('hidden');
@@ -679,46 +1151,102 @@
             document.getElementById('emergency-modal').classList.add('hidden');
         }
         
+        // Copy meeting link functionality
+        function copyMeetLink(appointmentId) {
+            const linkInput = document.getElementById('meet-link-' + appointmentId);
+            linkInput.select();
+            linkInput.setSelectionRange(0, 99999);
+            
+            navigator.clipboard.writeText(linkInput.value).then(() => {
+                const copyBtn = event.target.closest('button');
+                const originalHTML = copyBtn.innerHTML;
+                copyBtn.innerHTML = '<i class="fas fa-check"></i>';
+                copyBtn.style.background = 'rgba(16, 185, 129, 0.7)';
+                
+                setTimeout(() => {
+                    copyBtn.innerHTML = originalHTML;
+                    copyBtn.style.background = '';
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy text: ', err);
+                alert('Failed to copy link. Please copy manually.');
+            });
+        }
+        
         // Action functions
         function sendMessage() {
-            alert('💬 Message feature coming soon! For now, please use the emergency support if urgent.');
+            alert('💬 Secure messaging feature coming soon! For urgent matters, please use emergency support.');
         }
         
         function requestCall() {
-            alert('📞 Call request sent! Your therapist will contact you within 24 hours.');
-        }
-        
-        function scheduleSession() {
-            alert('📅 Session scheduling coming soon! Check back shortly.');
+            if (confirm('📞 Request a callback from your therapist? They will contact you within 24 hours to schedule a virtual session.')) {
+                alert('✅ Callback request sent! Your therapist will contact you soon to set up a virtual session.');
+            }
         }
         
         function requestEmergencySession() {
-            if (confirm('🚨 Request emergency session? This will prioritize your case for immediate attention.')) {
-                alert('✅ Emergency session requested! You will be contacted within 1 hour.');
+            if (confirm('🚨 Request emergency virtual session? This will prioritize your case for immediate online support.')) {
+                alert('✅ Emergency session requested! You will be contacted within 1 hour for a virtual session.');
             }
         }
         
         function acceptAppointment(appointmentId) {
-            if (confirm('✅ Accept this appointment time slot?')) {
-                alert('✅ Appointment confirmed! You will receive a confirmation email shortly.');
+            if (confirm('✅ Accept this virtual session time slot?')) {
+                alert('✅ Virtual session confirmed! You will receive a confirmation email with the meeting link.');
                 location.reload();
             }
         }
         
         function rescheduleAppointment(appointmentId) {
-            if (confirm('📅 Reschedule this appointment?')) {
-                alert('📅 Rescheduling request sent! You will receive new time options shortly.');
+            if (confirm('📅 Reschedule this virtual session?')) {
+                alert('📅 Rescheduling request sent! You will receive new virtual session time options shortly.');
+            }
+        }
+        
+        function cancelAppointment(appointmentId) {
+            if (confirm('❌ Are you sure you want to cancel this appointment?\n\nThis action cannot be undone, but you will be able to schedule a new session afterward.')) {
+                console.log('🗑️ Cancelling appointment:', appointmentId);
+                
+                const formData = new FormData();
+                formData.append('appointment_id', appointmentId);
+                
+                fetch('/api/cancel-appointment', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('✅ Appointment cancelled successfully!\n\nYou can now schedule a new session.');
+                        location.reload();
+                    } else {
+                        alert('❌ Failed to cancel appointment: ' + (data.error || 'Unknown error'));
+                    }
+                })
+                .catch(error => {
+                    console.error('❌ Cancel appointment error:', error);
+                    alert('❌ Failed to cancel appointment. Please try again or contact support.');
+                });
             }
         }
         
         // Initialize page
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('Therapist info page loaded');
+            console.log('Auto-scheduling therapist info page loaded');
             
-            // Close modal when clicking outside
+            // Close modals when clicking outside
             document.getElementById('emergency-modal').addEventListener('click', function(e) {
                 if (e.target === this) {
                     closeEmergencyModal();
+                }
+            });
+            
+            document.getElementById('autoschedule-modal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeAutoScheduleModal();
                 }
             });
         });
