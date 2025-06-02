@@ -23,6 +23,33 @@
             align-items: center;
             justify-content: center;
             padding: 2rem 1rem;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Animated background particles */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+        
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: rgba(139, 92, 246, 0.3);
+            border-radius: 50%;
+            animation: float 8s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.3; }
+            50% { transform: translateY(-30px) rotate(180deg); opacity: 1; }
         }
 
         .register-container {
@@ -32,9 +59,17 @@
             border-radius: 24px;
             box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
             width: 100%;
-            max-width: 800px;
+            max-width: 900px;
             padding: 3rem 2.5rem;
             color: #e0e7ff;
+            position: relative;
+            z-index: 10;
+            animation: slideUp 0.8s ease-out;
+        }
+        
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .register-header {
@@ -43,21 +78,51 @@
         }
 
         .register-header h1 {
-            font-size: 2.5rem;
+            font-size: 2rem;
             font-weight: 700;
             margin-bottom: 0.5rem;
             background: linear-gradient(135deg, #8b5cf6, #3b82f6, #10b981);
             background-clip: text;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            background-size: 200% 200%;
+            animation: gradientShift 3s ease-in-out infinite;
+        }
+        
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .register-header p {
+            color: #a78bfa;
+            font-size: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .feature-badges {
+            display: flex;
+            justify-content: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+        }
+        
+        .feature-badge {
+            background: rgba(139, 92, 246, 0.2);
+            color: #c4b5fd;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            border: 1px solid rgba(139, 92, 246, 0.3);
         }
 
         .input-field, .select-field, .textarea-field {
             width: 100%;
-            height: 52px;
+            height: 56px;
             font-size: 1rem;
-            padding: 0 1.25rem;
-            border-radius: 12px;
+            padding: 0 1.5rem;
+            border-radius: 16px;
             border: 1px solid rgba(255, 255, 255, 0.2);
             background: rgba(255, 255, 255, 0.08);
             color: #e0e7ff;
@@ -67,7 +132,7 @@
 
         .textarea-field {
             height: 100px;
-            padding: 1rem 1.25rem;
+            padding: 1rem 1.5rem;
             resize: vertical;
         }
 
@@ -95,8 +160,8 @@
             background: rgba(255, 255, 255, 0.03);
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 16px;
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
+            padding: 2rem;
+            margin-bottom: 2rem;
             display: none;
         }
 
@@ -110,11 +175,18 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
+        .role-section h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
         .checkbox-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 1rem;
-            padding: 1rem;
+            padding: 1.5rem;
             background: rgba(255, 255, 255, 0.05);
             border-radius: 12px;
             border: 1px solid rgba(255, 255, 255, 0.1);
@@ -124,16 +196,18 @@
             display: flex;
             align-items: center;
             gap: 0.75rem;
-            padding: 0.75rem;
+            padding: 1rem;
             background: rgba(255, 255, 255, 0.03);
-            border-radius: 8px;
+            border-radius: 12px;
             cursor: pointer;
             transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .checkbox-item:hover {
             background: rgba(139, 92, 246, 0.1);
-            transform: translateY(-1px);
+            border-color: rgba(139, 92, 246, 0.3);
+            transform: translateY(-2px);
         }
 
         .checkbox-item input[type="checkbox"] {
@@ -145,7 +219,7 @@
         .availability-grid {
             display: grid;
             gap: 1rem;
-            padding: 1rem;
+            padding: 1.5rem;
             background: rgba(255, 255, 255, 0.05);
             border-radius: 12px;
             border: 1px solid rgba(255, 255, 255, 0.1);
@@ -155,9 +229,10 @@
             display: flex;
             align-items: center;
             gap: 1rem;
-            padding: 0.75rem;
+            padding: 1rem;
             background: rgba(255, 255, 255, 0.03);
-            border-radius: 8px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .day-checkbox {
@@ -183,7 +258,7 @@
         .submit-btn {
             width: 100%;
             height: 56px;
-            background: linear-gradient(135deg, #10b981, #059669);
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
             border: none;
             border-radius: 16px;
             cursor: pointer;
@@ -193,22 +268,44 @@
             font-weight: 600;
             position: relative;
             overflow: hidden;
+            margin-bottom: 1.5rem;
+        }
+
+        .submit-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .submit-btn:hover::before {
+            left: 100%;
         }
 
         .submit-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(16, 185, 129, 0.4);
+            box-shadow: 0 10px 25px rgba(139, 92, 246, 0.4);
         }
 
         .submit-btn:disabled {
             background: rgba(255, 255, 255, 0.1);
             cursor: not-allowed;
             transform: none;
+            box-shadow: none;
+        }
+
+        .submit-btn:disabled::before {
+            display: none;
         }
 
         .dev-notice {
             background: rgba(16, 185, 129, 0.2);
             border: 1px solid rgba(16, 185, 129, 0.4);
+            color: #6ee7b7;
             padding: 1rem;
             border-radius: 12px;
             margin-bottom: 2rem;
@@ -230,26 +327,111 @@
 
         .mock-btn:hover {
             background: rgba(139, 92, 246, 0.3);
+            border-color: rgba(139, 92, 246, 0.6);
+        }
+
+        .error-message, .success-message {
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            font-size: 0.875rem;
+            border-radius: 12px;
+            display: none;
+            animation: shake 0.5s ease-in-out;
         }
 
         .error-message {
             background: rgba(239, 68, 68, 0.2);
             border: 1px solid rgba(239, 68, 68, 0.4);
             color: #fca5a5;
-            padding: 0.75rem;
-            margin-bottom: 1rem;
-            font-size: 0.875rem;
-            border-radius: 8px;
-            display: none;
         }
 
-        .error-message.show {
+        .success-message {
+            background: rgba(16, 185, 129, 0.2);
+            border: 1px solid rgba(16, 185, 129, 0.4);
+            color: #6ee7b7;
+        }
+
+        .error-message.show, .success-message.show {
             display: block;
         }
 
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .sign-in-link {
+            text-align: center;
+            font-size: 0.95rem;
+            color: #a78bfa;
+        }
+
+        .sign-in-link a {
+            color: #8b5cf6;
+            font-weight: 600;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        
+        .sign-in-link a:hover {
+            color: #c4b5fd;
+            text-decoration: underline;
+        }
+
+        /* Emergency hours special styling */
+        .emergency-checkbox {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 12px;
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .emergency-checkbox:hover {
+            background: rgba(239, 68, 68, 0.15);
+            border-color: rgba(239, 68, 68, 0.5);
+        }
+
+        .emergency-checkbox input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            accent-color: #ef4444;
+        }
+
+        .emergency-checkbox span {
+            color: #fca5a5;
+            font-weight: 500;
+        }
+
+        /* Loading spinner */
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #ffffff;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive design */
         @media (max-width: 768px) {
             .register-container {
                 padding: 2rem 1.5rem;
+                margin: 1rem;
+            }
+            
+            .register-header h1 {
+                font-size: 1.5rem;
             }
             
             .checkbox-grid {
@@ -259,20 +441,37 @@
             .day-schedule {
                 flex-direction: column;
                 align-items: stretch;
-                gap: 0.5rem;
+                gap: 0.75rem;
             }
             
             .time-inputs {
                 justify-content: space-between;
             }
+            
+            .feature-badges {
+                gap: 0.5rem;
+            }
+            
+            .feature-badge {
+                font-size: 0.7rem;
+                padding: 0.2rem 0.6rem;
+            }
         }
     </style>
 </head>
 <body>
+    <!-- Animated background particles -->
+    <div class="particles" id="particles"></div>
+
     <div class="register-container">
         <div class="register-header">
             <h1>🚀 Join Wellbeing Assistant</h1>
-            <p class="text-lg text-purple-300">Create your account and start your mental health journey</p>
+            <p>AI-Powered Mental Health Support</p>
+            <div class="feature-badges">
+                <span class="feature-badge">🤖 AI Matching</span>
+                <span class="feature-badge">⚡ Instant Setup</span>
+                <span class="feature-badge">🔒 Secure & Private</span>
+            </div>
         </div>
 
         <!-- Development Notice -->
@@ -280,7 +479,19 @@
             <strong>🚧 Development Mode:</strong> Use mock data buttons for quick testing
         </div>
 
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="{% if category == 'error' %}error-message{% else %}success-message{% endif %} show">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
         <div class="error-message" id="error-message"></div>
+        <div class="success-message" id="success-message"></div>
 
         <form id="registerForm" action="{{ url_for('auth.register') }}" method="POST" onsubmit="return validateForm()">
             <!-- Role Selection -->
@@ -318,7 +529,7 @@
 
             <!-- Student Fields -->
             <div id="student-fields" class="role-section">
-                <h3 class="text-xl font-bold mb-4 text-green-400">
+                <h3 class="text-green-400">
                     <i class="fas fa-graduation-cap mr-2"></i>
                     Student Information
                 </h3>
@@ -331,7 +542,7 @@
 
             <!-- Therapist Fields -->
             <div id="therapist-fields" class="role-section">
-                <h3 class="text-xl font-bold mb-4 text-blue-400">
+                <h3 class="text-blue-400">
                     <i class="fas fa-user-md mr-2"></i>
                     Professional Information
                 </h3>
@@ -420,14 +631,13 @@
                                placeholder="20" min="5" max="50" value="20">
                     </div>
                     <div class="flex items-center">
-                        <label class="flex items-center gap-3 p-4 bg-red-900 bg-opacity-30 rounded-lg border border-red-500 cursor-pointer">
-                            <input type="checkbox" id="emergency_hours" name="emergency_hours" value="true" 
-                                   class="w-5 h-5 accent-color-red-500">
-                            <span class="text-red-200">
+                        <div class="emergency-checkbox">
+                            <input type="checkbox" id="emergency_hours" name="emergency_hours" value="true">
+                            <span>
                                 <i class="fas fa-bolt mr-2"></i>
                                 Emergency Hours Available
                             </span>
-                        </label>
+                        </div>
                     </div>
                 </div>
 
@@ -524,22 +734,37 @@
 
             <!-- Submit Button -->
             <button type="submit" class="submit-btn" id="submit-btn">
-                <i class="fas fa-user-plus mr-2"></i>
-                Create Account
+                <span id="btn-text">
+                    <i class="fas fa-user-plus mr-2"></i>
+                    Create Account
+                </span>
             </button>
+            
+            <div class="sign-in-link">
+                <p>Already have an account? 
+                   <a href="{{ url_for('auth.login') }}">Sign In</a>
+                </p>
+            </div>
         </form>
-
-        <div class="text-center mt-6">
-            <p class="text-purple-300">
-                Already have an account? 
-                <a href="{{ url_for('auth.login') }}" class="text-purple-400 font-semibold hover:text-purple-300">
-                    Sign In
-                </a>
-            </p>
-        </div>
     </div>
 
     <script>
+        // Create animated particles
+        function createParticles() {
+            const particles = document.getElementById('particles');
+            const particleCount = 30;
+            
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.top = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 8 + 's';
+                particle.style.animationDuration = (Math.random() * 4 + 6) + 's';
+                particles.appendChild(particle);
+            }
+        }
+
         // Mock data for development
         const mockStudents = [
             {
@@ -576,6 +801,29 @@
             }
         ];
 
+        // Show message functions
+        function showError(message) {
+            const errorDiv = document.getElementById('error-message');
+            const successDiv = document.getElementById('success-message');
+            
+            successDiv.classList.remove('show');
+            errorDiv.textContent = message;
+            errorDiv.classList.add('show');
+            
+            setTimeout(() => {
+                errorDiv.classList.remove('show');
+            }, 5000);
+        }
+
+        function showSuccess(message) {
+            const errorDiv = document.getElementById('error-message');
+            const successDiv = document.getElementById('success-message');
+            
+            errorDiv.classList.remove('show');
+            successDiv.textContent = message;
+            successDiv.classList.add('show');
+        }
+
         function toggleFields() {
             const role = document.getElementById('role').value;
             const studentFields = document.getElementById('student-fields');
@@ -592,7 +840,7 @@
             } else if (role === 'therapist') {
                 therapistFields.classList.add('active');
                 document.getElementById('student_id').required = false;
-                document.getElementById('license_number').required = true;
+                document.getElementById('license_number').required = false; // Backend handles this
             }
         }
 
@@ -602,18 +850,21 @@
                 .then(data => {
                     if (data.success) {
                         document.getElementById('license_number').value = data.license_number;
-                        showMessage(`Generated license: ${data.license_number}`, 'success');
+                        showSuccess(`Generated license: ${data.license_number}`);
+                    } else {
+                        showError('Failed to generate license');
                     }
                 })
                 .catch(error => {
                     console.error('Error generating license:', error);
+                    showError('Failed to generate license');
                 });
         }
 
         function fillMockData() {
             const role = document.getElementById('role').value;
             if (!role) {
-                alert('Please select a role first');
+                showError('Please select a role first');
                 return;
             }
 
@@ -684,16 +935,6 @@
             });
         });
 
-        function showMessage(message, type) {
-            const errorDiv = document.getElementById('error-message');
-            errorDiv.textContent = message;
-            errorDiv.className = `error-message show ${type === 'success' ? 'bg-green-900 border-green-500 text-green-200' : ''}`;
-            
-            setTimeout(() => {
-                errorDiv.classList.remove('show');
-            }, 5000);
-        }
-
         function validateForm() {
             const role = document.getElementById("role").value;
             const firstName = document.getElementById("first_name").value.trim();
@@ -704,17 +945,17 @@
 
             // Basic validation
             if (!/^[A-Za-z]+$/.test(firstName)) {
-                showMessage('First name must contain only letters', 'error');
+                showError('First name must contain only letters');
                 return false;
             }
             
             if (!/^[A-Za-z]+$/.test(lastName)) {
-                showMessage('Last name must contain only letters', 'error');
+                showError('Last name must contain only letters');
                 return false;
             }
 
             if (email.length < 12) {
-                showMessage('Email must be at least 12 characters long', 'error');
+                showError('Email must be at least 12 characters long');
                 return false;
             }
 
@@ -722,20 +963,14 @@
             if (role === 'student') {
                 const studentId = document.getElementById("student_id").value;
                 if (!/^\d+$/.test(studentId)) {
-                    showMessage('Student ID must contain only numbers', 'error');
+                    showError('Student ID must contain only numbers');
                     return false;
                 }
             } else if (role === 'therapist') {
-                const licenseNumber = document.getElementById("license_number").value;
-                if (!licenseNumber.trim()) {
-                    showMessage('License number is required for therapists', 'error');
-                    return false;
-                }
-
                 // Check specializations
                 const selectedSpecs = document.querySelectorAll('input[name="specializations"]:checked');
                 if (selectedSpecs.length === 0) {
-                    showMessage('Please select at least one specialization', 'error');
+                    showError('Please select at least one specialization');
                     return false;
                 }
             }
@@ -743,22 +978,28 @@
             // Password validation
             const passwordPattern = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/;
             if (!passwordPattern.test(password)) {
-                showMessage('Password must be at least 8 characters with letters and numbers', 'error');
+                showError('Password must be at least 8 characters with letters and numbers');
                 return false;
             }
 
             if (password !== confirmPassword) {
-                showMessage('Passwords do not match', 'error');
+                showError('Passwords do not match');
                 return false;
             }
 
             // Show loading state
             const submitBtn = document.getElementById('submit-btn');
+            const btnText = document.getElementById('btn-text');
             submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Creating Account...';
+            btnText.innerHTML = '<div class="spinner"></div> Creating Account...';
 
             return true;
         }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            createParticles();
+        });
     </script>
 </body>
 </html>

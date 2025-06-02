@@ -3,12 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Your Therapist | Wellbeing Assistant</title>
+    <title>{% if therapist %}{{ therapist.name }} - Your Therapist{% else %}Your Therapist{% endif %} | Wellbeing Assistant</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css"> 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <meta name="description" content="Virtual therapy sessions with your AI-matched therapist through secure Zoom meetings">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         
+        :root {
+            --primary-purple: #8b5cf6;
+            --primary-green: #10b981;
+            --primary-blue: #3b82f6;
+            --danger-red: #ef4444;
+            --warning-yellow: #f59e0b;
+            --text-primary: #e0e7ff;
+            --text-secondary: #a78bfa;
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -18,30 +31,35 @@
 
         body {
             background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 50%, #2d1b69 100%);
-            color: #e0e7ff;
+            color: var(--text-primary);
             min-height: 100vh;
+            line-height: 1.6;
         }
         
+        /* Improved Sidebar */
         .sidebar {
-            background: rgba(15, 15, 35, 0.9);
+            background: rgba(15, 15, 35, 0.95);
             backdrop-filter: blur(20px);
-            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            border-right: 1px solid var(--glass-border);
             height: 100vh;
             position: fixed;
             left: 0;
             top: 0;
             width: 260px;
             z-index: 1000;
+            transition: transform 0.3s ease;
         }
         
         .sidebar-nav a {
-            color: #a78bfa;
+            color: var(--text-secondary);
             padding: 0.75rem 1.5rem;
             display: flex;
             align-items: center;
             transition: all 0.3s ease;
             border-radius: 0 20px 20px 0;
             margin-right: 1rem;
+            text-decoration: none;
+            font-weight: 500;
         }
         
         .sidebar-nav a:hover {
@@ -51,41 +69,68 @@
         }
         
         .sidebar-nav a.active {
-            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            background: linear-gradient(135deg, var(--primary-purple), #7c3aed);
             color: white;
             box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4);
         }
         
+        /* Enhanced Main Content */
         .main-content {
             margin-left: 260px;
             min-height: 100vh;
             padding: 2rem;
+            transition: margin-left 0.3s ease;
         }
         
+        /* Improved Glass Cards */
         .glass-card {
-            background: rgba(255, 255, 255, 0.05);
+            background: var(--glass-bg);
             backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--glass-border);
             border-radius: 20px;
             box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
             transition: all 0.3s ease;
+            padding: 1.5rem;
+            animation: fadeInSlide 0.6s ease-out;
         }
         
         .glass-card:hover {
             background: rgba(255, 255, 255, 0.08);
             transform: translateY(-2px);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.3);
         }
         
+        /* Enhanced Section Headers */
+        .section-header {
+            background: linear-gradient(135deg, var(--primary-purple), #ec4899);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 700;
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .section-subtitle {
+            color: var(--text-secondary);
+            font-size: 1.125rem;
+            margin-bottom: 2rem;
+        }
+        
+        /* Enhanced Therapist Avatar */
         .therapist-avatar {
             width: 120px;
             height: 120px;
             border-radius: 50%;
-            background: linear-gradient(135deg, #10b981, #059669);
+            background: linear-gradient(135deg, var(--primary-green), #059669);
             display: flex;
             align-items: center;
             justify-content: center;
             position: relative;
             margin-bottom: 1rem;
+            border: 4px solid var(--glass-border);
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
+            overflow: hidden;
         }
         
         .therapist-avatar::before {
@@ -96,11 +141,14 @@
             border-radius: 50%;
             background: rgba(16, 185, 129, 0.2);
             animation: pulse 2s infinite;
+            z-index: -1;
         }
         
-        @keyframes pulse {
-            0% { transform: scale(1); opacity: 0.6; }
-            100% { transform: scale(1.2); opacity: 0; }
+        .therapist-avatar img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
         }
         
         .therapist-avatar::after {
@@ -110,7 +158,7 @@
             right: 5px;
             width: 32px;
             height: 32px;
-            background: #10b981;
+            background: var(--primary-green);
             border: 4px solid #0f0f23;
             border-radius: 50%;
             display: flex;
@@ -121,6 +169,7 @@
             font-weight: bold;
         }
         
+        /* Enhanced Status Badges */
         .status-badge {
             display: inline-flex;
             align-items: center;
@@ -134,13 +183,8 @@
         
         .status-active {
             background: rgba(16, 185, 129, 0.2);
-            color: #10b981;
+            color: var(--primary-green);
             border: 1px solid rgba(16, 185, 129, 0.4);
-        }
-        
-        @keyframes statusPulse {
-            0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
-            50% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
         }
         
         .virtual-only-badge {
@@ -154,56 +198,110 @@
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
-            margin-left: 1rem;
         }
         
-        .appointment-card {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 16px;
-            padding: 1.5rem;
+        /* Enhanced License Display */
+        .license-badge {
+            background: rgba(245, 158, 11, 0.2);
+            color: #fbbf24;
+            border: 1px solid rgba(245, 158, 11, 0.4);
+            padding: 0.5rem 1rem;
+            border-radius: 12px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            font-family: 'Courier New', monospace;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        /* Zoom Integration Status */
+        .zoom-status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.375rem 0.875rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            margin-top: 0.5rem;
             transition: all 0.3s ease;
         }
         
-        .appointment-card:hover {
-            background: rgba(255, 255, 255, 0.06);
-            border-color: #8b5cf6;
-            transform: translateY(-2px);
+        .zoom-integrated {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--primary-green);
+            border: 1px solid rgba(16, 185, 129, 0.3);
         }
         
-        .appointment-upcoming {
-            border-left: 4px solid #10b981;
-            background: rgba(16, 185, 129, 0.1);
+        .zoom-fallback {
+            background: rgba(245, 158, 11, 0.2);
+            color: var(--warning-yellow);
+            border: 1px solid rgba(245, 158, 11, 0.3);
         }
         
-        .appointment-suggested {
-            border-left: 4px solid #f59e0b;
-            background: rgba(245, 158, 11, 0.1);
+        .zoom-error {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--danger-red);
+            border: 1px solid rgba(239, 68, 68, 0.3);
         }
         
-        /* Auto-schedule button with enhanced animation */
-        .btn-autoschedule {
-            background: linear-gradient(135deg, #10b981, #059669);
-            border: none;
-            padding: 1rem 2rem;
-            border-radius: 16px;
-            color: white;
-            font-weight: 700;
-            font-size: 1.1rem;
+        /* Enhanced Auto-Schedule Feature */
+        .auto-schedule-feature {
+            background: linear-gradient(135deg, var(--primary-green) 0%, #059669 100%);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+            animation: fadeInSlide 0.6s ease-out;
+        }
+        
+        .auto-schedule-feature::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            animation: shimmer 3s ease-in-out infinite;
+        }
+        
+        /* Enhanced Button Styles */
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
             position: relative;
             overflow: hidden;
             display: inline-flex;
             align-items: center;
-            gap: 0.75rem;
-            box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3);
-            animation: autoSchedulePulse 3s infinite;
+            gap: 0.5rem;
+            text-decoration: none;
+            border: none;
+            font-size: 0.875rem;
+            min-height: 44px;
+            user-select: none;
         }
         
-        @keyframes autoSchedulePulse {
-            0%, 100% { box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3); }
-            50% { box-shadow: 0 15px 40px rgba(16, 185, 129, 0.5); }
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+        
+        .btn-autoschedule {
+            background: linear-gradient(135deg, var(--primary-green), #059669);
+            color: white;
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+            font-weight: 700;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3);
+            animation: autoSchedulePulse 3s infinite;
         }
         
         .btn-autoschedule::before {
@@ -226,21 +324,9 @@
             box-shadow: 0 15px 40px rgba(16, 185, 129, 0.5);
         }
         
-        .btn-autoschedule:active {
-            transform: translateY(-1px);
-        }
-        
         .btn-primary {
-            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
-            border: none;
-            padding: 0.75rem 1.5rem;
-            border-radius: 12px;
+            background: linear-gradient(135deg, var(--primary-purple), #7c3aed);
             color: white;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
         }
         
         .btn-primary:hover {
@@ -249,47 +335,51 @@
         }
         
         .btn-secondary {
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            padding: 0.75rem 1.5rem;
-            border-radius: 12px;
-            color: #e0e7ff;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            color: var(--text-primary);
         }
         
         .btn-secondary:hover {
             background: rgba(255, 255, 255, 0.15);
-            border-color: #8b5cf6;
+            border-color: var(--primary-purple);
             transform: translateY(-2px);
         }
         
-        .btn-emergency {
-            background: linear-gradient(135deg, #ef4444, #dc2626);
-            border: none;
-            padding: 0.75rem 1.5rem;
-            border-radius: 12px;
+        .btn-danger {
+            background: linear-gradient(135deg, var(--danger-red), #dc2626);
             color: white;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
+        }
+        
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(239, 68, 68, 0.4);
+        }
+        
+        .btn-emergency {
+            background: linear-gradient(135deg, var(--danger-red), #dc2626);
+            color: white;
             animation: emergencyPulse 2s infinite;
         }
         
-        @keyframes emergencyPulse {
-            0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
-            50% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+        .btn-emergency:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(239, 68, 68, 0.4);
         }
         
+        /* Enhanced Specialization Tags */
         .specialization-tag {
             background: rgba(139, 92, 246, 0.2);
             color: #c4b5fd;
-            padding: 0.25rem 0.75rem;
+            padding: 0.375rem 0.875rem;
             border-radius: 12px;
             font-size: 0.875rem;
             border: 1px solid rgba(139, 92, 246, 0.4);
             transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin: 0.25rem;
         }
         
         .specialization-tag:hover {
@@ -297,32 +387,75 @@
             transform: scale(1.05);
         }
         
+        /* Enhanced Stat Cards */
         .stat-card {
             text-align: center;
-            padding: 1rem;
+            padding: 1.25rem;
             background: rgba(255, 255, 255, 0.03);
-            border-radius: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            border: 1px solid var(--glass-border);
             transition: all 0.3s ease;
         }
         
         .stat-card:hover {
             background: rgba(255, 255, 255, 0.06);
             transform: translateY(-2px);
+            border-color: var(--primary-purple);
         }
         
         .stat-number {
-            font-size: 1.5rem;
+            font-size: 1.75rem;
             font-weight: 700;
             margin-bottom: 0.5rem;
         }
         
         .stat-label {
             font-size: 0.875rem;
-            color: #a78bfa;
+            color: var(--text-secondary);
+            font-weight: 500;
         }
         
-        /* Auto-scheduling modal */
+        /* Enhanced Appointment Cards */
+        .appointment-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            animation: fadeInSlide 0.6s ease-out;
+            margin-bottom: 1rem;
+        }
+        
+        .appointment-card:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: var(--primary-purple);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+        
+        .appointment-upcoming {
+            border-left: 4px solid var(--primary-green);
+            background: rgba(16, 185, 129, 0.05);
+        }
+        
+        .appointment-suggested {
+            border-left: 4px solid var(--warning-yellow);
+            background: rgba(245, 158, 11, 0.05);
+        }
+        
+        .appointment-completed {
+            border-left: 4px solid #6b7280;
+            background: rgba(107, 114, 128, 0.05);
+            opacity: 0.7;
+        }
+        
+        .appointment-cancelled {
+            border-left: 4px solid var(--danger-red);
+            background: rgba(239, 68, 68, 0.05);
+            opacity: 0.7;
+        }
+        
+        /* Enhanced Modal Styling */
         .modal {
             display: none;
             position: fixed;
@@ -333,24 +466,35 @@
             height: 100%;
             background-color: rgba(0, 0, 0, 0.8);
             backdrop-filter: blur(10px);
+            animation: fadeIn 0.3s ease-out;
+        }
+        
+        .modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
         }
         
         .modal-content {
             background: rgba(15, 15, 35, 0.95);
             backdrop-filter: blur(20px);
-            margin: 10% auto;
             padding: 2rem;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--glass-border);
             border-radius: 20px;
-            width: 90%;
+            width: 100%;
             max-width: 500px;
             text-align: center;
+            animation: modalSlideIn 0.3s ease-out;
+            max-height: 90vh;
+            overflow-y: auto;
         }
         
+        /* Enhanced Loading States */
         .loading-spinner {
             border: 3px solid rgba(255, 255, 255, 0.3);
             border-radius: 50%;
-            border-top: 3px solid #10b981;
+            border-top: 3px solid var(--primary-green);
             width: 50px;
             height: 50px;
             animation: spin 1s linear infinite;
@@ -358,22 +502,217 @@
             margin-bottom: 1rem;
         }
         
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        .skeleton {
+            background: linear-gradient(90deg, #2d3748 25%, #4a5568 50%, #2d3748 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 8px;
         }
         
-        /* Success animation */
+        /* Enhanced Success States */
         .success-checkmark {
             width: 80px;
             height: 80px;
             border-radius: 50%;
-            background: linear-gradient(135deg, #10b981, #059669);
+            background: linear-gradient(135deg, var(--primary-green), #059669);
             display: flex;
             align-items: center;
             justify-content: center;
             margin: 0 auto 1rem;
             animation: checkmarkBounce 0.8s ease-out;
+        }
+        
+        /* Enhanced Alert System */
+        .alert {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 10000;
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            border-left: 4px solid;
+            backdrop-filter: blur(20px);
+            animation: slideInRight 0.3s ease-out;
+            max-width: 400px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        .alert-success {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: var(--primary-green);
+            color: #d1fae5;
+        }
+        
+        .alert-error {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: var(--danger-red);
+            color: #fecaca;
+        }
+        
+        .alert-warning {
+            background: rgba(245, 158, 11, 0.1);
+            border-color: var(--warning-yellow);
+            color: #fef3c7;
+        }
+        
+        /* Enhanced Copy Link Functionality */
+        .copy-input-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(59, 130, 246, 0.4);
+            border-radius: 8px;
+            padding: 0.5rem;
+        }
+        
+        .copy-input {
+            background: transparent;
+            border: none;
+            color: #60a5fa;
+            font-family: 'Courier New', monospace;
+            font-size: 0.875rem;
+            flex: 1;
+            outline: none;
+            padding: 0.5rem;
+        }
+        
+        .copy-btn {
+            background: var(--primary-blue);
+            color: white;
+            border: none;
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.875rem;
+        }
+        
+        .copy-btn:hover {
+            background: #2563eb;
+        }
+        
+        .copy-btn.copied {
+            background: var(--primary-green);
+        }
+        
+        /* Enhanced Responsive Design */
+        @media (max-width: 1024px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            
+            .sidebar.open {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-left: 0;
+                padding: 1rem;
+            }
+            
+            .section-header {
+                font-size: 2rem;
+            }
+        }
+        
+        @media (max-width: 640px) {
+            .main-content {
+                padding: 0.5rem;
+            }
+            
+            .glass-card {
+                padding: 1rem;
+                border-radius: 16px;
+            }
+            
+            .auto-schedule-feature {
+                padding: 1.5rem;
+            }
+            
+            .btn-autoschedule {
+                padding: 0.75rem 1.5rem;
+                font-size: 1rem;
+            }
+            
+            .appointment-card {
+                padding: 1rem;
+            }
+            
+            .modal-content {
+                padding: 1.5rem;
+                margin: 1rem;
+            }
+        }
+        
+        /* Enhanced Animations */
+        @keyframes fadeInSlide {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(100%);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9) translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 0.6; }
+            100% { transform: scale(1.2); opacity: 0; }
+        }
+        
+        @keyframes statusPulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+            50% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+        }
+        
+        @keyframes emergencyPulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            50% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+        }
+        
+        @keyframes autoSchedulePulse {
+            0%, 100% { box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3); }
+            50% { box-shadow: 0 15px 40px rgba(16, 185, 129, 0.5); }
+        }
+        
+        @keyframes shimmer {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
         
         @keyframes checkmarkBounce {
@@ -382,184 +721,222 @@
             100% { transform: scale(1); }
         }
         
-        /* Auto-schedule highlight feature */
-        .auto-schedule-feature {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-            border-radius: 20px;
-            padding: 2rem;
-            margin-bottom: 2rem;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .auto-schedule-feature::before {
-            content: '';
+        /* Enhanced Accessibility */
+        .sr-only {
             position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-            animation: shimmer 3s ease-in-out infinite;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
         }
         
-        @keyframes shimmer {
-            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
-            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+        .focus\:not-sr-only:focus {
+            position: static;
+            width: auto;
+            height: auto;
+            padding: 0;
+            margin: 0;
+            overflow: visible;
+            clip: auto;
+            white-space: normal;
         }
         
-        @media (max-width: 1024px) {
-            .sidebar {
-                transform: translateX(-100%);
+        /* Focus styles for better accessibility */
+        button:focus,
+        a:focus,
+        input:focus {
+            outline: 2px solid var(--primary-purple);
+            outline-offset: 2px;
+        }
+        
+        /* Print styles */
+        @media print {
+            .sidebar,
+            .btn,
+            .modal {
+                display: none !important;
             }
             
             .main-content {
                 margin-left: 0;
             }
+            
+            body {
+                background: white;
+                color: black;
+            }
+            
+            .glass-card {
+                background: white;
+                border: 1px solid #ccc;
+                box-shadow: none;
+            }
         }
     </style>
 </head>
 <body>
+    <!-- Mobile Menu Button -->
+    <button id="mobile-menu-btn" class="fixed top-4 left-4 z-50 lg:hidden bg-purple-600 text-white p-3 rounded-lg shadow-lg">
+        <i class="fas fa-bars"></i>
+        <span class="sr-only">Toggle navigation menu</span>
+    </button>
+
     <!-- Sidebar Navigation -->
-    <aside class="sidebar">
+    <aside class="sidebar" id="sidebar" role="navigation" aria-label="Main navigation">
         <div class="p-6">
             <h1 class="text-2xl font-bold mb-8 bg-gradient-to-r from-purple-400 to-pink-600 bg-clip-text text-transparent">
                 Wellbeing Assistant
             </h1>
         </div>
         <nav class="sidebar-nav">
-            <ul class="space-y-2">
-                <li><a href="{{ url_for('dashboard.index') }}" class="flex items-center">
-                    <i class="fas fa-chart-line w-5 mr-3"></i> Dashboard
+            <ul class="space-y-2" role="list">
+                <li><a href="{{ url_for('dashboard.index') }}" class="flex items-center" aria-label="Go to Dashboard">
+                    <i class="fas fa-chart-line w-5 mr-3" aria-hidden="true"></i> Dashboard
                 </a></li>
-                <li><a href="{{ url_for('tracking.index') }}" class="flex items-center">
-                    <i class="fas fa-chart-bar w-5 mr-3"></i> Wellness Tracker
+                <li><a href="{{ url_for('tracking.index') }}" class="flex items-center" aria-label="Go to Wellness Tracker">
+                    <i class="fas fa-chart-bar w-5 mr-3" aria-hidden="true"></i> Wellness Tracker
                 </a></li>
-                <li><a href="{{ url_for('chatbot.chatbot_page') }}" class="flex items-center">
-                    <i class="fas fa-comments w-5 mr-3"></i> AI Chat
+                <li><a href="{{ url_for('chatbot.chatbot_page') }}" class="flex items-center" aria-label="Go to AI Chat">
+                    <i class="fas fa-comments w-5 mr-3" aria-hidden="true"></i> AI Chat
                 </a></li>
-                <li><a href="{{ url_for('dashboard.therapist_info') }}" class="flex items-center active">
-                    <i class="fas fa-user-md w-5 mr-3"></i> Your Therapist
+                <li><a href="{{ url_for('dashboard.therapist_info') }}" class="flex items-center active" aria-current="page" aria-label="Your Therapist (current page)">
+                    <i class="fas fa-user-md w-5 mr-3" aria-hidden="true"></i> Your Therapist
                 </a></li>
-                <li><a href="{{ url_for('dashboard.profile') }}" class="flex items-center">
-                    <i class="fas fa-user w-5 mr-3"></i> Profile
+                <li><a href="{{ url_for('dashboard.profile') }}" class="flex items-center" aria-label="Go to Profile">
+                    <i class="fas fa-user w-5 mr-3" aria-hidden="true"></i> Profile
                 </a></li>
-                <li><a href="{{ url_for('dashboard.student_resources') }}" class="flex items-center">
-                    <i class="fas fa-book w-5 mr-3"></i> Resources
+                <li><a href="{{ url_for('dashboard.student_resources') }}" class="flex items-center" aria-label="Go to Resources">
+                    <i class="fas fa-book w-5 mr-3" aria-hidden="true"></i> Resources
                 </a></li>
-                <li><a href="{{ url_for('dashboard.settings') }}" class="flex items-center">
-                    <i class="fas fa-cog w-5 mr-3"></i> Settings
+                <li><a href="{{ url_for('dashboard.settings') }}" class="flex items-center" aria-label="Go to Settings">
+                    <i class="fas fa-cog w-5 mr-3" aria-hidden="true"></i> Settings
                 </a></li>
             </ul>
             
             <div class="mt-auto p-6">
-                <a href="{{ url_for('auth.logout') }}" class="flex items-center text-red-400 hover:text-red-300">
-                    <i class="fas fa-sign-out-alt w-5 mr-3"></i> Logout
+                <a href="{{ url_for('auth.logout') }}" class="flex items-center text-red-400 hover:text-red-300" aria-label="Logout">
+                    <i class="fas fa-sign-out-alt w-5 mr-3" aria-hidden="true"></i> Logout
                 </a>
             </div>
         </nav>
     </aside>
 
     <!-- Main Content -->
-    <main class="main-content">
+    <main class="main-content" role="main">
         <div class="max-w-6xl mx-auto">
             
             {% if therapist %}
             <!-- Header -->
-            <div class="mb-8">
-                <div class="flex items-center justify-between mb-4">
-                    <div>
-                        <h1 class="text-4xl font-bold mb-2 bg-gradient-to-r from-purple-400 to-pink-600 bg-clip-text text-transparent">
-                            Your Therapist
-                        </h1>
-                        <p class="text-purple-300">🤖 AI-matched to your specific needs • 🔒 Complete confidentiality</p>
-                        <div class="virtual-only-badge mt-2">
-                            <i class="fas fa-video"></i>
-                            Virtual Sessions Only - All meetings conducted online
-                        </div>
+            <header class="mb-8">
+                <h1 class="section-header">Your Therapist</h1>
+                <p class="section-subtitle">
+                    <i class="fas fa-robot mr-2" aria-hidden="true"></i>AI-matched to your specific needs • 
+                    <i class="fas fa-shield-alt mr-2" aria-hidden="true"></i>Complete confidentiality
+                </p>
+                <div class="flex flex-wrap gap-3 mt-4">
+                    <div class="virtual-only-badge">
+                        <i class="fas fa-video" aria-hidden="true"></i>
+                        Virtual Sessions Only - All meetings conducted via secure Zoom
                     </div>
-                    <div class="flex space-x-3">
-                        <button onclick="showEmergencyModal()" class="btn-emergency">
-                            <i class="fas fa-exclamation-triangle mr-2"></i>
-                            Emergency Support
-                        </button>
+                    <div class="license-badge">
+                        <i class="fas fa-certificate" aria-hidden="true"></i>
+                        License: {{ therapist.license_number }}
                     </div>
                 </div>
-            </div>
+                <div class="flex gap-3 mt-4">
+                    <button onclick="showEmergencyModal()" class="btn btn-emergency" aria-label="Get emergency support">
+                        <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
+                        Emergency Support
+                    </button>
+                </div>
+            </header>
 
-            <!-- Auto-Schedule Feature Highlight -->
-            {% set has_active_appointment = appointments and appointments|selectattr('status', 'in', ['confirmed', 'suggested'])|list|length > 0 %}
+            <!-- Auto-Schedule Feature or Already Scheduled Message -->
+            {% set has_active_appointment = appointment_status and appointment_status.has_active_appointment %}
             {% if not has_active_appointment %}
-            <div class="auto-schedule-feature">
+            <section class="auto-schedule-feature" aria-labelledby="auto-schedule-title">
                 <div class="text-center relative z-10">
                     <div class="flex items-center justify-center mb-4">
                         <div class="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center mr-4">
-                            <i class="fas fa-magic text-2xl text-white"></i>
+                            <i class="fas fa-magic text-2xl text-white" aria-hidden="true"></i>
                         </div>
                         <div class="text-left">
-                            <h2 class="text-2xl font-bold text-white mb-1">⚡ Instant AI Scheduling</h2>
-                            <p class="text-green-100">Get your next session booked in seconds with smart scheduling</p>
+                            <h2 id="auto-schedule-title" class="text-2xl font-bold text-white mb-1">⚡ Instant AI Scheduling</h2>
+                            <p class="text-green-100">Get your next Zoom session booked in seconds with smart scheduling</p>
                         </div>
                     </div>
                     
                     <div class="flex flex-wrap gap-4 justify-center">
-                        <button onclick="autoScheduleSession()" class="btn-autoschedule">
-                            <i class="fas fa-bolt"></i>
+                        <button onclick="autoScheduleSession()" class="btn-autoschedule" id="auto-schedule-btn" aria-describedby="auto-schedule-features">
+                            <i class="fas fa-bolt" aria-hidden="true"></i>
                             <span>Auto-Schedule Next Available</span>
-                            <i class="fas fa-arrow-right"></i>
+                            <i class="fas fa-arrow-right" aria-hidden="true"></i>
                         </button>
-                        <button onclick="showManualScheduling()" class="btn-secondary">
-                            <i class="fas fa-calendar-alt mr-2"></i>
+                        <button onclick="showManualScheduling()" class="btn btn-secondary">
+                            <i class="fas fa-calendar-alt" aria-hidden="true"></i>
                             Choose Specific Time
                         </button>
                     </div>
                     
-                    <div class="mt-4 text-sm text-green-100">
-                        <p><i class="fas fa-check mr-2"></i>Finds best available time automatically</p>
-                        <p><i class="fas fa-check mr-2"></i>Instant Google Meet link generation</p>
-                        <p><i class="fas fa-check mr-2"></i>Calendar invites & reminders included</p>
+                    <div id="auto-schedule-features" class="mt-4 text-sm text-green-100 space-y-1">
+                        <p><i class="fas fa-check mr-2" aria-hidden="true"></i>Finds best available time automatically</p>
+                        <p><i class="fas fa-check mr-2" aria-hidden="true"></i>Instant secure Zoom meeting creation</p>
+                        <p><i class="fas fa-check mr-2" aria-hidden="true"></i>Email notifications & reminders included</p>
                     </div>
                 </div>
-            </div>
+            </section>
             {% else %}
             <!-- Already Scheduled Message -->
-            <div class="glass-card p-6 mb-8 border-2 border-blue-500">
+            <section class="glass-card border-2 border-blue-500 mb-8" aria-labelledby="scheduled-session-title">
                 <div class="text-center">
                     <div class="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <i class="fas fa-calendar-check text-2xl text-white"></i>
+                        <i class="fas fa-calendar-check text-2xl text-white" aria-hidden="true"></i>
                     </div>
-                    <h2 class="text-2xl font-bold text-white mb-2">✅ Session Already Scheduled</h2>
+                    <h2 id="scheduled-session-title" class="text-2xl font-bold text-white mb-2">✅ Zoom Session Already Scheduled</h2>
                     <p class="text-blue-300 mb-4">You can only have one active appointment at a time</p>
+                    {% if appointment_status and appointment_status.active_appointment %}
                     <div class="bg-blue-900 bg-opacity-30 rounded-lg p-4 mb-4">
-                        {% set active_appointments = appointments|selectattr('status', 'in', ['confirmed', 'suggested'])|list %}
-                        {% if active_appointments %}
-                            {% set first_appointment = active_appointments[0] %}
-                            <p class="text-white font-semibold">📅 {{ first_appointment.formatted_time }}</p>
-                            <p class="text-blue-200 text-sm">Status: {{ first_appointment.status.title() }}</p>
+                        <p class="text-white font-semibold">📅 {{ appointment_status.active_appointment.formatted_time }}</p>
+                        <p class="text-blue-200 text-sm">Status: {{ appointment_status.active_appointment.status.title() }}</p>
+                        {% if appointment_status.active_appointment.get('zoom_integrated') %}
+                        <div class="zoom-status-indicator zoom-integrated">
+                            <i class="fas fa-video" aria-hidden="true"></i>
+                            Real Zoom Meeting
+                        </div>
+                        {% else %}
+                        <div class="zoom-status-indicator zoom-fallback">
+                            <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
+                            Manual Setup Required
+                        </div>
                         {% endif %}
                     </div>
+                    {% endif %}
                     <p class="text-sm text-blue-200">
                         To schedule a new session, please complete or cancel your existing appointment first.
                     </p>
                 </div>
-            </div>
+            </section>
             {% endif %}
 
             <!-- Main Therapist Card -->
-            <div class="glass-card p-8 mb-8">
+            <section class="glass-card mb-8" aria-labelledby="therapist-profile-title">
                 <div class="flex flex-col lg:flex-row items-start lg:items-center space-y-6 lg:space-y-0 lg:space-x-8">
                     
                     <!-- Therapist Avatar -->
                     <div class="flex-shrink-0 text-center">
                         <div class="therapist-avatar mx-auto">
                             {% if therapist.photo %}
-                                <img src="{{ therapist.photo }}" alt="{{ therapist.name }}" class="w-full h-full rounded-full object-cover">
+                                <img src="{{ therapist.photo }}" alt="Photo of {{ therapist.name }}" loading="lazy">
                             {% else %}
-                                <i class="fas fa-user-md text-4xl text-white"></i>
+                                <i class="fas fa-user-md text-4xl text-white" aria-hidden="true"></i>
                             {% endif %}
                         </div>
                         <div class="status-badge status-active">
-                            <i class="fas fa-circle"></i>
+                            <i class="fas fa-circle" aria-hidden="true"></i>
                             Online Available
                         </div>
                     </div>
@@ -568,21 +945,22 @@
                     <div class="flex-grow">
                         <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-4">
                             <div>
-                                <h2 class="text-3xl font-bold text-white mb-2">{{ therapist.name }}</h2>
+                                <h2 id="therapist-profile-title" class="text-3xl font-bold text-white mb-2">{{ therapist.name }}</h2>
                                 <p class="text-lg text-purple-300 mb-3">Licensed Mental Health Professional</p>
                                 
                                 <!-- Rating -->
                                 <div class="flex items-center mb-3">
-                                    <div class="flex text-yellow-400 mr-3">
+                                    <div class="flex text-yellow-400 mr-3" role="img" aria-label="Rating: {{ therapist.rating or 5 }} out of 5 stars">
+                                        {% set rating = therapist.rating or 5 %}
                                         {% for i in range(5) %}
-                                            {% if i < (therapist.rating|round|int) %}
-                                                <i class="fas fa-star"></i>
+                                            {% if i < (rating|round|int) %}
+                                                <i class="fas fa-star" aria-hidden="true"></i>
                                             {% else %}
-                                                <i class="far fa-star"></i>
+                                                <i class="far fa-star" aria-hidden="true"></i>
                                             {% endif %}
                                         {% endfor %}
                                     </div>
-                                    <span class="text-yellow-400 font-semibold">{{ therapist.rating or 'New' }}</span>
+                                    <span class="text-yellow-400 font-semibold">{{ therapist.rating or 5.0 }}</span>
                                     <span class="text-purple-300 ml-2">({{ therapist.total_sessions or 0 }} virtual sessions)</span>
                                 </div>
                             </div>
@@ -591,19 +969,19 @@
                             <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 text-center">
                                 <div class="stat-card">
                                     <div class="stat-number text-green-400">{{ therapist.total_sessions or 0 }}+</div>
-                                    <div class="stat-label">Online Sessions</div>
+                                    <div class="stat-label">Zoom Sessions</div>
                                 </div>
                                 <div class="stat-card">
                                     <div class="stat-number text-blue-400">{{ therapist.rating or 5.0 }}/5</div>
                                     <div class="stat-label">Rating</div>
                                 </div>
                                 <div class="stat-card">
-                                    <div class="stat-number text-purple-400">{{ therapist.specializations|length }}</div>
+                                    <div class="stat-number text-purple-400">{{ therapist.specializations|length or 0 }}</div>
                                     <div class="stat-label">Specialties</div>
                                 </div>
                                 <div class="stat-card">
                                     <div class="stat-number text-yellow-400">
-                                        <i class="fas fa-video text-lg"></i>
+                                        <i class="fas fa-video text-lg" aria-hidden="true"></i>
                                     </div>
                                     <div class="stat-label">Virtual Only</div>
                                 </div>
@@ -614,32 +992,45 @@
                         <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
                             <div>
                                 <p class="text-purple-300 text-sm mb-1">License Number</p>
-                                <p class="font-semibold">{{ therapist.license_number }}</p>
+                                <p class="font-semibold font-mono">{{ therapist.license_number }}</p>
                             </div>
                             <div>
                                 <p class="text-purple-300 text-sm mb-1">Experience</p>
-                                <p class="font-semibold">{{ therapist.years_experience or 'Verified' }} Years</p>
+                                <p class="font-semibold">{{ therapist.years_experience or 0 }} Years</p>
                             </div>
                             <div>
                                 <p class="text-purple-300 text-sm mb-1">Session Type</p>
                                 <p class="font-semibold">
-                                    <i class="fas fa-video mr-2 text-blue-400"></i>
-                                    Virtual Sessions Only
+                                    <i class="fas fa-video mr-2 text-blue-400" aria-hidden="true"></i>
+                                    Secure Zoom Sessions Only
                                 </p>
                             </div>
                         </div>
                         
+                        <!-- Emergency Hours Badge -->
+                        {% if therapist.emergency_hours %}
+                        <div class="mb-4">
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm bg-red-900 text-red-200">
+                                <i class="fas fa-clock mr-2" aria-hidden="true"></i>
+                                Emergency Hours Available
+                            </span>
+                        </div>
+                        {% endif %}
+                        
                         <!-- Specializations -->
+                        {% if therapist.specializations %}
                         <div class="mb-6">
                             <p class="text-purple-300 text-sm mb-3">🎯 Specializations (AI-matched to your needs)</p>
                             <div class="flex flex-wrap gap-2">
                                 {% for spec in therapist.specializations %}
                                 <span class="specialization-tag">
-                                    ✓ {{ spec.replace('_', ' ').title() }}
+                                    <i class="fas fa-check" aria-hidden="true"></i>
+                                    {{ spec.replace('_', ' ').title() }}
                                 </span>
                                 {% endfor %}
                             </div>
                         </div>
+                        {% endif %}
                         
                         <!-- Bio -->
                         {% if therapist.bio %}
@@ -651,45 +1042,45 @@
                         
                         <!-- Action Buttons -->
                         <div class="flex flex-wrap gap-4">
-                            <button onclick="sendMessage()" class="btn-primary">
-                                <i class="fas fa-message mr-2"></i>
+                            <a href="{{ url_for('dashboard.student_chat') }}" class="btn btn-primary">
+                                <i class="fas fa-message" aria-hidden="true"></i>
                                 Send Message
-                            </button>
-                            <button onclick="requestCall()" class="btn-secondary">
-                                <i class="fas fa-phone mr-2"></i>
+                            </a>
+                            <button onclick="requestCall()" class="btn btn-secondary">
+                                <i class="fas fa-phone" aria-hidden="true"></i>
                                 Request Call
                             </button>
                             {% if therapist.emergency_hours %}
-                            <button onclick="requestEmergencySession()" class="btn-emergency">
-                                <i class="fas fa-bolt mr-2"></i>
+                            <button onclick="requestEmergencySession()" class="btn btn-emergency">
+                                <i class="fas fa-bolt" aria-hidden="true"></i>
                                 Emergency Session
                             </button>
                             {% endif %}
                         </div>
                     </div>
                 </div>
-            </div>
+            </section>
 
             <!-- Appointments Section -->
-            <div class="glass-card p-6 mb-8">
+            <section class="glass-card mb-8" aria-labelledby="appointments-title">
                 <div class="flex items-center justify-between mb-6">
-                    <h3 class="text-2xl font-bold text-white">
-                        <i class="fas fa-video mr-3 text-purple-400"></i>
-                        Your Virtual Sessions
+                    <h3 id="appointments-title" class="text-2xl font-bold text-white">
+                        <i class="fas fa-video mr-3 text-purple-400" aria-hidden="true"></i>
+                        Your Virtual Zoom Sessions
                     </h3>
                     <div class="flex gap-3">
-                        <button onclick="refreshAppointments()" class="btn-secondary">
-                            <i class="fas fa-refresh mr-2"></i>
+                        <button onclick="refreshAppointments()" class="btn btn-secondary" aria-label="Refresh appointments">
+                            <i class="fas fa-refresh" aria-hidden="true"></i>
                             Refresh
                         </button>
                         {% if not has_active_appointment %}
                         <button onclick="autoScheduleSession()" class="btn-autoschedule">
-                            <i class="fas fa-bolt"></i>
+                            <i class="fas fa-bolt" aria-hidden="true"></i>
                             <span>Auto-Schedule</span>
                         </button>
                         {% else %}
-                        <button onclick="showAlreadyScheduledMessage()" class="btn-secondary" style="opacity: 0.6;">
-                            <i class="fas fa-calendar-check mr-2"></i>
+                        <button onclick="showAlreadyScheduledMessage()" class="btn btn-secondary" style="opacity: 0.6;" disabled>
+                            <i class="fas fa-calendar-check" aria-hidden="true"></i>
                             <span>Session Scheduled</span>
                         </button>
                         {% endif %}
@@ -697,19 +1088,27 @@
                 </div>
                 
                 {% if appointments and appointments|length > 0 %}
-                <div class="space-y-4">
+                <div class="space-y-4" id="appointments-container">
                     {% for appointment in appointments %}
-                    <div class="appointment-card {% if appointment.status == 'confirmed' %}appointment-upcoming{% elif appointment.status == 'suggested' %}appointment-suggested{% endif %}">
+                    <article class="appointment-card 
+                        {% if appointment.status == 'confirmed' %}appointment-upcoming
+                        {% elif appointment.status == 'suggested' %}appointment-suggested
+                        {% elif appointment.status == 'completed' %}appointment-completed
+                        {% elif appointment.status == 'cancelled' %}appointment-cancelled
+                        {% endif %}" 
+                        id="apt-{{ appointment._id }}"
+                        aria-labelledby="apt-title-{{ appointment._id }}">
+                        
                         <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between">
                             <div class="flex-grow">
                                 <div class="flex items-center space-x-4 mb-2">
                                     <div class="flex-shrink-0">
                                         <div class="w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center">
-                                            <i class="fas fa-video text-white"></i>
+                                            <i class="fas fa-video text-white" aria-hidden="true"></i>
                                         </div>
                                     </div>
                                     <div>
-                                        <h4 class="font-semibold text-white text-lg">
+                                        <h4 id="apt-title-{{ appointment._id }}" class="font-semibold text-white text-lg">
                                             {% if appointment.formatted_time %}
                                                 {{ appointment.formatted_time }}
                                             {% else %}
@@ -721,14 +1120,39 @@
                                             {% endif %}
                                         </h4>
                                         <p class="text-purple-300">
-                                            <i class="fas fa-video mr-1"></i>
-                                            Virtual Session • 60 minutes
+                                            <i class="fas fa-video mr-1" aria-hidden="true"></i>
+                                            Zoom Virtual Session • 60 minutes
                                         </p>
+                                        
+                                        <!-- Status Badge -->
+                                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs mt-1
+                                            {% if appointment.status == 'confirmed' %}bg-green-900 text-green-200
+                                            {% elif appointment.status == 'suggested' %}bg-yellow-900 text-yellow-200
+                                            {% elif appointment.status == 'completed' %}bg-gray-700 text-gray-300
+                                            {% elif appointment.status == 'cancelled' %}bg-red-900 text-red-200
+                                            {% endif %}">
+                                            <i class="fas fa-circle mr-1 text-xs" aria-hidden="true"></i>
+                                            {{ appointment.status.title() }}
+                                        </span>
+                                        
                                         {% if appointment.crisis_level and appointment.crisis_level in ['high', 'critical'] %}
-                                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-red-900 text-red-200 mt-1">
-                                            <i class="fas fa-exclamation-triangle mr-1"></i>
+                                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-red-900 text-red-200 mt-1 ml-2">
+                                            <i class="fas fa-exclamation-triangle mr-1" aria-hidden="true"></i>
                                             Priority Session
                                         </span>
+                                        {% endif %}
+                                        
+                                        <!-- Zoom Integration Status -->
+                                        {% if appointment.get('zoom_integrated') %}
+                                        <div class="zoom-status-indicator zoom-integrated">
+                                            <i class="fas fa-video" aria-hidden="true"></i>
+                                            Real Zoom Meeting
+                                        </div>
+                                        {% else %}
+                                        <div class="zoom-status-indicator zoom-fallback">
+                                            <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
+                                            Manual Setup Required
+                                        </div>
                                         {% endif %}
                                     </div>
                                 </div>
@@ -737,27 +1161,52 @@
                                 <p class="text-gray-400 text-sm mt-2 ml-16">{{ appointment.notes }}</p>
                                 {% endif %}
                                 
+                                <!-- Meeting Info -->
                                 {% if appointment.meeting_info %}
                                 <div class="mt-3 ml-16 bg-blue-900 bg-opacity-30 p-3 rounded-lg">
+                                    {% if appointment.get('zoom_integrated') %}
+                                    <!-- Real Zoom Meeting -->
                                     <p class="text-blue-300 text-sm font-medium mb-2">
-                                        <i class="fas fa-video mr-1"></i>
-                                        Virtual Meeting Details:
+                                        <i class="fas fa-video mr-1" aria-hidden="true"></i>
+                                        Zoom Meeting Details:
                                     </p>
-                                    <div class="flex items-center space-x-2">
+                                    <div class="copy-input-container mb-2">
                                         <input type="text" 
                                                value="{{ appointment.meeting_info.meet_link }}" 
                                                id="meet-link-{{ appointment._id }}" 
-                                               class="bg-transparent text-blue-200 text-sm flex-1 p-2 border border-blue-400 rounded font-mono" 
-                                               readonly>
+                                               class="copy-input" 
+                                               readonly
+                                               aria-label="Zoom meeting link">
                                         <button onclick="copyMeetLink('{{ appointment._id }}')" 
-                                                class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded text-sm transition-all">
-                                            <i class="fas fa-copy"></i>
+                                                class="copy-btn"
+                                                aria-label="Copy meeting link">
+                                            <i class="fas fa-copy" aria-hidden="true"></i>
                                         </button>
                                     </div>
-                                    {% if appointment.meeting_info.dial_in %}
-                                    <p class="text-blue-300 text-xs mt-2">
-                                        📞 Dial-in: {{ appointment.meeting_info.dial_in }} | PIN: {{ appointment.meeting_info.dial_in_pin }}
+                                    {% if appointment.meeting_info.meeting_password %}
+                                    <p class="text-blue-300 text-xs">
+                                        🔐 Meeting ID: {{ appointment.zoom_meeting_id }} | Password: {{ appointment.meeting_info.meeting_password }}
                                     </p>
+                                    {% endif %}
+                                    {% if appointment.meeting_info.dial_in %}
+                                    <p class="text-blue-300 text-xs mt-1">
+                                        📞 Dial-in: {{ appointment.meeting_info.dial_in }}
+                                    </p>
+                                    {% endif %}
+                                    {% else %}
+                                    <!-- Fallback/Manual Setup -->
+                                    <p class="text-yellow-300 text-sm font-medium mb-2">
+                                        <i class="fas fa-exclamation-triangle mr-1" aria-hidden="true"></i>
+                                        Meeting Setup:
+                                    </p>
+                                    <p class="text-yellow-200 text-sm">
+                                        {{ appointment.meeting_info.note or 'Your therapist will provide the Zoom meeting link before your session.' }}
+                                    </p>
+                                    <button onclick="refreshZoomMeeting('{{ appointment._id }}')" 
+                                            class="btn btn-secondary text-xs mt-2">
+                                        <i class="fas fa-refresh mr-1" aria-hidden="true"></i>
+                                        Refresh Meeting Info
+                                    </button>
                                     {% endif %}
                                 </div>
                                 {% endif %}
@@ -766,151 +1215,157 @@
                             <!-- Action Buttons -->
                             <div class="flex flex-wrap gap-2 mt-4 lg:mt-0">
                                 {% if appointment.status == 'suggested' %}
-                                <button onclick="acceptAppointment('{{ appointment._id }}')" class="btn-primary">
-                                    <i class="fas fa-check mr-1"></i>
+                                <button onclick="acceptAppointment('{{ appointment._id }}')" class="btn btn-primary">
+                                    <i class="fas fa-check" aria-hidden="true"></i>
                                     Accept
                                 </button>
-                                <button onclick="rescheduleAppointment('{{ appointment._id }}')" class="btn-secondary">
-                                    <i class="fas fa-calendar mr-1"></i>
+                                <button onclick="rescheduleAppointment('{{ appointment._id }}')" class="btn btn-secondary">
+                                    <i class="fas fa-calendar" aria-hidden="true"></i>
                                     Reschedule
                                 </button>
-                                <button onclick="cancelAppointment('{{ appointment._id }}')" class="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded text-sm transition-all">
-                                    <i class="fas fa-times mr-1"></i>
+                                <button onclick="cancelAppointment('{{ appointment._id }}')" class="btn btn-danger">
+                                    <i class="fas fa-times" aria-hidden="true"></i>
                                     Cancel
                                 </button>
                                 {% elif appointment.status == 'confirmed' %}
-                                    {% if appointment.meeting_info %}
+                                    {% if appointment.meeting_info and appointment.get('zoom_integrated') %}
                                     <a href="{{ appointment.meeting_info.meet_link }}" 
                                        target="_blank" 
-                                       class="btn-primary">
-                                        <i class="fas fa-video mr-1"></i>
-                                        Join Virtual Session
+                                       class="btn btn-primary">
+                                        <i class="fas fa-video" aria-hidden="true"></i>
+                                        Join Zoom Session
                                     </a>
+                                    {% else %}
+                                    <button onclick="refreshZoomMeeting('{{ appointment._id }}')" class="btn btn-primary">
+                                        <i class="fas fa-refresh" aria-hidden="true"></i>
+                                        Get Meeting Link
+                                    </button>
                                     {% endif %}
-                                    <button onclick="rescheduleAppointment('{{ appointment._id }}')" class="btn-secondary">
-                                        <i class="fas fa-calendar mr-1"></i>
+                                    <button onclick="rescheduleAppointment('{{ appointment._id }}')" class="btn btn-secondary">
+                                        <i class="fas fa-calendar" aria-hidden="true"></i>
                                         Reschedule
                                     </button>
-                                    <button onclick="cancelAppointment('{{ appointment._id }}')" class="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded text-sm transition-all">
-                                        <i class="fas fa-times mr-1"></i>
+                                    <button onclick="cancelAppointment('{{ appointment._id }}')" class="btn btn-danger">
+                                        <i class="fas fa-times" aria-hidden="true"></i>
                                         Cancel
                                     </button>
                                 {% endif %}
                             </div>
                         </div>
-                    </div>
+                    </article>
                     {% endfor %}
                 </div>
                 {% else %}
                 <div class="text-center py-12">
-                    <i class="fas fa-video text-6xl text-purple-400 mb-4 opacity-50"></i>
-                    <h3 class="text-xl font-semibold text-white mb-2">No virtual sessions scheduled yet</h3>
-                    <p class="text-purple-300 mb-6">Ready to start your online therapy journey?</p>
+                    <i class="fas fa-video text-6xl text-purple-400 mb-4 opacity-50" aria-hidden="true"></i>
+                    <h3 class="text-xl font-semibold text-white mb-2">No Zoom sessions scheduled yet</h3>
+                    <p class="text-purple-300 mb-6">Ready to start your virtual therapy journey?</p>
                     {% if not has_active_appointment %}
                     <button onclick="autoScheduleSession()" class="btn-autoschedule">
-                        <i class="fas fa-bolt"></i>
-                        <span>Auto-Schedule Your First Session</span>
-                        <i class="fas fa-arrow-right"></i>
+                        <i class="fas fa-bolt" aria-hidden="true"></i>
+                        <span>Auto-Schedule Your First Zoom Session</span>
+                        <i class="fas fa-arrow-right" aria-hidden="true"></i>
                     </button>
                     {% else %}
                     <p class="text-blue-300">You already have a session scheduled. Check above for details.</p>
                     {% endif %}
                 </div>
                 {% endif %}
-            </div>
+            </section>
 
             <!-- Virtual Session Preparation Tips -->
-            <div class="glass-card p-6">
-                <h3 class="text-2xl font-bold text-white mb-6">
-                    <i class="fas fa-lightbulb mr-3 text-yellow-400"></i>
-                    🚀 Virtual Session Success Tips
+            <section class="glass-card" aria-labelledby="tips-title">
+                <h3 id="tips-title" class="text-2xl font-bold text-white mb-6">
+                    <i class="fas fa-lightbulb mr-3 text-yellow-400" aria-hidden="true"></i>
+                    🚀 Zoom Session Success Tips
                 </h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <div class="text-center">
+                    <div class="text-center p-6 bg-white bg-opacity-5 rounded-lg border border-white border-opacity-10">
                         <div class="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <i class="fas fa-wifi text-2xl text-white"></i>
+                            <i class="fas fa-wifi text-2xl text-white" aria-hidden="true"></i>
                         </div>
                         <h4 class="font-semibold text-white mb-2">Stable Internet</h4>
-                        <p class="text-purple-300 text-sm">Ensure you have a reliable internet connection for smooth video calls</p>
+                        <p class="text-purple-300 text-sm">Ensure reliable internet connection for smooth Zoom video calls</p>
                     </div>
-                    <div class="text-center">
+                    <div class="text-center p-6 bg-white bg-opacity-5 rounded-lg border border-white border-opacity-10">
                         <div class="w-16 h-16 bg-gradient-to-r from-green-500 to-teal-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <i class="fas fa-home text-2xl text-white"></i>
+                            <i class="fas fa-home text-2xl text-white" aria-hidden="true"></i>
                         </div>
                         <h4 class="font-semibold text-white mb-2">Private Space</h4>
                         <p class="text-purple-300 text-sm">Find a quiet, private area where you can speak freely without interruptions</p>
                     </div>
-                    <div class="text-center">
+                    <div class="text-center p-6 bg-white bg-opacity-5 rounded-lg border border-white border-opacity-10">
                         <div class="w-16 h-16 bg-gradient-to-r from-red-500 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <i class="fas fa-video text-2xl text-white"></i>
+                            <i class="fas fa-video text-2xl text-white" aria-hidden="true"></i>
                         </div>
                         <h4 class="font-semibold text-white mb-2">Test Your Setup</h4>
-                        <p class="text-purple-300 text-sm">Join 5 minutes early to test your camera, microphone, and connection</p>
+                        <p class="text-purple-300 text-sm">Join 5 minutes early to test camera, microphone, and Zoom connection</p>
                     </div>
                 </div>
-            </div>
+            </section>
 
             {% else %}
             <!-- No Therapist Assigned -->
-            <div class="glass-card p-12 text-center">
-                <i class="fas fa-user-md text-8xl text-purple-400 mb-8 opacity-50"></i>
-                <h2 class="text-3xl font-bold text-white mb-4">No Therapist Assigned Yet</h2>
+            <section class="glass-card text-center" aria-labelledby="no-therapist-title">
+                <i class="fas fa-user-md text-8xl text-purple-400 mb-8 opacity-50" aria-hidden="true"></i>
+                <h2 id="no-therapist-title" class="text-3xl font-bold text-white mb-4">No Therapist Assigned Yet</h2>
                 <p class="text-purple-300 mb-8 text-lg">Complete your mental health assessment to get instantly matched with a perfect therapist</p>
                 <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                    <a href="{{ url_for('dashboard.student_intake') }}" class="btn-primary">
-                        <i class="fas fa-brain mr-2"></i>
+                    <a href="{{ url_for('dashboard.student_intake') }}" class="btn btn-primary">
+                        <i class="fas fa-brain" aria-hidden="true"></i>
                         Start AI Assessment
                     </a>
-                    <button onclick="showEmergencyModal()" class="btn-secondary">
-                        <i class="fas fa-exclamation-triangle mr-2"></i>
+                    <button onclick="showEmergencyModal()" class="btn btn-secondary">
+                        <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
                         Need Immediate Help?
                     </button>
                 </div>
-            </div>
+            </section>
             {% endif %}
         </div>
     </main>
 
     <!-- Auto-Scheduling Modal -->
-    <div id="autoschedule-modal" class="modal">
+    <div id="autoschedule-modal" class="modal" role="dialog" aria-labelledby="autoschedule-title" aria-hidden="true">
         <div class="modal-content">
             <div id="scheduling-step-1">
-                <div class="loading-spinner"></div>
-                <h2 class="text-2xl font-bold text-white mb-4">⚡ Auto-Scheduling Your Session</h2>
-                <p class="text-purple-300 mb-6">Finding the perfect time slot for you...</p>
-                <div class="text-sm text-gray-400">
-                    <p>✓ Analyzing your calendar</p>
+                <div class="loading-spinner" aria-label="Loading"></div>
+                <h2 id="autoschedule-title" class="text-2xl font-bold text-white mb-4">⚡ Auto-Scheduling Your Zoom Session</h2>
+                <p class="text-purple-300 mb-6">Finding the perfect time slot and creating secure meeting...</p>
+                <div class="text-sm text-gray-400 space-y-1" role="status" aria-live="polite">
+                    <p>✓ Analyzing your schedule</p>
                     <p>✓ Checking therapist availability</p>
+                    <p>✓ Creating secure Zoom meeting</p>
                     <p>✓ Finding optimal time slot</p>
                 </div>
             </div>
             
             <div id="scheduling-step-2" style="display: none;">
-                <div class="success-checkmark">
-                    <i class="fas fa-check text-3xl text-white"></i>
+                <div class="success-checkmark" aria-label="Success">
+                    <i class="fas fa-check text-3xl text-white" aria-hidden="true"></i>
                 </div>
-                <h2 class="text-2xl font-bold text-white mb-4">🎉 Session Auto-Scheduled!</h2>
+                <h2 class="text-2xl font-bold text-white mb-4">🎉 Zoom Session Auto-Scheduled!</h2>
                 <div class="text-left bg-white bg-opacity-10 rounded-lg p-4 mb-6">
                     <div class="flex items-center mb-2">
-                        <i class="fas fa-clock text-green-400 mr-3"></i>
+                        <i class="fas fa-clock text-green-400 mr-3" aria-hidden="true"></i>
                         <span class="font-semibold text-white" id="scheduled-time">Loading...</span>
                     </div>
                     <div class="flex items-center mb-2">
-                        <i class="fas fa-video text-blue-400 mr-3"></i>
-                        <span class="text-purple-300">Virtual Session with {{ therapist.name if therapist else 'Your Therapist' }}</span>
+                        <i class="fas fa-video text-blue-400 mr-3" aria-hidden="true"></i>
+                        <span class="text-purple-300">Secure Zoom Session with {{ therapist.name if therapist else 'Your Therapist' }}</span>
                     </div>
                     <div class="flex items-center">
-                        <i class="fas fa-link text-purple-400 mr-3"></i>
-                        <span class="text-green-300">Google Meet link generated automatically</span>
+                        <i class="fas fa-link text-purple-400 mr-3" aria-hidden="true"></i>
+                        <span class="text-green-300">Zoom meeting link generated with password protection</span>
                     </div>
                 </div>
                 <div class="flex space-x-4 justify-center">
-                    <button onclick="viewSessionDetails()" class="btn-primary">
-                        <i class="fas fa-eye mr-2"></i>
+                    <button onclick="viewSessionDetails()" class="btn btn-primary">
+                        <i class="fas fa-eye" aria-hidden="true"></i>
                         View Session Details
                     </button>
-                    <button onclick="closeAutoScheduleModal()" class="btn-secondary">
-                        <i class="fas fa-times mr-2"></i>
+                    <button onclick="closeAutoScheduleModal()" class="btn btn-secondary">
+                        <i class="fas fa-times" aria-hidden="true"></i>
                         Close
                     </button>
                 </div>
@@ -919,17 +1374,17 @@
     </div>
 
     <!-- Emergency Support Modal -->
-    <div id="emergency-modal" class="fixed inset-0 bg-black bg-opacity-75 hidden z-50 flex items-center justify-center p-4">
-        <div class="glass-card p-8 max-w-lg w-full">
-            <h3 class="text-2xl font-bold mb-4 text-red-400 flex items-center">
-                <i class="fas fa-shield-alt mr-3"></i>
+    <div id="emergency-modal" class="modal" role="dialog" aria-labelledby="emergency-title" aria-hidden="true">
+        <div class="modal-content">
+            <h3 id="emergency-title" class="text-2xl font-bold mb-4 text-red-400 flex items-center">
+                <i class="fas fa-shield-alt mr-3" aria-hidden="true"></i>
                 🆘 Emergency Support
             </h3>
             <p class="text-gray-300 mb-6">If you're having thoughts of suicide or self-harm, please reach out immediately:</p>
             
             <div class="space-y-4 mb-8">
                 <div class="flex items-center space-x-4 p-3 bg-red-900 bg-opacity-30 rounded-lg">
-                    <i class="fas fa-phone text-red-400"></i>
+                    <i class="fas fa-phone text-red-400" aria-hidden="true"></i>
                     <div>
                         <p class="font-semibold text-red-200">National Suicide Prevention Lifeline</p>
                         <p class="text-red-100">Call or text: <strong>988</strong></p>
@@ -937,7 +1392,7 @@
                 </div>
                 
                 <div class="flex items-center space-x-4 p-3 bg-blue-900 bg-opacity-30 rounded-lg">
-                    <i class="fas fa-message text-blue-400"></i>
+                    <i class="fas fa-message text-blue-400" aria-hidden="true"></i>
                     <div>
                         <p class="font-semibold text-blue-200">Crisis Text Line</p>
                         <p class="text-blue-100">Text <strong>HOME</strong> to <strong>741741</strong></p>
@@ -945,7 +1400,7 @@
                 </div>
                 
                 <div class="flex items-center space-x-4 p-3 bg-yellow-900 bg-opacity-30 rounded-lg">
-                    <i class="fas fa-ambulance text-yellow-400"></i>
+                    <i class="fas fa-ambulance text-yellow-400" aria-hidden="true"></i>
                     <div>
                         <p class="font-semibold text-yellow-200">Emergency Services</p>
                         <p class="text-yellow-100">Call: <strong>911</strong></p>
@@ -954,302 +1409,422 @@
             </div>
             
             <div class="flex space-x-4">
-                <a href="tel:988" class="btn-emergency flex-1 text-center">
-                    <i class="fas fa-phone mr-2"></i>
+                <a href="tel:988" class="btn btn-emergency flex-1 text-center">
+                    <i class="fas fa-phone" aria-hidden="true"></i>
                     Call 988 Now
                 </a>
-                <button onclick="closeEmergencyModal()" class="btn-secondary flex-1">
-                    <i class="fas fa-times mr-2"></i>
+                <button onclick="closeEmergencyModal()" class="btn btn-secondary flex-1">
+                    <i class="fas fa-times" aria-hidden="true"></i>
                     Close
                 </button>
             </div>
         </div>
     </div>
 
+    <!-- Alert Container -->
+    <div id="alert-container" aria-live="polite" aria-atomic="true"></div>
+
     <script>
-        // Auto-scheduling functionality
-        function autoScheduleSession() {
-            // Check if therapist is available
-            {% if not therapist or not therapist._id %}
-            alert('❌ No therapist assigned yet. Please complete your assessment first.');
-            return;
-            {% endif %}
-            
-            document.getElementById('autoschedule-modal').style.display = 'block';
-            
-            // Simulate auto-scheduling process
-            setTimeout(() => {
-                // Step 1: Finding slot (2 seconds)
-                setTimeout(() => {
-                    // Step 2: Show success (after finding slot)
-                    document.getElementById('scheduling-step-1').style.display = 'none';
-                    document.getElementById('scheduling-step-2').style.display = 'block';
-                    
-                    // Generate a realistic next available time (demo data)
-                    const nextSlot = getNextAvailableSlot();
-                    document.getElementById('scheduled-time').textContent = nextSlot;
-                    
-                    // Auto-close after 3 seconds and create real appointment
-                    setTimeout(() => {
-                        closeAutoScheduleModal();
-                        // Create a real appointment
-                        autoScheduleAppointment();
-                    }, 3000);
-                }, 2000);
-            }, 500);
-        }
-        
-        function getNextAvailableSlot() {
-            // Simulate finding next available slot
-            const tomorrow = new Date();
-            tomorrow.setDate(tomorrow.getDate() + 1);
-            tomorrow.setHours(14, 0, 0, 0); // 2:00 PM tomorrow
-            
-            return tomorrow.toLocaleDateString('en-US', { 
-                weekday: 'long', 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric',
-                hour: 'numeric',
-                minute: '2-digit'
-            });
-        }
-        
-        function closeAutoScheduleModal() {
-            document.getElementById('autoschedule-modal').style.display = 'none';
-            // Reset modal to first step
-            document.getElementById('scheduling-step-1').style.display = 'block';
-            document.getElementById('scheduling-step-2').style.display = 'none';
-        }
-        
-        function viewSessionDetails() {
-            closeAutoScheduleModal();
-            // Create a real appointment and redirect properly
-            autoScheduleAppointment();
-        }
-        
-        // Handle the actual auto-scheduling logic
-        function autoScheduleAppointment() {
-            console.log('🚀 Starting auto-scheduling...');
-            
-            // Check if we have a therapist ID
-            const therapistId = '{{ therapist._id if therapist else "" }}';
-            console.log('👨‍⚕️ Therapist ID:', therapistId);
-            
-            if (!therapistId) {
-                console.error('❌ No therapist ID available');
-                alert('❌ No therapist assigned. Please complete your assessment first.');
-                closeAutoScheduleModal();
-                return;
+        // ======================
+        //  CONFIGURATION & STATE
+        // ======================
+        const CONFIG = {
+            therapistId: '{{ therapist._id if therapist else "" }}',
+            licenseNumber: '{{ therapist.license_number if therapist else "" }}',
+            hasTherapist: {{ 'true' if therapist else 'false' }},
+            hasActiveAppointment: {{ 'true' if has_active_appointment else 'false' }},
+            endpoints: {
+                autoSchedule: '/api/auto-schedule-appointment',
+                cancelAppointment: '/api/cancel-appointment',
+                refreshZoom: '/api/refresh-zoom-meeting',
+                appointmentStatus: '/api/appointment-status'
             }
-            
-            const formData = new FormData();
-            formData.append('therapist_id', therapistId);
-            formData.append('crisis_level', 'normal');
-            
-            console.log('📤 Sending request to /api/auto-schedule-appointment');
-            console.log('📋 Form data:', {
-                therapist_id: therapistId,
-                crisis_level: 'normal'
-            });
-            
-            // Make API call to create real appointment
-            fetch('/api/auto-schedule-appointment', {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            })
-            .then(response => {
-                console.log('📥 Response status:', response.status);
-                console.log('📥 Response headers:', response.headers);
-                
+        };
+
+        let isLoading = false;
+
+        // ======================
+        //  UTILITY FUNCTIONS
+        // ======================
+        class Utils {
+            static validateObjectId(id) {
+                return /^[0-9a-fA-F]{24}$/.test(id);
+            }
+
+            static async handleAPIResponse(response) {
                 if (!response.ok) {
-                    return response.json().then(errorData => {
-                        console.error('❌ Error response:', errorData);
-                        throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
-                    });
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
                 }
-                return response.json();
-            })
-            .then(data => {
-                console.log('✅ Response data:', data);
-                if (data.success && data.appointment_id) {
-                    console.log('🎉 Appointment created with ID:', data.appointment_id);
+                return await response.json();
+            }
+
+            static showAlert(message, type = 'success', duration = 5000) {
+                const container = document.getElementById('alert-container');
+                const alertId = 'alert-' + Date.now();
+                
+                const alert = document.createElement('div');
+                alert.id = alertId;
+                alert.className = `alert alert-${type}`;
+                alert.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'exclamation-triangle'} mr-2" aria-hidden="true"></i>
+                            <span>${message}</span>
+                        </div>
+                        <button onclick="Utils.closeAlert('${alertId}')" class="ml-4 text-current opacity-75 hover:opacity-100" aria-label="Close alert">
+                            <i class="fas fa-times" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                `;
+                
+                container.appendChild(alert);
+                
+                // Auto-remove after duration
+                setTimeout(() => Utils.closeAlert(alertId), duration);
+                
+                return alertId;
+            }
+
+            static closeAlert(alertId) {
+                const alert = document.getElementById(alertId);
+                if (alert) {
+                    alert.style.opacity = '0';
+                    alert.style.transform = 'translateX(100%)';
+                    setTimeout(() => alert.remove(), 300);
+                }
+            }
+
+            static showLoading(element, text = 'Loading...') {
+                if (element) {
+                    element.disabled = true;
+                    element.innerHTML = `<i class="fas fa-spinner fa-spin mr-2" aria-hidden="true"></i>${text}`;
+                }
+            }
+
+            static hideLoading(element, originalText) {
+                if (element) {
+                    element.disabled = false;
+                    element.innerHTML = originalText;
+                }
+            }
+
+            static showModal(modalId) {
+                const modal = document.getElementById(modalId);
+                if (modal) {
+                    modal.classList.add('show');
+                    modal.setAttribute('aria-hidden', 'false');
+                    document.body.style.overflow = 'hidden';
                     
-                    if (data.redirect_to_therapist) {
-                        // Show success message and refresh therapist page
-                        alert(`🎉 Session Auto-Scheduled Successfully!\n\nTime: ${data.formatted_time}\nAppointment ID: ${data.appointment_id}\n\nRefreshing page to show your appointment...`);
-                        setTimeout(() => {
-                            window.location.href = '/student/therapist-info';
-                        }, 1000);
-                    } else {
-                        // Redirect to confirmation page
-                        const confirmUrl = `/student/appointment-confirmed/${data.appointment_id}?crisis_level=normal`;
-                        console.log('🔗 Redirecting to:', confirmUrl);
+                    // Focus management
+                    const firstFocusable = modal.querySelector('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+                    if (firstFocusable) firstFocusable.focus();
+                }
+            }
+
+            static hideModal(modalId) {
+                const modal = document.getElementById(modalId);
+                if (modal) {
+                    modal.classList.remove('show');
+                    modal.setAttribute('aria-hidden', 'true');
+                    document.body.style.overflow = '';
+                }
+            }
+        }
+
+        // ======================
+        //  APPOINTMENT FUNCTIONS
+        // ======================
+        class AppointmentManager {
+            static async autoScheduleSession() {
+                if (isLoading || !CONFIG.hasTherapist) {
+                    Utils.showAlert('Please wait for current operation to complete.', 'warning');
+                    return;
+                }
+
+                if (CONFIG.hasActiveAppointment) {
+                    Utils.showAlert('You already have an active appointment.', 'warning');
+                    return;
+                }
+
+                isLoading = true;
+                Utils.showModal('autoschedule-modal');
+
+                try {
+                    // Show loading step
+                    document.getElementById('scheduling-step-1').style.display = 'block';
+                    document.getElementById('scheduling-step-2').style.display = 'none';
+
+                    // Debug logging
+                    console.log('Auto-scheduling with:', {
+                        licenseNumber: CONFIG.licenseNumber,
+                        hasTherapist: CONFIG.hasTherapist,
+                        endpoint: CONFIG.endpoints.autoSchedule
+                    });
+
+                    // Validate license number
+                    if (!CONFIG.licenseNumber) {
+                        throw new Error('No therapist license number available');
+                    }
+
+                    // Create form data (backend expects form data, not JSON)
+                    const formData = new FormData();
+                    formData.append('license_id', CONFIG.licenseNumber);
+                    formData.append('crisis_level', 'normal');
+
+                    const response = await fetch(CONFIG.endpoints.autoSchedule, {
+                        method: 'POST',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: formData
+                    });
+
+                    const data = await Utils.handleAPIResponse(response);
+                    console.log('Scheduling response:', data);
+
+                    // Show success step
+                    setTimeout(() => {
+                        document.getElementById('scheduling-step-1').style.display = 'none';
+                        document.getElementById('scheduling-step-2').style.display = 'block';
+                        
+                        if (data.formatted_time) {
+                            document.getElementById('scheduled-time').textContent = data.formatted_time;
+                        }
+                    }, 2000);
+
+                    // Refresh page after a delay
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 5000);
+
+                } catch (error) {
+                    console.error('Auto-scheduling error:', error);
+                    Utils.hideModal('autoschedule-modal');
+                    Utils.showAlert(error.message || 'Failed to schedule appointment', 'error');
+                } finally {
+                    isLoading = false;
+                }
+            }
+
+            static async cancelAppointment(appointmentId) {
+                if (!confirm('❌ Cancel this virtual session?\n\nThis action cannot be undone.')) {
+                    return;
+                }
+
+                const appointmentCard = document.getElementById(`apt-${appointmentId}`);
+                const cancelBtn = event.target;
+                const originalText = cancelBtn.innerHTML;
+                
+                Utils.showLoading(cancelBtn, 'Cancelling...');
+
+                try {
+                    const response = await fetch(CONFIG.endpoints.cancelAppointment, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ appointment_id: appointmentId })
+                    });
+
+                    await Utils.handleAPIResponse(response);
+                    
+                    // Animate card removal
+                    if (appointmentCard) {
+                        appointmentCard.style.transition = 'all 0.3s ease';
+                        appointmentCard.style.opacity = '0';
+                        appointmentCard.style.transform = 'translateX(-20px)';
                         
                         setTimeout(() => {
-                            window.location.href = confirmUrl;
-                        }, 1000);
+                            appointmentCard.remove();
+                            Utils.showAlert('Session cancelled successfully!');
+                        }, 300);
+                    } else {
+                        Utils.showAlert('Session cancelled! Refreshing page...');
+                        setTimeout(() => window.location.reload(), 1000);
                     }
-                } else {
-                    console.error('❌ Invalid response:', data);
-                    throw new Error(data.error || 'Invalid response from server');
+
+                } catch (error) {
+                    console.error('Cancel error:', error);
+                    Utils.showAlert(error.message || 'Failed to cancel appointment', 'error');
+                    Utils.hideLoading(cancelBtn, originalText);
                 }
-            })
-            .catch(error => {
-                console.error('❌ Auto-scheduling error:', error);
-                console.error('❌ Full error object:', error);
+            }
+
+            static async refreshZoomMeeting(appointmentId) {
+                const refreshBtn = event.target;
+                const originalText = refreshBtn.innerHTML;
                 
-                // Handle specific "already scheduled" error
-                if (error.message.includes('already have a session scheduled')) {
-                    alert('📅 You already have a session scheduled!\n\nYou can only have one active appointment at a time.\n\nTo schedule a new session, please cancel or complete your existing appointment first.');
-                } else if (error.message.includes('HTTP 4') || error.message.includes('HTTP 5')) {
-                    // Server error - real failure
-                    alert(`❌ Scheduling failed: ${error.message}\n\nCheck the browser console for details, or try refreshing the page.`);
-                } else {
-                    // Generic error handling
-                    const tryAgain = confirm(`❌ There was an issue: ${error.message}\n\nWould you like to:\n- OK: Refresh the page to see your current appointments\n- Cancel: Close this dialog`);
-                    if (tryAgain) {
-                        window.location.reload();
-                    }
+                Utils.showLoading(refreshBtn, 'Refreshing...');
+
+                try {
+                    const response = await fetch(CONFIG.endpoints.refreshZoom, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ appointment_id: appointmentId })
+                    });
+                    
+                    await Utils.handleAPIResponse(response);
+                    Utils.showAlert('Zoom meeting refreshed successfully!');
+                    setTimeout(() => window.location.reload(), 1000);
+
+                } catch (error) {
+                    console.error('Refresh error:', error);
+                    Utils.showAlert(error.message || 'Failed to refresh Zoom meeting', 'error');
+                    Utils.hideLoading(refreshBtn, originalText);
                 }
-                closeAutoScheduleModal();
-            });
+            }
+
+            static copyMeetLink(appointmentId) {
+                const linkInput = document.getElementById(`meet-link-${appointmentId}`);
+                const copyBtn = event.target.closest('.copy-btn');
+                
+                if (!linkInput || !copyBtn) return;
+
+                navigator.clipboard.writeText(linkInput.value)
+                    .then(() => {
+                        copyBtn.classList.add('copied');
+                        copyBtn.innerHTML = '<i class="fas fa-check" aria-hidden="true"></i>';
+                        Utils.showAlert('Meeting link copied to clipboard!');
+                        
+                        setTimeout(() => {
+                            copyBtn.classList.remove('copied');
+                            copyBtn.innerHTML = '<i class="fas fa-copy" aria-hidden="true"></i>';
+                        }, 2000);
+                    })
+                    .catch(() => {
+                        // Fallback for older browsers
+                        linkInput.select();
+                        document.execCommand('copy');
+                        Utils.showAlert('Meeting link copied!');
+                    });
+            }
         }
-        
-        function showManualScheduling() {
-            alert('📅 Manual scheduling modal would open here (existing functionality)');
-        }
-        
-        function showAlreadyScheduledMessage() {
-            alert('📅 You already have a session scheduled!\n\nYou can only have one active appointment at a time.\n\nTo schedule a new session, please complete or cancel your existing appointment first.');
-        }
-        
-        // Refresh appointments list
-        function refreshAppointments() {
-            console.log('🔄 Refreshing appointments...');
-            // Show loading state
-            const refreshBtn = event.target;
-            const originalHTML = refreshBtn.innerHTML;
-            refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Loading...';
-            refreshBtn.disabled = true;
-            
-            // Reload the page after a short delay
-            setTimeout(() => {
+
+        // ======================
+        //  UI FUNCTIONS
+        // ======================
+        class UIManager {
+            static showEmergencyModal() {
+                Utils.showModal('emergency-modal');
+            }
+
+            static closeEmergencyModal() {
+                Utils.hideModal('emergency-modal');
+            }
+
+            static closeAutoScheduleModal() {
+                Utils.hideModal('autoschedule-modal');
+            }
+
+            static toggleMobileMenu() {
+                const sidebar = document.getElementById('sidebar');
+                sidebar.classList.toggle('open');
+            }
+
+            static refreshAppointments() {
                 window.location.reload();
-            }, 500);
+            }
+
+            static showManualScheduling() {
+                Utils.showAlert('Manual scheduling feature coming soon!', 'info');
+            }
+
+            static sendMessage() {
+                Utils.showAlert('Messaging feature coming soon!', 'info');
+            }
+
+            static requestCall() {
+                Utils.showAlert('Call request feature coming soon!', 'info');
+            }
+
+            static requestEmergencySession() {
+                if (confirm('Request emergency virtual session?')) {
+                    Utils.showAlert('Emergency session request submitted!', 'success');
+                }
+            }
+
+            static viewSessionDetails() {
+                Utils.hideModal('autoschedule-modal');
+                Utils.showAlert('Redirecting to session details...');
+                // Could redirect to a specific appointment page
+            }
+
+            static showAlreadyScheduledMessage() {
+                Utils.showAlert('You already have an active appointment scheduled.', 'info');
+            }
         }
-        
-        // Emergency modal functions
-        function showEmergencyModal() {
-            document.getElementById('emergency-modal').classList.remove('hidden');
-        }
-        
-        function closeEmergencyModal() {
-            document.getElementById('emergency-modal').classList.add('hidden');
-        }
-        
-        // Copy meeting link functionality
-        function copyMeetLink(appointmentId) {
-            const linkInput = document.getElementById('meet-link-' + appointmentId);
-            linkInput.select();
-            linkInput.setSelectionRange(0, 99999);
-            
-            navigator.clipboard.writeText(linkInput.value).then(() => {
-                const copyBtn = event.target.closest('button');
-                const originalHTML = copyBtn.innerHTML;
-                copyBtn.innerHTML = '<i class="fas fa-check"></i>';
-                copyBtn.style.background = 'rgba(16, 185, 129, 0.7)';
+
+        // ======================
+        //  EVENT LISTENERS
+        // ======================
+        document.addEventListener('DOMContentLoaded', function() {
+            // Mobile menu toggle
+            const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+            if (mobileMenuBtn) {
+                mobileMenuBtn.addEventListener('click', UIManager.toggleMobileMenu);
+            }
+
+            // Keyboard navigation for modals
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    // Close any open modal
+                    document.querySelectorAll('.modal.show').forEach(modal => {
+                        Utils.hideModal(modal.id);
+                    });
+                }
+            });
+
+            // Click outside modal to close
+            document.querySelectorAll('.modal').forEach(modal => {
+                modal.addEventListener('click', function(e) {
+                    if (e.target === modal) {
+                        Utils.hideModal(modal.id);
+                    }
+                });
+            });
+
+            // Animate appointment cards on load
+            const appointmentCards = document.querySelectorAll('.appointment-card');
+            appointmentCards.forEach((card, index) => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
                 
                 setTimeout(() => {
-                    copyBtn.innerHTML = originalHTML;
-                    copyBtn.style.background = '';
-                }, 2000);
-            }).catch(err => {
-                console.error('Failed to copy text: ', err);
-                alert('Failed to copy link. Please copy manually.');
+                    card.style.transition = 'all 0.3s ease';
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, index * 100);
             });
-        }
-        
-        // Action functions
-        function sendMessage() {
-            alert('💬 Secure messaging feature coming soon! For urgent matters, please use emergency support.');
-        }
-        
-        function requestCall() {
-            if (confirm('📞 Request a callback from your therapist? They will contact you within 24 hours to schedule a virtual session.')) {
-                alert('✅ Callback request sent! Your therapist will contact you soon to set up a virtual session.');
-            }
-        }
-        
-        function requestEmergencySession() {
-            if (confirm('🚨 Request emergency virtual session? This will prioritize your case for immediate online support.')) {
-                alert('✅ Emergency session requested! You will be contacted within 1 hour for a virtual session.');
-            }
-        }
-        
-        function acceptAppointment(appointmentId) {
-            if (confirm('✅ Accept this virtual session time slot?')) {
-                alert('✅ Virtual session confirmed! You will receive a confirmation email with the meeting link.');
-                location.reload();
-            }
-        }
-        
-        function rescheduleAppointment(appointmentId) {
-            if (confirm('📅 Reschedule this virtual session?')) {
-                alert('📅 Rescheduling request sent! You will receive new virtual session time options shortly.');
-            }
-        }
-        
-        function cancelAppointment(appointmentId) {
-            if (confirm('❌ Are you sure you want to cancel this appointment?\n\nThis action cannot be undone, but you will be able to schedule a new session afterward.')) {
-                console.log('🗑️ Cancelling appointment:', appointmentId);
-                
-                const formData = new FormData();
-                formData.append('appointment_id', appointmentId);
-                
-                fetch('/api/cancel-appointment', {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest'
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        alert('✅ Appointment cancelled successfully!\n\nYou can now schedule a new session.');
-                        location.reload();
-                    } else {
-                        alert('❌ Failed to cancel appointment: ' + (data.error || 'Unknown error'));
-                    }
-                })
-                .catch(error => {
-                    console.error('❌ Cancel appointment error:', error);
-                    alert('❌ Failed to cancel appointment. Please try again or contact support.');
-                });
-            }
-        }
-        
-        // Initialize page
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('Auto-scheduling therapist info page loaded');
-            
-            // Close modals when clicking outside
-            document.getElementById('emergency-modal').addEventListener('click', function(e) {
-                if (e.target === this) {
-                    closeEmergencyModal();
-                }
-            });
-            
-            document.getElementById('autoschedule-modal').addEventListener('click', function(e) {
-                if (e.target === this) {
-                    closeAutoScheduleModal();
-                }
-            });
+
+            // Initialize tooltips or other interactive elements as needed
+            console.log('Therapist page initialized successfully');
         });
+
+        // ======================
+        //  GLOBAL FUNCTIONS (for onclick handlers)
+        // ======================
+        window.autoScheduleSession = AppointmentManager.autoScheduleSession;
+        window.cancelAppointment = AppointmentManager.cancelAppointment;
+        window.refreshZoomMeeting = AppointmentManager.refreshZoomMeeting;
+        window.copyMeetLink = AppointmentManager.copyMeetLink;
+        window.showEmergencyModal = UIManager.showEmergencyModal;
+        window.closeEmergencyModal = UIManager.closeEmergencyModal;
+        window.closeAutoScheduleModal = UIManager.closeAutoScheduleModal;
+        window.refreshAppointments = UIManager.refreshAppointments;
+        window.showManualScheduling = UIManager.showManualScheduling;
+        window.sendMessage = UIManager.sendMessage;
+        window.requestCall = UIManager.requestCall;
+        window.requestEmergencySession = UIManager.requestEmergencySession;
+        window.viewSessionDetails = UIManager.viewSessionDetails;
+        window.showAlreadyScheduledMessage = UIManager.showAlreadyScheduledMessage;
+
+        // Legacy compatibility functions
+        window.acceptAppointment = function(appointmentId) {
+            Utils.showAlert('Accept appointment feature coming soon!', 'info');
+        };
+
+        window.rescheduleAppointment = function(appointmentId) {
+            Utils.showAlert('Reschedule feature coming soon!', 'info');
+        };
     </script>
 </body>
 </html>

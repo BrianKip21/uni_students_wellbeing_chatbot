@@ -20,3 +20,7 @@ venv/
 # OS-specific
 Thumbs.db
 .DS_Store
+
+.env
+.env.local
+.env.production

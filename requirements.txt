@@ -1,0 +1,79 @@
+# Core Flask dependencies
+Flask==2.3.3
+Flask-PyMongo==2.3.0
+Flask-Login==0.6.3
+Flask-WTF==1.2.1
+WTForms==3.1.0
+
+# Database
+pymongo==4.6.0
+bson==0.5.10
+
+# Zoom Integration (NEW - for real video meetings)
+PyJWT==2.8.0
+requests==2.31.0
+
+# Google Calendar Integration (Optional - for calendar features)
+google-auth==2.23.4
+google-auth-oauthlib==1.1.0
+google-auth-httplib2==0.1.1
+google-api-python-client==2.108.0
+
+# Date and time handling
+python-dateutil==2.8.2
+pytz==2023.3
+
+# Environment management
+python-dotenv==1.0.0
+
+# Logging and monitoring
+structlog==23.2.0
+
+# HTTP requests (enhanced for Zoom API)
+urllib3==1.26.18
+
+# Data validation
+marshmallow==3.20.1
+
+# Email functionality
+Flask-Mail==0.9.1
+
+# Task scheduling (for background tasks)
+celery==5.3.4
+redis==5.0.1
+
+# Security
+cryptography==41.0.7
+
+# Development dependencies
+pytest==7.4.3
+pytest-flask==1.3.0
+pytest-mock==3.12.0
+black==23.11.0
+flake8==6.1.0
+
+# Additional utilities
+uuid==1.30
+jsonschema==4.20.0
+
+# Mental health specific dependencies
+scikit-learn==1.3.2  # For crisis detection algorithms
+textblob==0.17.1     # For text analysis if needed
+
+# Calendar and scheduling utilities
+icalendar==5.0.10    # For iCal format support
+recurring-ical-events==2.0.2  # For recurring events
+
+# SMS notifications (optional)
+twilio==8.10.0
+
+# Push notifications (optional)
+pyfcm==1.5.4
+
+# Web scraping and API tools (for integrations)
+beautifulsoup4==4.12.2
+lxml==4.9.3
+
+# Additional security for API tokens
+cryptography==41.0.7
+Werkzeug==2.3.7

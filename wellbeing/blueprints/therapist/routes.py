@@ -9,7 +9,58 @@ from wellbeing.blueprints.therapist import therapist_bp
 from wellbeing.utils.decorators import therapist_required
 from wellbeing import mongo, logger
 from wellbeing.models.therapist import find_therapist_by_id, update_therapist_settings
+from wellbeing.utils.automated_moderation import send_auto_moderated_message, AutomatedModerator
 
+# Add this NEW function to therapist.py
+def get_therapist_students_with_fallback(therapist_id):
+    """Get students for a therapist with fallback to users collection"""
+    try:
+        # Primary method: get from therapist_assignments
+        assignments = list(mongo.db.therapist_assignments.find({
+            'therapist_id': therapist_id,
+            'status': 'active'
+        }))
+        
+        logger.info(f"Found {len(assignments)} assignments for therapist {therapist_id}")
+        
+        # Fallback method: if no assignments found, check users collection
+        if not assignments:
+            logger.info(f"No assignments found, checking users collection for fallback")
+            users_with_therapist = list(mongo.db.users.find({
+                'assigned_therapist_id': therapist_id,
+                'role': 'student'
+            }))
+            
+            if users_with_therapist:
+                logger.info(f"Found {len(users_with_therapist)} users assigned to therapist via users collection")
+                # Create missing assignments
+                for user in users_with_therapist:
+                    assignment_data = {
+                        'therapist_id': therapist_id,
+                        'student_id': user['_id'],
+                        'status': 'active',
+                        'auto_assigned': True,
+                        'created_at': user.get('assignment_date', datetime.now()),
+                        'updated_at': datetime.now()
+                    }
+                    
+                    # Check if assignment already exists before inserting
+                    existing = mongo.db.therapist_assignments.find_one({
+                        'therapist_id': therapist_id,
+                        'student_id': user['_id']
+                    })
+                    
+                    if not existing:
+                        mongo.db.therapist_assignments.insert_one(assignment_data)
+                        assignments.append(assignment_data)
+                        logger.info(f"Created missing assignment for student {user['_id']}")
+        
+        return assignments
+        
+    except Exception as e:
+        logger.error(f"Error getting therapist students: {str(e)}")
+        return []
+    
 @therapist_bp.route('/dashboard', methods=['GET', 'POST'])
 @therapist_required
 def index():
@@ -155,7 +206,7 @@ def index():
 @therapist_bp.route('/students')
 @therapist_required
 def students():
-    """View assigned students with virtual session history."""
+    """View assigned students with virtual session history - FIXED VERSION."""
     try:
         therapist_id = ObjectId(session['user'])
         therapist = find_therapist_by_id(therapist_id)
@@ -164,11 +215,8 @@ def students():
             flash('Therapist not found. Please log in again.', 'error')
             return redirect(url_for('auth.login'))
         
-        # Get all active student assignments
-        assignments = list(mongo.db.therapist_assignments.find({
-            'therapist_id': therapist_id,
-            'status': 'active'
-        }))
+        # Use the fixed function to get students with fallback
+        assignments = get_therapist_students_with_fallback(therapist_id)
         
         logger.info(f"Found {len(assignments)} active assignments for therapist ID {therapist_id}")
         
@@ -190,14 +238,14 @@ def students():
                 
                 # Get latest VIRTUAL appointment
                 latest_appointment = mongo.db.appointments.find_one({
-                    'user_id': student_id,
+                    'student_id': student_id,  # Use student_id consistently
                     'therapist_id': therapist_id,
                     'type': 'virtual'
                 }, sort=[('datetime', -1)])
                 
                 # Get next upcoming VIRTUAL appointment
                 next_appointment = mongo.db.appointments.find_one({
-                    'user_id': student_id,
+                    'student_id': student_id,  # Use student_id consistently
                     'therapist_id': therapist_id,
                     'datetime': {'$gte': datetime.now()},
                     'status': 'confirmed',
@@ -206,7 +254,7 @@ def students():
                 
                 # Count total virtual sessions
                 total_sessions = mongo.db.appointments.count_documents({
-                    'user_id': student_id,
+                    'student_id': student_id,  # Use student_id consistently
                     'therapist_id': therapist_id,
                     'status': 'completed',
                     'type': 'virtual'
@@ -254,6 +302,7 @@ def students():
         logger.error(f"Error in students route: {e}")
         flash('An error occurred while loading your students', 'error')
         return redirect(url_for('therapist.index'))
+
 
 @therapist_bp.route('/virtual-sessions')
 @therapist_required
@@ -1073,7 +1122,7 @@ def chat(student_id):
 @therapist_bp.route('/send-message/<student_id>', methods=['POST'])
 @therapist_required
 def send_message(student_id):
-    """Send a message to a student."""
+    """Send message with fully automated moderation"""
     therapist_id = ObjectId(session['user'])
     
     # Verify assignment
@@ -1086,48 +1135,168 @@ def send_message(student_id):
     if not assignment:
         return jsonify({'success': False, 'error': 'Student not assigned to you'})
     
-    # Get message content
     message = request.form.get('message', '').strip()
     
     if not message:
         return jsonify({'success': False, 'error': 'Message cannot be empty'})
     
     try:
-        # Create message
-        new_message = {
-            'student_id': ObjectId(student_id),
-            'therapist_id': therapist_id,
-            'sender': 'therapist',
-            'message': message,
-            'read': False,
-            'timestamp': datetime.now(timezone.utc)
-        }
+        # Send through automated moderation
+        result = send_auto_moderated_message(
+            sender_id=str(therapist_id),
+            recipient_id=student_id,
+            message=message,
+            sender_type='therapist'
+        )
         
-        result = mongo.db.therapist_chats.insert_one(new_message)
+        if not result['success']:
+            return jsonify({
+                'success': False,
+                'blocked': result.get('blocked', False),
+                'error': result.get('reason', 'Message could not be sent'),
+                'auto_response': result.get('auto_response')
+            })
         
-        # Add notification for student
-        mongo.db.notifications.insert_one({
-            'user_id': ObjectId(student_id),
-            'type': 'new_message',
-            'message': 'You have a new message from your therapist.',
-            'related_id': result.inserted_id,
-            'read': False,
-            'created_at': datetime.now(timezone.utc)
-        })
-        
-        # Return formatted message for immediate display
-        return jsonify({
+        # Message sent successfully
+        response = {
             'success': True,
             'message': {
-                'id': str(result.inserted_id),
+                'id': result['message_id'],
                 'content': message,
-                'timestamp': datetime.now(timezone.utc).strftime('%I:%M %p | %b %d')
+                'timestamp': datetime.now().strftime('%I:%M %p | %b %d'),
+                'was_filtered': result.get('filtered', False)
             }
+        }
+        
+        # Add notifications for therapists
+        if result.get('warnings'):
+            response['warnings'] = result['warnings']
+        
+        if result.get('filtered'):
+            response['content_filtered'] = True
+        
+        return jsonify(response)
+        
+    except Exception as e:
+        logger.error(f"Therapist automated message send error: {e}")
+        return jsonify({
+            'success': False, 
+            'error': 'An error occurred while sending the message'
+        })
+    
+@therapist_bp.route('/api/crisis-alerts')
+@therapist_required
+def get_crisis_alerts():
+    """Get automated crisis alerts for therapist"""
+    therapist_id = ObjectId(session['user'])
+    
+    try:
+        # Get active crisis alerts for this therapist's students
+        active_alerts = list(mongo.db.crisis_alerts.find({
+            'therapist_id': therapist_id,
+            'status': {'$in': ['auto_escalated', 'pending_review']},
+            'created_at': {'$gte': datetime.now() - timedelta(days=7)}
+        }).sort('created_at', -1))
+        
+        # Add student information
+        for alert in active_alerts:
+            student = mongo.db.users.find_one({'_id': alert['student_id']})
+            if student:
+                alert['student_name'] = f"{student['first_name']} {student['last_name']}"
+                alert['student_email'] = student.get('email', '')
+        
+        return jsonify({
+            'active_alerts': active_alerts,
+            'total_count': len(active_alerts)
         })
         
     except Exception as e:
-        logger.error(f"Send message error: {e}")
-        return jsonify({'success': False, 'error': 'An error occurred while sending the message'})
+        logger.error(f"Error getting crisis alerts: {e}")
+        return jsonify({'active_alerts': [], 'total_count': 0})
+
+@therapist_bp.route('/api/acknowledge-crisis-alert/<alert_id>', methods=['POST'])
+@therapist_required
+def acknowledge_crisis_alert(alert_id):
+    """Acknowledge and respond to automated crisis alert"""
+    therapist_id = ObjectId(session['user'])
+    
+    try:
+        # Update alert status
+        result = mongo.db.crisis_alerts.update_one(
+            {
+                '_id': ObjectId(alert_id),
+                'therapist_id': therapist_id
+            },
+            {
+                '$set': {
+                    'status': 'acknowledged',
+                    'acknowledged_by': therapist_id,
+                    'acknowledged_at': datetime.now(),
+                    'response_action': request.json.get('action', 'contacted_student')
+                }
+            }
+        )
+        
+        if result.modified_count > 0:
+            # Optionally notify student that alert was acknowledged
+            alert = mongo.db.crisis_alerts.find_one({'_id': ObjectId(alert_id)})
+            if alert:
+                mongo.db.notifications.insert_one({
+                    'user_id': alert['student_id'],
+                    'type': 'crisis_response',
+                    'message': 'Your therapist has been notified of your message and will respond shortly.',
+                    'read': False,
+                    'created_at': datetime.now()
+                })
+            
+            return jsonify({'success': True, 'message': 'Crisis alert acknowledged'})
+        else:
+            return jsonify({'success': False, 'error': 'Alert not found or already processed'})
+            
+    except Exception as e:
+        logger.error(f"Error acknowledging crisis alert: {e}")
+        return jsonify({'success': False, 'error': 'Failed to acknowledge alert'})
+    
+# Bulk message operations with automated moderation
+@therapist_bp.route('/api/bulk-message-status')
+@therapist_required
+def bulk_message_status():
+    """Get moderation status for multiple recent messages"""
+    therapist_id = ObjectId(session['user'])
+    
+    try:
+        # Get recent messages from this therapist's students
+        recent_messages = list(mongo.db.therapist_chats.find({
+            'therapist_id': therapist_id,
+            'timestamp': {'$gte': datetime.now() - timedelta(hours=24)},
+            'automated_moderation': True
+        }).sort('timestamp', -1))
+        
+        # Group by moderation flags
+        moderation_summary = {}
+        for msg in recent_messages:
+            flags = msg.get('moderation_flags', [])
+            action = msg.get('moderation_action', 'allow')
+            
+            if flags:
+                for flag in flags:
+                    if flag not in moderation_summary:
+                        moderation_summary[flag] = {'count': 0, 'action_types': {}}
+                    
+                    moderation_summary[flag]['count'] += 1
+                    moderation_summary[flag]['action_types'][action] = \
+                        moderation_summary[flag]['action_types'].get(action, 0) + 1
+        
+        return jsonify({
+            'total_messages': len(recent_messages),
+            'moderation_summary': moderation_summary,
+            'period': '24_hours'
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting bulk message status: {e}")
+        return jsonify({'error': 'Failed to get message status'})
+
 
 @therapist_bp.route('/share-resource', methods=['POST'])
 @therapist_required

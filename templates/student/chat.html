@@ -1,0 +1,1157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat with {{ therapist.name if therapist else 'Your Therapist' }} | Wellbeing Assistant</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css"> 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <meta name="description" content="Secure messaging with your assigned therapist">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        :root {
+            --primary-purple: #8b5cf6;
+            --primary-green: #10b981;
+            --primary-blue: #3b82f6;
+            --danger-red: #ef4444;
+            --warning-yellow: #f59e0b;
+            --text-primary: #e0e7ff;
+            --text-secondary: #a78bfa;
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 50%, #2d1b69 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+        
+        /* Sidebar */
+        .sidebar {
+            background: rgba(15, 15, 35, 0.95);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid var(--glass-border);
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 260px;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+        }
+        
+        .sidebar-nav a {
+            color: var(--text-secondary);
+            padding: 0.75rem 1.5rem;
+            display: flex;
+            align-items: center;
+            transition: all 0.3s ease;
+            border-radius: 0 20px 20px 0;
+            margin-right: 1rem;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .sidebar-nav a:hover {
+            background: rgba(139, 92, 246, 0.2);
+            color: #c4b5fd;
+            transform: translateX(8px);
+        }
+        
+        .sidebar-nav a.active {
+            background: linear-gradient(135deg, var(--primary-purple), #7c3aed);
+            color: white;
+            box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4);
+        }
+        
+        /* Main Content */
+        .main-content {
+            margin-left: 260px;
+            min-height: 100vh;
+            padding: 2rem;
+            transition: margin-left 0.3s ease;
+        }
+        
+        /* Glass Cards */
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+            animation: fadeInSlide 0.6s ease-out;
+        }
+        
+        .glass-card:hover {
+            background: rgba(255, 255, 255, 0.08);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Chat Container */
+        .chat-container {
+            background: rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            border: 1px solid var(--glass-border);
+            height: 500px;
+            overflow-y: auto;
+            padding: 1.5rem;
+            scroll-behavior: smooth;
+        }
+
+        .chat-container::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .chat-container::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+
+        .chat-container::-webkit-scrollbar-thumb {
+            background: var(--primary-purple);
+            border-radius: 4px;
+        }
+
+        .chat-container::-webkit-scrollbar-thumb:hover {
+            background: #7c3aed;
+        }
+
+        /* Message Bubbles */
+        .message-bubble {
+            animation: messageSlideIn 0.3s ease-out;
+            margin-bottom: 1rem;
+        }
+
+        .message-content {
+            max-width: 70%;
+            padding: 1rem 1.25rem;
+            border-radius: 20px;
+            word-wrap: break-word;
+            position: relative;
+            backdrop-filter: blur(10px);
+            border: 1px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .student-message .message-content {
+            background: linear-gradient(135deg, var(--primary-purple), #7c3aed);
+            color: white;
+            margin-left: auto;
+            border-bottom-right-radius: 8px;
+            box-shadow: 0 8px 25px rgba(139, 92, 246, 0.3);
+        }
+
+        .therapist-message .message-content {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+            border: 1px solid var(--glass-border);
+            margin-right: auto;
+            border-bottom-left-radius: 8px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .message-time {
+            font-size: 0.75rem;
+            opacity: 0.8;
+            margin-top: 0.5rem;
+            display: block;
+        }
+
+        .student-message .message-time {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .therapist-message .message-time {
+            color: var(--text-secondary);
+        }
+
+        /* Message Input */
+        .message-input-container {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 1rem;
+            margin-top: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .message-input-container:focus-within {
+            border-color: var(--primary-purple);
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+        }
+
+        .message-input {
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            width: 100%;
+            padding: 0.75rem;
+            font-size: 1rem;
+            outline: none;
+            resize: none;
+            min-height: 44px;
+            max-height: 120px;
+        }
+
+        .message-input::placeholder {
+            color: var(--text-secondary);
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            border: none;
+            font-size: 0.875rem;
+            min-height: 44px;
+            user-select: none;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-purple), #7c3aed);
+            color: white;
+            box-shadow: 0 8px 25px rgba(139, 92, 246, 0.3);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 30px rgba(139, 92, 246, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            color: var(--text-primary);
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: var(--primary-purple);
+            transform: translateY(-2px);
+        }
+
+        .send-btn {
+            background: linear-gradient(135deg, var(--primary-green), #059669);
+            color: white;
+            border-radius: 12px;
+            padding: 0.75rem 1rem;
+            margin-left: 1rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
+        }
+
+        .send-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 30px rgba(16, 185, 129, 0.4);
+        }
+
+        /* Status Indicators */
+        .online-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--primary-green);
+            border: 1px solid rgba(16, 185, 129, 0.4);
+            animation: statusPulse 2s infinite;
+        }
+
+        .unread-badge {
+            background: linear-gradient(135deg, var(--danger-red), #dc2626);
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 600;
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            animation: unreadPulse 2s infinite;
+        }
+
+        /* Sidebar Cards */
+        .sidebar-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 1.25rem;
+            margin-bottom: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-card:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: var(--primary-purple);
+            transform: translateY(-2px);
+        }
+
+        .appointment-item {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            padding: 0.75rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            margin-bottom: 0.75rem;
+            border: 1px solid var(--glass-border);
+            transition: all 0.3s ease;
+        }
+
+        .appointment-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: var(--primary-green);
+        }
+
+        .resource-item {
+            padding: 0.75rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            margin-bottom: 0.75rem;
+            border: 1px solid var(--glass-border);
+            transition: all 0.3s ease;
+        }
+
+        .resource-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: var(--primary-blue);
+            transform: translateX(4px);
+        }
+
+        .resource-link {
+            color: var(--primary-blue);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .resource-link:hover {
+            color: #60a5fa;
+        }
+
+        /* Empty State */
+        .empty-chat {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--text-secondary);
+        }
+
+        .empty-chat i {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        /* Therapist Avatar */
+        .therapist-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-green), #059669);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            border: 3px solid var(--glass-border);
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
+            overflow: hidden;
+        }
+
+        .therapist-avatar::after {
+            content: '●';
+            position: absolute;
+            bottom: 2px;
+            right: 2px;
+            width: 16px;
+            height: 16px;
+            background: var(--primary-green);
+            border: 2px solid #0f0f23;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 8px;
+            color: white;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            
+            .sidebar.open {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-left: 0;
+                padding: 1rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .chat-layout {
+                flex-direction: column;
+            }
+            
+            .chat-main {
+                order: 1;
+            }
+            
+            .chat-sidebar {
+                order: 2;
+                margin-top: 2rem;
+            }
+            
+            .message-content {
+                max-width: 85%;
+            }
+            
+            .chat-container {
+                height: 400px;
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeInSlide {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes messageSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        @keyframes statusPulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+            50% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+        }
+
+        @keyframes unreadPulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            50% { box-shadow: 0 0 0 4px rgba(239, 68, 68, 0); }
+        }
+
+        @keyframes typing {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-10px); }
+        }
+
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            margin-bottom: 1rem;
+            width: fit-content;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--primary-purple);
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+        /* Focus styles for accessibility */
+        button:focus,
+        a:focus,
+        input:focus,
+        textarea:focus {
+            outline: 2px solid var(--primary-purple);
+            outline-offset: 2px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Mobile Menu Button -->
+    <button id="mobile-menu-btn" class="fixed top-4 left-4 z-50 lg:hidden bg-purple-600 text-white p-3 rounded-lg shadow-lg">
+        <i class="fas fa-bars"></i>
+        <span class="sr-only">Toggle navigation menu</span>
+    </button>
+
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" id="sidebar" role="navigation" aria-label="Main navigation">
+        <div class="p-6">
+            <h1 class="text-2xl font-bold mb-8 bg-gradient-to-r from-purple-400 to-pink-600 bg-clip-text text-transparent">
+                Wellbeing Assistant
+            </h1>
+        </div>
+        <nav class="sidebar-nav">
+            <ul class="space-y-2" role="list">
+                <li><a href="{{ url_for('dashboard.index') }}" class="flex items-center">
+                    <i class="fas fa-chart-line w-5 mr-3"></i> Dashboard
+                </a></li>
+                <li><a href="{{ url_for('tracking.index') }}" class="flex items-center">
+                    <i class="fas fa-chart-bar w-5 mr-3"></i> Wellness Tracker
+                </a></li>
+                <li><a href="{{ url_for('chatbot.chatbot_page') }}" class="flex items-center">
+                    <i class="fas fa-robot w-5 mr-3"></i> AI Chat
+                </a></li>
+                <li><a href="{{ url_for('dashboard.student_chat') }}" class="flex items-center active" aria-current="page">
+                    <i class="fas fa-comments w-5 mr-3"></i> Chat with Therapist
+                </a></li>
+                <li><a href="{{ url_for('dashboard.therapist_info') }}" class="flex items-center">
+                    <i class="fas fa-user-md w-5 mr-3"></i> Your Therapist
+                </a></li>
+                <li><a href="{{ url_for('dashboard.profile') }}" class="flex items-center">
+                    <i class="fas fa-user w-5 mr-3"></i> Profile
+                </a></li>
+                <li><a href="{{ url_for('dashboard.student_resources') }}" class="flex items-center">
+                    <i class="fas fa-book w-5 mr-3"></i> Resources
+                </a></li>
+                <li><a href="{{ url_for('dashboard.settings') }}" class="flex items-center">
+                    <i class="fas fa-cog w-5 mr-3"></i> Settings
+                </a></li>
+            </ul>
+            
+            <div class="mt-auto p-6">
+                <a href="{{ url_for('auth.logout') }}" class="flex items-center text-red-400 hover:text-red-300">
+                    <i class="fas fa-sign-out-alt w-5 mr-3"></i> Logout
+                </a>
+            </div>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content" role="main">
+        <div class="max-w-7xl mx-auto">
+            <!-- Header -->
+            <header class="mb-8">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-4">
+                        {% if therapist %}
+                        <div class="therapist-avatar">
+                            {% if therapist.photo %}
+                                <img src="{{ therapist.photo }}" alt="Photo of {{ therapist.name }}" class="w-full h-full object-cover rounded-full">
+                            {% else %}
+                                <i class="fas fa-user-md text-2xl text-white"></i>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <h1 class="text-3xl font-bold text-white mb-1">
+                                Chat with {{ therapist.name }}
+                            </h1>
+                            <p class="text-purple-300">
+                                <i class="fas fa-shield-alt mr-2"></i>
+                                Secure & Confidential Messaging
+                            </p>
+                            <div class="online-status mt-2">
+                                <i class="fas fa-circle"></i>
+                                Online Available
+                            </div>
+                        </div>
+                        {% else %}
+                        <div>
+                            <h1 class="text-3xl font-bold text-white mb-1">
+                                Chat with Your Therapist
+                            </h1>
+                            <p class="text-purple-300">
+                                Complete your intake to start messaging
+                            </p>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    {% if therapist %}
+                    <div class="flex space-x-3">
+                        <button onclick="clearChat()" class="btn btn-secondary">
+                            <i class="fas fa-broom"></i>
+                            Clear Chat
+                        </button>
+                        <a href="{{ url_for('dashboard.therapist_info') }}" class="btn btn-primary">
+                            <i class="fas fa-user-md"></i>
+                            View Therapist Profile
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </header>
+
+            {% if therapist %}
+            <!-- Chat Layout -->
+            <div class="chat-layout grid grid-cols-1 lg:grid-cols-4 gap-8">
+                <!-- Main Chat Area -->
+                <div class="chat-main lg:col-span-3">
+                    <div class="glass-card p-0 overflow-hidden">
+                        <!-- Chat Header -->
+                        <div class="p-6 border-b border-white border-opacity-10">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-3">
+                                    <i class="fas fa-comments text-2xl text-purple-400"></i>
+                                    <div>
+                                        <h2 class="text-xl font-semibold text-white">
+                                            Secure Conversation
+                                        </h2>
+                                        <p class="text-sm text-purple-300">
+                                            End-to-end encrypted messaging
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-sm text-purple-300">
+                                        {{ chat_history|length }} messages
+                                    </div>
+                                    {% if therapist.license_number %}
+                                    <div class="text-xs text-gray-400">
+                                        License: {{ therapist.license_number }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Chat Messages -->
+                        <div class="chat-container" id="chatContainer">
+                            {% if chat_history and chat_history|length > 0 %}
+                                {% for chat in chat_history %}
+                                <div class="message-bubble {{ 'student-message' if chat.sender == 'student' else 'therapist-message' }}">
+                                    <div class="flex {{ 'justify-end' if chat.sender == 'student' else 'justify-start' }}">
+                                        <div class="message-content">
+                                            <p class="mb-0">{{ chat.message }}</p>
+                                            <small class="message-time">
+                                                {% if chat.sender == 'student' %}
+                                                    <i class="fas fa-check text-xs mr-1"></i>
+                                                {% else %}
+                                                    <i class="fas fa-user-md text-xs mr-1"></i>
+                                                {% endif %}
+                                                {{ chat.timestamp.strftime('%I:%M %p | %b %d') if chat.timestamp else 'Just now' }}
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                                <div class="empty-chat">
+                                    <i class="fas fa-comment-dots"></i>
+                                    <h3 class="text-xl font-semibold mb-2">Start Your Conversation</h3>
+                                    <p class="mb-4">Send your first message to {{ therapist.name }}</p>
+                                    <div class="text-sm space-y-1">
+                                        <p><i class="fas fa-shield-alt mr-2 text-green-400"></i>Messages are encrypted and secure</p>
+                                        <p><i class="fas fa-clock mr-2 text-blue-400"></i>Responses typically within 24 hours</p>
+                                        <p><i class="fas fa-heart mr-2 text-purple-400"></i>Professional therapeutic support</p>
+                                    </div>
+                                </div>
+                            {% endif %}
+
+                            <!-- Typing Indicator (hidden by default) -->
+                            <div id="typingIndicator" class="typing-indicator" style="display: none;">
+                                <span class="text-purple-300 text-sm mr-3">{{ therapist.name }} is typing</span>
+                                <div class="typing-dot"></div>
+                                <div class="typing-dot"></div>
+                                <div class="typing-dot"></div>
+                            </div>
+                        </div>
+
+                        <!-- Message Input -->
+                        <div class="p-6 border-t border-white border-opacity-10">
+                            <form id="messageForm" onsubmit="sendMessage(event)">
+                                <div class="message-input-container">
+                                    <div class="flex items-end space-x-4">
+                                        <div class="flex-1">
+                                            <textarea 
+                                                id="messageInput" 
+                                                class="message-input" 
+                                                placeholder="Type your message to {{ therapist.name }}..."
+                                                required
+                                                maxlength="1000"
+                                                rows="1"
+                                                aria-label="Message input"></textarea>
+                                        </div>
+                                        <button type="submit" class="send-btn" id="sendButton">
+                                            <i class="fas fa-paper-plane"></i>
+                                            <span class="hidden sm:inline ml-2">Send</span>
+                                        </button>
+                                    </div>
+                                    <div class="flex items-center justify-between mt-3 text-sm text-purple-300">
+                                        <div class="flex items-center space-x-4">
+                                            <span>
+                                                <i class="fas fa-lock mr-1"></i>
+                                                Encrypted & Secure
+                                            </span>
+                                            <span id="charCount">0/1000</span>
+                                        </div>
+                                        <div class="flex items-center space-x-2">
+                                            <button type="button" onclick="addEmoji('😊')" class="text-yellow-400 hover:text-yellow-300 transition-colors">😊</button>
+                                            <button type="button" onclick="addEmoji('😔')" class="text-blue-400 hover:text-blue-300 transition-colors">😔</button>
+                                            <button type="button" onclick="addEmoji('😟')" class="text-red-400 hover:text-red-300 transition-colors">😟</button>
+                                            <button type="button" onclick="addEmoji('💙')" class="text-blue-500 hover:text-blue-400 transition-colors">💙</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sidebar -->
+                <div class="chat-sidebar lg:col-span-1 space-y-6">
+                    <!-- Upcoming Appointments -->
+                    <div class="sidebar-card">
+                        <h3 class="text-lg font-semibold text-white mb-4 flex items-center">
+                            <i class="fas fa-calendar-alt mr-2 text-green-400"></i>
+                            Upcoming Sessions
+                        </h3>
+                        {% if upcoming_appointments and upcoming_appointments|length > 0 %}
+                            {% for appointment in upcoming_appointments %}
+                            <div class="appointment-item">
+                                <div class="flex-1">
+                                    <div class="font-semibold text-white text-sm">
+                                        {{ appointment.get('formatted_time', 'Time TBD') }}
+                                    </div>
+                                    <div class="text-xs text-purple-300">
+                                        <i class="fas fa-video mr-1"></i>
+                                        {{ appointment.get('type', 'Virtual') }} Session
+                                    </div>
+                                </div>
+                                {% if appointment.get('meeting_info', {}).get('meet_link') %}
+                                <a href="{{ url_for('dashboard.join_session', appointment_id=appointment._id) }}" 
+                                   class="btn btn-primary text-xs px-3 py-1">
+                                    Join
+                                </a>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="text-center py-6 text-purple-300">
+                                <i class="fas fa-calendar-plus text-3xl mb-3 opacity-50"></i>
+                                <p class="text-sm">No upcoming sessions</p>
+                                <a href="{{ url_for('dashboard.therapist_info') }}" class="btn btn-secondary text-xs mt-3">
+                                    Schedule Session
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Shared Resources -->
+                    <div class="sidebar-card">
+                        <h3 class="text-lg font-semibold text-white mb-4 flex items-center">
+                            <i class="fas fa-book-open mr-2 text-blue-400"></i>
+                            Shared Resources
+                        </h3>
+                        {% if shared_resources and shared_resources|length > 0 %}
+                            {% for resource in shared_resources[:5] %}
+                            <div class="resource-item">
+                                <a href="{{ resource.url }}" target="_blank" class="resource-link block">
+                                    <div class="font-semibold text-sm">{{ resource.title }}</div>
+                                </a>
+                                <div class="text-xs text-gray-400 mt-1">
+                                    {{ resource.description[:60] }}{% if resource.description|length > 60 %}...{% endif %}
+                                </div>
+                                <div class="text-xs text-green-400 mt-1">
+                                    <i class="fas fa-calendar mr-1"></i>
+                                    Shared {{ resource.shared_at.strftime('%b %d') if resource.shared_at else 'recently' }}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="text-center py-6 text-purple-300">
+                                <i class="fas fa-book text-3xl mb-3 opacity-50"></i>
+                                <p class="text-sm">No resources shared yet</p>
+                                <p class="text-xs mt-1">Your therapist may share helpful resources here</p>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div class="sidebar-card">
+                        <h3 class="text-lg font-semibold text-white mb-4 flex items-center">
+                            <i class="fas fa-bolt mr-2 text-yellow-400"></i>
+                            Quick Actions
+                        </h3>
+                        <div class="space-y-3">
+                            <button onclick="requestEmergencySupport()" class="btn btn-danger w-full text-sm">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                Emergency Support
+                            </button>
+                            <a href="{{ url_for('dashboard.therapist_info') }}" class="btn btn-secondary w-full text-sm">
+                                <i class="fas fa-user-md"></i>
+                                View Therapist Profile
+                            </a>
+                            <button onclick="exportChat()" class="btn btn-secondary w-full text-sm">
+                                <i class="fas fa-download"></i>
+                                Export Chat History
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {% else %}
+            <!-- No Therapist Assigned -->
+            <div class="glass-card text-center p-12">
+                <i class="fas fa-user-md text-8xl text-purple-400 mb-8 opacity-50"></i>
+                <h2 class="text-3xl font-bold text-white mb-4">No Therapist Assigned</h2>
+                <p class="text-purple-300 mb-8 text-lg">Complete your mental health assessment to get matched with a therapist and start secure messaging</p>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                    <a href="{{ url_for('dashboard.student_intake') }}" class="btn btn-primary">
+                        <i class="fas fa-brain"></i>
+                        Start Assessment
+                    </a>
+                    <a href="{{ url_for('dashboard.index') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i>
+                        Back to Dashboard
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </main>
+
+    <!-- Success Toast Template -->
+    <div id="toast-container" class="fixed top-4 right-4 z-50" aria-live="polite"></div>
+
+    <script>
+        // Configuration
+        const CONFIG = {
+            hasTherapist: {{ 'true' if therapist else 'false' }},
+            endpoints: {
+                sendMessage: '{{ url_for("dashboard.send_message_to_therapist") }}',
+                getRecentMessages: '{{ url_for("dashboard.get_recent_messages") }}'
+            }
+        };
+
+        let isLoading = false;
+        let lastMessageTime = null;
+
+        // Utility Functions
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toastId = 'toast-' + Date.now();
+            
+            const toast = document.createElement('div');
+            toast.id = toastId;
+            toast.className = `bg-${type === 'success' ? 'green' : type === 'error' ? 'red' : 'yellow'}-600 text-white p-4 rounded-lg shadow-lg transform transition-all duration-300 mb-2`;
+            toast.innerHTML = `
+                <div class="flex items-center justify-between">
+                    <span><i class="fas fa-${type === 'success' ? 'check' : type === 'error' ? 'exclamation-triangle' : 'info'}-circle mr-2"></i>${message}</span>
+                    <button onclick="closeToast('${toastId}')" class="ml-4 text-white opacity-75 hover:opacity-100">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+            
+            container.appendChild(toast);
+            
+            // Auto-remove after 5 seconds
+            setTimeout(() => closeToast(toastId), 5000);
+        }
+
+        function closeToast(toastId) {
+            const toast = document.getElementById(toastId);
+            if (toast) {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100%)';
+                setTimeout(() => toast.remove(), 300);
+            }
+        }
+
+        // Auto-resize textarea
+        function autoResizeTextarea() {
+            const textarea = document.getElementById('messageInput');
+            textarea.style.height = 'auto';
+            textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+        }
+
+        // Character counter
+        function updateCharCount() {
+            const textarea = document.getElementById('messageInput');
+            const charCount = document.getElementById('charCount');
+            const count = textarea.value.length;
+            charCount.textContent = `${count}/1000`;
+            
+            if (count > 900) {
+                charCount.style.color = 'var(--danger-red)';
+            } else if (count > 800) {
+                charCount.style.color = 'var(--warning-yellow)';
+            } else {
+                charCount.style.color = 'var(--text-secondary)';
+            }
+        }
+
+        // Send Message
+        async function sendMessage(event) {
+            event.preventDefault();
+            
+            if (isLoading || !CONFIG.hasTherapist) {
+                showToast('Please wait for current operation to complete.', 'warning');
+                return;
+            }
+
+            const messageInput = document.getElementById('messageInput');
+            const sendButton = document.getElementById('sendButton');
+            const message = messageInput.value.trim();
+            
+            if (!message) {
+                showToast('Please enter a message.', 'warning');
+                return;
+            }
+
+            isLoading = true;
+            const originalButtonText = sendButton.innerHTML;
+            sendButton.disabled = true;
+            sendButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span class="hidden sm:inline ml-2">Sending...</span>';
+            
+            // Add message to chat immediately (optimistic UI)
+            addMessageToChat(message, 'student', 'Just now');
+            messageInput.value = '';
+            updateCharCount();
+            autoResizeTextarea();
+            
+            try {
+                const formData = new FormData();
+                formData.append('message', message);
+                
+                const response = await fetch(CONFIG.endpoints.sendMessage, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                
+                if (!data.success) {
+                    throw new Error(data.error || 'Failed to send message');
+                }
+                
+                showToast('Message sent successfully!');
+                lastMessageTime = new Date().toISOString();
+                
+            } catch (error) {
+                console.error('Send message error:', error);
+                showToast(error.message || 'Failed to send message', 'error');
+                // Remove the optimistic message on failure
+                setTimeout(() => location.reload(), 1000);
+            } finally {
+                isLoading = false;
+                sendButton.disabled = false;
+                sendButton.innerHTML = originalButtonText;
+                messageInput.focus();
+            }
+        }
+
+        // Add message to chat
+        function addMessageToChat(message, sender, timestamp) {
+            const chatContainer = document.getElementById('chatContainer');
+            const isStudent = sender === 'student';
+            
+            // Remove empty state if present
+            const emptyChat = chatContainer.querySelector('.empty-chat');
+            if (emptyChat) {
+                emptyChat.remove();
+            }
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message-bubble ${sender}-message`;
+            
+            messageDiv.innerHTML = `
+                <div class="flex ${isStudent ? 'justify-end' : 'justify-start'}">
+                    <div class="message-content">
+                        <p class="mb-0">${message}</p>
+                        <small class="message-time">
+                            ${isStudent ? '<i class="fas fa-check text-xs mr-1"></i>' : '<i class="fas fa-user-md text-xs mr-1"></i>'}
+                            ${timestamp}
+                        </small>
+                    </div>
+                </div>
+            `;
+            
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        // Add emoji
+        function addEmoji(emoji) {
+            const messageInput = document.getElementById('messageInput');
+            const cursorPos = messageInput.selectionStart;
+            const textBefore = messageInput.value.substring(0, cursorPos);
+            const textAfter = messageInput.value.substring(cursorPos);
+            
+            messageInput.value = textBefore + emoji + textAfter;
+            messageInput.focus();
+            messageInput.setSelectionRange(cursorPos + emoji.length, cursorPos + emoji.length);
+            
+            updateCharCount();
+            autoResizeTextarea();
+        }
+
+        // Quick Actions
+        function clearChat() {
+            if (confirm('Are you sure you want to clear the chat view? This will only clear your local view, not the actual conversation history.')) {
+                const chatContainer = document.getElementById('chatContainer');
+                chatContainer.innerHTML = `
+                    <div class="empty-chat">
+                        <i class="fas fa-comment-dots"></i>
+                        <h3 class="text-xl font-semibold mb-2">Chat Cleared</h3>
+                        <p class="mb-4">Your conversation history is still saved securely</p>
+                        <button onclick="location.reload()" class="btn btn-primary">
+                            <i class="fas fa-refresh mr-2"></i>Reload Messages
+                        </button>
+                    </div>
+                `;
+                showToast('Chat view cleared');
+            }
+        }
+
+        function requestEmergencySupport() {
+            if (confirm('Do you need immediate emergency support? This will provide you with crisis hotline information.')) {
+                showToast('Emergency resources: Call 988 (Suicide & Crisis Lifeline) or 911 for immediate help', 'warning');
+                // Could open a modal with emergency resources
+            }
+        }
+
+        function exportChat() {
+            showToast('Chat export feature coming soon!', 'info');
+        }
+
+        // Mobile menu toggle
+        function toggleMobileMenu() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('open');
+        }
+
+        // Keyboard shortcuts
+        function handleKeyboardShortcuts(event) {
+            // Ctrl/Cmd + Enter to send message
+            if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
+                event.preventDefault();
+                const form = document.getElementById('messageForm');
+                if (form) {
+                    sendMessage({ preventDefault: () => {} });
+                }
+            }
+            
+            // Escape to close mobile menu
+            if (event.key === 'Escape') {
+                const sidebar = document.getElementById('sidebar');
+                if (sidebar.classList.contains('open')) {
+                    sidebar.classList.remove('open');
+                }
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            const messageInput = document.getElementById('messageInput');
+            const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+            const chatContainer = document.getElementById('chatContainer');
+            
+            // Event listeners
+            if (messageInput) {
+                messageInput.addEventListener('input', function() {
+                    updateCharCount();
+                    autoResizeTextarea();
+                });
+                
+                messageInput.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
+                        e.preventDefault();
+                        sendMessage(e);
+                    }
+                });
+                
+                messageInput.focus();
+            }
+            
+            if (mobileMenuBtn) {
+                mobileMenuBtn.addEventListener('click', toggleMobileMenu);
+            }
+            
+            // Global keyboard shortcuts
+            document.addEventListener('keydown', handleKeyboardShortcuts);
+            
+            // Auto-scroll to bottom
+            if (chatContainer) {
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            }
+            
+            // Initialize character count
+            updateCharCount();
+            
+            console.log('Chat interface initialized successfully');
+        });
+
+        // Auto-refresh messages (optional)
+        // Uncomment to enable auto-refresh every 30 seconds
+        /*
+        setInterval(async function() {
+            if (!isLoading && CONFIG.hasTherapist && lastMessageTime) {
+                try {
+                    const response = await fetch(`${CONFIG.endpoints.getRecentMessages}?since=${lastMessageTime}`);
+                    const data = await response.json();
+                    
+                    if (data.messages && data.messages.length > 0) {
+                        data.messages.reverse().forEach(msg => {
+                            addMessageToChat(msg.message, msg.sender, msg.formatted_time);
+                        });
+                        lastMessageTime = data.messages[0].timestamp;
+                    }
+                } catch (error) {
+                    console.error('Auto-refresh error:', error);
+                }
+            }
+        }, 30000);
+        */
+    </script>
+</body>
+</html>

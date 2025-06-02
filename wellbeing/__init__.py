@@ -2,11 +2,12 @@ import os
 import logging
 from flask import Flask, render_template
 from datetime import datetime
-from flask_cors import CORS
 from flask_pymongo import PyMongo
+from flask_cors import CORS
 from werkzeug.middleware.proxy_fix import ProxyFix
 from apscheduler.schedulers.background import BackgroundScheduler
 from flask_moment import Moment
+from wellbeing.extensions import socketio, mongo 
 
 app = Flask(__name__)
 moment = Moment(app)
@@ -60,6 +61,11 @@ def create_app(test_config=None):
     app.jinja_env.filters['format_datetime'] = format_datetime
     # Fix for proxy headers
     app.wsgi_app = ProxyFix(app.wsgi_app)
+
+    mongo.init_app(app)
+    socketio.init_app(app)
+
+    from wellbeing.utils.enhanced_scheduling import enhance_existing_scheduling_routes
     
     # Method override middleware to handle PUT and DELETE from forms
     from wellbeing.utils.middleware import MethodOverrideMiddleware
@@ -67,6 +73,7 @@ def create_app(test_config=None):
     
     # Register blueprints
     from wellbeing.blueprints.auth import auth_bp
+    from wellbeing.connection import connection_bp
     from wellbeing.blueprints.dashboard import dashboard_bp
     from wellbeing.blueprints.admin import admin_bp
     from wellbeing.blueprints.tracking import tracking_bp
@@ -78,13 +85,14 @@ def create_app(test_config=None):
     api_bp = init_blueprint()  
 
     app.register_blueprint(auth_bp)
+    app.register_blueprint(connection_bp)
     app.register_blueprint(therapist_bp, url_prefix='/therapist')
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(admin_bp, url_prefix='/admin')
     app.register_blueprint(tracking_bp)
     app.register_blueprint(chatbot_bp)
     app.register_blueprint(api_bp, url_prefix='/api')
-        
+   
     # Set up error handlers
     @app.errorhandler(404)
     def page_not_found(e):
@@ -104,5 +112,25 @@ def create_app(test_config=None):
         initialize_bert_model()
         from wellbeing.services.feedback_service import initialize_feedback_system
         initialize_feedback_system()
+        
+        # ============== INITIALIZE AUTOMATED MODERATION SYSTEM ==============
+        logger.info("Initializing automated message moderation system...")
+        try:
+            from wellbeing.utils.moderation_setup import initialize_automated_moderation, add_moderation_routes
+            
+            # Initialize the moderation system
+            initialize_automated_moderation(app)
+            
+            # Add moderation routes
+            add_moderation_routes(app)
+            
+            logger.info("✅ Automated moderation system initialized successfully")
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to initialize automated moderation: {e}")
+            # Continue without moderation - the app should still work
+        # ======================================================================
+
+    enhance_existing_scheduling_routes()
     
     return app

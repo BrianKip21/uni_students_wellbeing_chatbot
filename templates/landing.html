@@ -8,26 +8,52 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Poppins', sans-serif;
+            font-family: 'Inter', sans-serif;
         }
 
         body {
-            background: #111827;
-            color: #e0e0e0;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 50%, #2d1b69 100%);
+            color: #e0e7ff;
             overflow-x: hidden;
-            padding-top: 70px; /* Height of fixed header */
-            scroll-behavior: smooth;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        /* Animated background particles */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+        
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: rgba(139, 92, 246, 0.3);
+            border-radius: 50%;
+            animation: float 8s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.3; }
+            50% { transform: translateY(-30px) rotate(180deg); opacity: 1; }
         }
 
         .header {
-            background-color: #1f2937;
-            border-bottom: 1px solid #374151;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             padding: 1rem 0;
             position: fixed;
             top: 0;
@@ -41,188 +67,380 @@
         .main-content {
             display: flex;
             align-items: center;
-            background-color: #111827;
             position: relative;
-            padding: 6rem 0;
-            min-height: calc(100vh - 70px); /* Viewport height minus header */
+            padding: 10rem 0 6rem 0;
+            min-height: 100vh;
+            z-index: 10;
+        }
+
+        .hero-title {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(135deg, #8b5cf6, #3b82f6, #10b981);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-size: 200% 200%;
+            animation: gradientShift 3s ease-in-out infinite;
+            line-height: 1.2;
         }
         
-        .main-content::before {
-            content: "";
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 60%;
-            height: 60%;
-            background: radial-gradient(circle at top right, rgba(59, 130, 246, 0.08) 0%, rgba(31, 41, 55, 0) 70%);
-            pointer-events: none;
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
         }
 
         .btn {
             transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .btn:hover::before {
+            left: 100%;
         }
 
         .btn:hover {
             transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(139, 92, 246, 0.4);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: #8b5cf6;
         }
         
         .feature-card {
-            background-color: rgba(31, 41, 55, 0.7);
-            border: 1px solid rgba(75, 85, 99, 0.3);
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
             transition: all 0.3s ease;
-            padding: 1.25rem;
+            padding: 1.5rem;
+            height: 100%;
         }
         
         .feature-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.2);
-            border-color: rgba(59, 130, 246, 0.3);
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+            border-color: rgba(139, 92, 246, 0.3);
+            background: rgba(255, 255, 255, 0.08);
         }
-        
-        .footer {
-            background-color: #1f2937;
-            border-top: 1px solid #374151;
-            padding: 1.5rem 0;
-            margin-top: 2rem;
+
+        .feature-icon {
+            width: 3rem;
+            height: 3rem;
+            background: rgba(139, 92, 246, 0.2);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover .feature-icon {
+            background: rgba(139, 92, 246, 0.3);
+            border-color: rgba(139, 92, 246, 0.5);
+            transform: scale(1.1);
         }
 
         .section {
-            padding: 5rem 0;
-            border-top: 1px solid #1f2937;
-            scroll-margin-top: 70px; /* Adjusts scroll position to account for fixed header */
+            padding: 6rem 0;
+            position: relative;
+            z-index: 10;
+        }
+
+        .section-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 3rem;
+            background: linear-gradient(135deg, #8b5cf6, #3b82f6);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
         .about-card {
-            background-color: #1f2937;
-            border-radius: 0.5rem;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
             transition: all 0.3s ease;
-            border: 1px solid #374151;
+            padding: 2rem;
             height: 100%;
-            padding: 1.75rem;
+            text-align: center;
         }
 
         .about-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            border-color: rgba(139, 92, 246, 0.3);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .about-icon {
+            width: 4rem;
+            height: 4rem;
+            background: rgba(139, 92, 246, 0.2);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem auto;
+            transition: all 0.3s ease;
+        }
+
+        .about-card:hover .about-icon {
+            background: rgba(139, 92, 246, 0.3);
+            border-color: rgba(139, 92, 246, 0.5);
+            transform: scale(1.1) rotate(5deg);
         }
 
         .contact-method {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
             transition: all 0.3s ease;
-            padding: 1.5rem;
+            padding: 2rem;
+            text-align: center;
         }
 
         .contact-method:hover {
-            transform: translateY(-3px);
+            transform: translateY(-5px);
+            border-color: rgba(139, 92, 246, 0.3);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .contact-icon {
+            width: 4rem;
+            height: 4rem;
+            background: rgba(139, 92, 246, 0.2);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem auto;
+            transition: all 0.3s ease;
+        }
+
+        .contact-method:hover .contact-icon {
+            background: rgba(139, 92, 246, 0.3);
+            border-color: rgba(139, 92, 246, 0.5);
+            transform: scale(1.1);
         }
         
-        .section-heading {
-            margin-bottom: 3rem;
+        .footer {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 2rem 0;
+            position: relative;
+            z-index: 10;
         }
-        
-        .icon-container {
-            width: 3rem;
-            height: 3rem;
-            margin-bottom: 1.25rem;
+
+        .nav-link {
+            color: #a78bfa;
+            transition: all 0.3s ease;
+            text-decoration: none;
         }
-        
+
+        .nav-link:hover {
+            color: #c4b5fd;
+            text-decoration: none;
+        }
+
+        .logo-text {
+            background: linear-gradient(135deg, #8b5cf6, #3b82f6);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 700;
+        }
+
+        .social-link {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 2.5rem;
+            height: 2.5rem;
+            background: rgba(139, 92, 246, 0.2);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 8px;
+            color: #c4b5fd;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .social-link:hover {
+            background: rgba(139, 92, 246, 0.3);
+            border-color: rgba(139, 92, 246, 0.5);
+            transform: translateY(-2px);
+            color: #e0e7ff;
+            text-decoration: none;
+        }
+
+        /* Responsive design */
         @media (max-width: 768px) {
+            .hero-title {
+                font-size: 2rem;
+            }
+            
+            .section-title {
+                font-size: 2rem;
+            }
+            
             .main-content {
-                padding: 3rem 0;
+                padding: 8rem 0 4rem 0;
             }
             
             .section {
-                padding: 3rem 0;
+                padding: 4rem 0;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .hero-title {
+                font-size: 1.75rem;
+            }
+            
+            .section-title {
+                font-size: 1.75rem;
             }
         }
     </style>
 </head>
 <body>
+    <!-- Animated background particles -->
+    <div class="particles" id="particles"></div>
+
     <!-- Fixed Header -->
     <header class="header">
         <div class="container mx-auto px-6 flex justify-between items-center h-full">
             <div class="flex items-center">
-                <i class="fas fa-brain text-blue-400 mr-3 text-xl"></i>
-                <h1 class="text-xl font-bold text-gray-200">Wellbeing Assistant</h1>
+                <i class="fas fa-brain text-purple-400 mr-3 text-xl"></i>
+                <h1 class="text-xl logo-text">Wellbeing Assistant</h1>
             </div>
-            <nav>
+            <nav class="hidden md:block">
                 <ul class="flex space-x-6">
-                    <li><a href="#about" class="text-gray-300 hover:text-blue-300 transition">About</a></li>
-                    <li><a href="#contact" class="text-gray-300 hover:text-blue-300 transition">Contact</a></li>
-                    <li><a href="{{ url_for('auth.login') }}" class="text-blue-400 font-medium hover:text-blue-300 transition">Login</a></li>
-                    <li><a href="{{ url_for('auth.register') }}" class="bg-gray-800 text-gray-200 px-5 py-2 rounded-full hover:bg-gray-700 transition border border-gray-700">Sign Up</a></li>
+                    <li><a href="#about" class="nav-link">About</a></li>
+                    <li><a href="#contact" class="nav-link">Contact</a></li>
+                    <li><a href="{{ url_for('auth.login') }}" class="nav-link font-medium">Login</a></li>
+                    <li><a href="{{ url_for('auth.register') }}" class="btn btn-secondary px-5 py-2 rounded-full text-sm">Sign Up</a></li>
                 </ul>
             </nav>
+            <!-- Mobile menu button -->
+            <button class="md:hidden text-purple-400" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars text-xl"></i>
+            </button>
+        </div>
+        <!-- Mobile menu -->
+        <div id="mobile-menu" class="md:hidden hidden bg-black bg-opacity-90 backdrop-blur-lg border-t border-white border-opacity-10">
+            <div class="px-6 py-4 space-y-3">
+                <a href="#about" class="block nav-link py-2">About</a>
+                <a href="#contact" class="block nav-link py-2">Contact</a>
+                <a href="{{ url_for('auth.login') }}" class="block nav-link py-2 font-medium">Login</a>
+                <a href="{{ url_for('auth.register') }}" class="block btn btn-secondary px-4 py-2 rounded-full text-sm text-center">Sign Up</a>
+            </div>
         </div>
     </header>
 
     <!-- Main Content -->
     <main class="main-content">
         <div class="container mx-auto px-6">
-            <div class="flex flex-col md:flex-row items-center justify-between">
+            <div class="flex flex-col lg:flex-row items-center justify-between">
                 <!-- Left side - Text content -->
-                <div class="md:w-1/2 md:pr-12 mb-12 md:mb-0">
-                    <h1 class="text-4xl md:text-5xl font-bold mb-6 text-gray-200 leading-tight">Supporting Your Mental Wellbeing</h1>
-                    <p class="text-xl text-gray-300 mb-8 leading-relaxed">A safe space for university students to track, manage, and improve their mental health with professional support.</p>
+                <div class="lg:w-1/2 lg:pr-12 mb-12 lg:mb-0 text-center lg:text-left">
+                    <h1 class="hero-title">Supporting Your Mental Wellbeing</h1>
+                    <p class="text-xl text-purple-200 mb-8 leading-relaxed max-w-2xl mx-auto lg:mx-0">
+                        A safe space for university students to track, manage, and improve their mental health with professional support and AI-powered assistance.
+                    </p>
                     
-                    <div class="flex flex-wrap gap-4 mb-8">
-                        <a href="{{ url_for('auth.register') }}" class="btn bg-blue-600 text-gray-100 font-semibold px-8 py-3 rounded-full shadow-lg hover:bg-blue-700 border border-blue-700">
+                    <div class="flex flex-col sm:flex-row gap-4 mb-8 justify-center lg:justify-start">
+                        <a href="{{ url_for('auth.register') }}" class="btn btn-primary font-semibold px-8 py-4 rounded-full text-lg">
                             <i class="fas fa-user-plus mr-2"></i> Get Started
                         </a>
-                        <a href="{{ url_for('auth.login') }}" class="btn bg-gray-800 text-gray-300 px-8 py-3 rounded-full hover:bg-gray-700 border border-gray-700">
+                        <a href="{{ url_for('auth.login') }}" class="btn btn-secondary px-8 py-4 rounded-full text-lg">
                             <i class="fas fa-sign-in-alt mr-2"></i> Sign In
                         </a>
+                    </div>
+
+                    <div class="flex justify-center lg:justify-start gap-6 text-sm text-purple-300">
+                        <div class="flex items-center">
+                            <i class="fas fa-shield-alt mr-2 text-green-400"></i>
+                            <span>100% Confidential</span>
+                        </div>
+                        <div class="flex items-center">
+                            <i class="fas fa-clock mr-2 text-blue-400"></i>
+                            <span>24/7 Available</span>
+                        </div>
+                        <div class="flex items-center">
+                            <i class="fas fa-user-md mr-2 text-purple-400"></i>
+                            <span>Licensed Therapists</span>
+                        </div>
                     </div>
                 </div>
                 
                 <!-- Right side - Features -->
-                <div class="md:w-1/2">
+                <div class="lg:w-1/2">
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                        <div class="feature-card rounded-xl">
-                            <div class="flex items-start">
-                                <div class="mr-4 w-12 h-12 bg-blue-900 bg-opacity-50 rounded-full flex items-center justify-center">
-                                    <i class="fas fa-chart-line text-blue-400 text-lg"></i>
-                                </div>
-                                <div>
-                                    <h3 class="font-semibold text-gray-200 text-lg mb-2">Mood Tracking</h3>
-                                    <p class="text-gray-400">Monitor your emotions and identify patterns over time</p>
-                                </div>
+                        <div class="feature-card">
+                            <div class="feature-icon">
+                                <i class="fas fa-chart-line text-purple-400 text-xl"></i>
                             </div>
+                            <h3 class="font-semibold text-white text-lg mb-3">Mood Tracking</h3>
+                            <p class="text-purple-200">Monitor your emotions and identify patterns over time with intelligent analytics</p>
                         </div>
                         
-                        <div class="feature-card rounded-xl">
-                            <div class="flex items-start">
-                                <div class="mr-4 w-12 h-12 bg-blue-900 bg-opacity-50 rounded-full flex items-center justify-center">
-                                    <i class="fas fa-user-md text-blue-400 text-lg"></i>
-                                </div>
-                                <div>
-                                    <h3 class="font-semibold text-gray-200 text-lg mb-2">Therapist Support</h3>
-                                    <p class="text-gray-400">Connect with qualified mental health professionals</p>
-                                </div>
+                        <div class="feature-card">
+                            <div class="feature-icon">
+                                <i class="fas fa-user-md text-purple-400 text-xl"></i>
                             </div>
+                            <h3 class="font-semibold text-white text-lg mb-3">Therapist Support</h3>
+                            <p class="text-purple-200">Connect with qualified mental health professionals for personalized care</p>
                         </div>
                         
-                        <div class="feature-card rounded-xl">
-                            <div class="flex items-start">
-                                <div class="mr-4 w-12 h-12 bg-blue-900 bg-opacity-50 rounded-full flex items-center justify-center">
-                                    <i class="fas fa-comments text-blue-400 text-lg"></i>
-                                </div>
-                                <div>
-                                    <h3 class="font-semibold text-gray-200 text-lg mb-2">AI Chatbot</h3>
-                                    <p class="text-gray-400">Get immediate support through our intelligent assistant</p>
-                                </div>
+                        <div class="feature-card">
+                            <div class="feature-icon">
+                                <i class="fas fa-robot text-purple-400 text-xl"></i>
                             </div>
+                            <h3 class="font-semibold text-white text-lg mb-3">AI Assistant</h3>
+                            <p class="text-purple-200">Get immediate support through our intelligent chatbot available 24/7</p>
                         </div>
                         
-                        <div class="feature-card rounded-xl">
-                            <div class="flex items-start">
-                                <div class="mr-4 w-12 h-12 bg-blue-900 bg-opacity-50 rounded-full flex items-center justify-center">
-                                    <i class="fas fa-book text-blue-400 text-lg"></i>
-                                </div>
-                                <div>
-                                    <h3 class="font-semibold text-gray-200 text-lg mb-2">Resources</h3>
-                                    <p class="text-gray-400">Access curated self-help materials and guides</p>
-                                </div>
+                        <div class="feature-card">
+                            <div class="feature-icon">
+                                <i class="fas fa-book-open text-purple-400 text-xl"></i>
                             </div>
+                            <h3 class="font-semibold text-white text-lg mb-3">Resources</h3>
+                            <p class="text-purple-200">Access curated self-help materials, guides, and wellness exercises</p>
                         </div>
                     </div>
                 </div>
@@ -233,31 +451,31 @@
     <!-- About Us Section -->
     <section id="about" class="section">
         <div class="container mx-auto px-6">
-            <h2 class="text-3xl font-bold text-center text-gray-200 section-heading">About Us</h2>
+            <h2 class="section-title text-center">About Our Platform</h2>
             
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <div class="about-card">
-                    <div class="w-16 h-16 bg-blue-900 bg-opacity-50 rounded-full flex items-center justify-center mb-5">
-                        <i class="fas fa-university text-blue-400 text-2xl"></i>
+                    <div class="about-icon">
+                        <i class="fas fa-university text-purple-400 text-2xl"></i>
                     </div>
-                    <h3 class="text-xl font-semibold mb-3 text-gray-200">Our Mission</h3>
-                    <p class="text-gray-400 leading-relaxed">To provide accessible mental health support for university students through innovative digital solutions.</p>
+                    <h3 class="text-xl font-semibold mb-4 text-white">Our Mission</h3>
+                    <p class="text-purple-200 leading-relaxed">To provide accessible, comprehensive mental health support for university students through innovative digital solutions that bridge the gap between need and care.</p>
                 </div>
                 
                 <div class="about-card">
-                    <div class="w-16 h-16 bg-blue-900 bg-opacity-50 rounded-full flex items-center justify-center mb-5">
-                        <i class="fas fa-users text-blue-400 text-2xl"></i>
+                    <div class="about-icon">
+                        <i class="fas fa-users text-purple-400 text-2xl"></i>
                     </div>
-                    <h3 class="text-xl font-semibold mb-3 text-gray-200">Our Team</h3>
-                    <p class="text-gray-400 leading-relaxed">A dedicated group of mental health professionals, technologists, and student advocates working together.</p>
+                    <h3 class="text-xl font-semibold mb-4 text-white">Our Team</h3>
+                    <p class="text-purple-200 leading-relaxed">A dedicated group of mental health professionals, AI researchers, and student advocates working together to revolutionize campus mental health support.</p>
                 </div>
                 
                 <div class="about-card">
-                    <div class="w-16 h-16 bg-blue-900 bg-opacity-50 rounded-full flex items-center justify-center mb-5">
-                        <i class="fas fa-shield-alt text-blue-400 text-2xl"></i>
+                    <div class="about-icon">
+                        <i class="fas fa-heart text-purple-400 text-2xl"></i>
                     </div>
-                    <h3 class="text-xl font-semibold mb-3 text-gray-200">Our Values</h3>
-                    <p class="text-gray-400 leading-relaxed">Confidentiality, accessibility, and evidence-based approaches to mental wellbeing support.</p>
+                    <h3 class="text-xl font-semibold mb-4 text-white">Our Values</h3>
+                    <p class="text-purple-200 leading-relaxed">Confidentiality, accessibility, evidence-based approaches, and student-centered care are at the core of everything we do.</p>
                 </div>
             </div>
         </div>
@@ -266,31 +484,34 @@
     <!-- Contact Section -->
     <section id="contact" class="section">
         <div class="container mx-auto px-6">
-            <h2 class="text-3xl font-bold text-center text-gray-200 section-heading">Contact Us</h2>
+            <h2 class="section-title text-center">Get In Touch</h2>
             
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-                <div class="contact-method text-center">
-                    <div class="w-16 h-16 bg-blue-900 bg-opacity-50 rounded-full flex items-center justify-center mx-auto mb-5">
-                        <i class="fas fa-envelope text-blue-400 text-2xl"></i>
+                <div class="contact-method">
+                    <div class="contact-icon">
+                        <i class="fas fa-envelope text-purple-400 text-2xl"></i>
                     </div>
-                    <h3 class="text-xl font-semibold mb-3 text-gray-200">Email</h3>
-                    <p class="text-gray-400">support@wellbeingassistant.edu</p>
+                    <h3 class="text-xl font-semibold mb-3 text-white">Email Support</h3>
+                    <p class="text-purple-200 mb-2">support@wellbeingassistant.edu</p>
+                    <p class="text-sm text-purple-300">Response within 24 hours</p>
                 </div>
                 
-                <div class="contact-method text-center">
-                    <div class="w-16 h-16 bg-blue-900 bg-opacity-50 rounded-full flex items-center justify-center mx-auto mb-5">
-                        <i class="fas fa-phone text-blue-400 text-2xl"></i>
+                <div class="contact-method">
+                    <div class="contact-icon">
+                        <i class="fas fa-phone text-purple-400 text-2xl"></i>
                     </div>
-                    <h3 class="text-xl font-semibold mb-3 text-gray-200">Phone</h3>
-                    <p class="text-gray-400">(+254)0791857121</p>
+                    <h3 class="text-xl font-semibold mb-3 text-white">Crisis Hotline</h3>
+                    <p class="text-purple-200 mb-2">(+254) 0791857121</p>
+                    <p class="text-sm text-purple-300">Available 24/7 for emergencies</p>
                 </div>
                 
-                <div class="contact-method text-center">
-                    <div class="w-16 h-16 bg-blue-900 bg-opacity-50 rounded-full flex items-center justify-center mx-auto mb-5">
-                        <i class="fas fa-map-marker-alt text-blue-400 text-2xl"></i>
+                <div class="contact-method">
+                    <div class="contact-icon">
+                        <i class="fas fa-map-marker-alt text-purple-400 text-2xl"></i>
                     </div>
-                    <h3 class="text-xl font-semibold mb-3 text-gray-200">Location</h3>
-                    <p class="text-gray-400">Learning Resource Center<br>CUEA</p>
+                    <h3 class="text-xl font-semibold mb-3 text-white">Campus Location</h3>
+                    <p class="text-purple-200 mb-2">Learning Resource Center</p>
+                    <p class="text-purple-200">CUEA Campus</p>
                 </div>
             </div>
         </div>
@@ -298,39 +519,89 @@
 
     <!-- Footer -->
     <footer class="footer">
-        <div class="container mx-auto px-6 flex flex-col md:flex-row justify-between items-center">
-            <div class="flex items-center mb-4 md:mb-0">
-                <i class="fas fa-brain text-blue-400 mr-3"></i>
-                <p class="text-gray-400">© 2025 University Students' Wellbeing Assistant</p>
-            </div>
-            <div class="flex items-center space-x-6">
-                <a href="#" class="text-gray-400 hover:text-blue-400 transition">
-                    <i class="fab fa-twitter"></i>
-                </a>
-                <a href="#" class="text-gray-400 hover:text-blue-400 transition">
-                    <i class="fab fa-instagram"></i>
-                </a>
-                <a href="#" class="text-gray-400 hover:text-blue-400 transition">
-                    <i class="fas fa-envelope"></i>
-                </a>
+        <div class="container mx-auto px-6">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="flex items-center mb-4 md:mb-0">
+                    <i class="fas fa-brain text-purple-400 mr-3 text-xl"></i>
+                    <p class="text-purple-300">© 2025 University Students' Wellbeing Assistant</p>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="#" class="social-link">
+                        <i class="fab fa-twitter"></i>
+                    </a>
+                    <a href="#" class="social-link">
+                        <i class="fab fa-instagram"></i>
+                    </a>
+                    <a href="#" class="social-link">
+                        <i class="fab fa-linkedin"></i>
+                    </a>
+                    <a href="mailto:support@wellbeingassistant.edu" class="social-link">
+                        <i class="fas fa-envelope"></i>
+                    </a>
+                </div>
             </div>
         </div>
     </footer>
 
-    <!-- JavaScript for smooth scrolling -->
     <script>
+        // Create animated particles
+        function createParticles() {
+            const particles = document.getElementById('particles');
+            const particleCount = 50;
+            
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.top = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 8 + 's';
+                particle.style.animationDuration = (Math.random() * 4 + 6) + 's';
+                particles.appendChild(particle);
+            }
+        }
+
+        // Mobile menu toggle
+        function toggleMobileMenu() {
+            const mobileMenu = document.getElementById('mobile-menu');
+            mobileMenu.classList.toggle('hidden');
+        }
+
+        // Smooth scrolling for anchor links
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function (e) {
                 e.preventDefault();
                 
                 const target = document.querySelector(this.getAttribute('href'));
                 if (target) {
+                    const headerOffset = 70;
+                    const elementPosition = target.offsetTop;
+                    const offsetPosition = elementPosition - headerOffset;
+
                     window.scrollTo({
-                        top: target.offsetTop,
+                        top: offsetPosition,
                         behavior: 'smooth'
                     });
+                    
+                    // Close mobile menu if open
+                    const mobileMenu = document.getElementById('mobile-menu');
+                    mobileMenu.classList.add('hidden');
                 }
             });
+        });
+
+        // Header background opacity on scroll
+        window.addEventListener('scroll', function() {
+            const header = document.querySelector('.header');
+            if (window.scrollY > 50) {
+                header.style.background = 'rgba(255, 255, 255, 0.08)';
+            } else {
+                header.style.background = 'rgba(255, 255, 255, 0.05)';
+            }
+        });
+
+        // Initialize particles when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            createParticles();
         });
     </script>
 </body>

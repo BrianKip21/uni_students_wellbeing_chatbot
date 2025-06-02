@@ -16,7 +16,7 @@
             padding: 0;
             box-sizing: border-box;
             font-family: 'Inter', sans-serif;
-        }
+        
 
         body {
             background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 50%, #2d1b69 100%);
@@ -482,6 +482,9 @@
                 </a></li>
                 <li><a href="{{ url_for('chatbot.chatbot_page') }}" class="flex items-center">
                     <i class="fas fa-comments w-5 mr-3"></i> AI Chat
+                </a></li>
+                <li><a href="{{ url_for('dashboard.student_chat') }}" class="flex items-center" aria-current="page">
+                    <i class="fas fa-comments w-5 mr-3"></i> Chat with Therapist
                 </a></li>
                 <li><a href="{{ url_for('dashboard.therapist_info') }}" class="flex items-center">
                     <i class="fas fa-user-md w-5 mr-3"></i> Your Therapist

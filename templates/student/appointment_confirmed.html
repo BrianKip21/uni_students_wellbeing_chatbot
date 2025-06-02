@@ -153,6 +153,30 @@
             box-shadow: 0 25px 50px rgba(59, 130, 246, 0.4);
         }
         
+        /* Zoom integration status indicator */
+        .zoom-status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 12px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        
+        .zoom-integrated {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+        
+        .zoom-fallback {
+            background: rgba(245, 158, 11, 0.2);
+            color: #f59e0b;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+        
         /* Countdown timer */
         .countdown-timer {
             background: linear-gradient(135deg, #f59e0b, #d97706);
@@ -306,6 +330,19 @@
                     <div class="text-center mb-8">
                         <h2 class="text-3xl font-bold text-white mb-2">Your Session Details</h2>
                         <p class="text-purple-300">AI-powered matching • Instant scheduling • Seamless experience</p>
+                        
+                        <!-- Zoom Integration Status -->
+                        {% if zoom_integrated %}
+                        <div class="zoom-status-indicator zoom-integrated">
+                            <i class="fas fa-video"></i>
+                            Real Zoom Meeting Created
+                        </div>
+                        {% else %}
+                        <div class="zoom-status-indicator zoom-fallback">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            Therapist will provide meeting link
+                        </div>
+                        {% endif %}
                     </div>
 
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -363,7 +400,7 @@
                                     <div>
                                         <div class="font-semibold text-white text-lg">Virtual Session</div>
                                         <div class="text-sm text-purple-300">
-                                            🌐 Video call - join from anywhere, anytime
+                                            🌐 Zoom video call - join from anywhere, anytime
                                         </div>
                                         <div class="status-virtual mt-2">
                                             <i class="fas fa-check-circle"></i>
@@ -394,8 +431,10 @@
                                     Join Your Session
                                 </h3>
                                 
+                                {% if zoom_integrated %}
+                                <!-- Real Zoom Meeting -->
                                 <div class="bg-white bg-opacity-20 rounded-lg p-4 mb-4">
-                                    <p class="text-sm text-blue-100 mb-2">🔗 Google Meet Link:</p>
+                                    <p class="text-sm text-blue-100 mb-2">🔗 Zoom Meeting Link:</p>
                                     <div class="flex items-center space-x-2">
                                         <input type="text" 
                                                value="{{ appointment.meeting_info.meet_link }}" 
@@ -407,20 +446,44 @@
                                             <i class="fas fa-copy"></i>
                                         </button>
                                     </div>
+                                    {% if appointment.meeting_info.meeting_password %}
+                                    <p class="text-xs text-blue-100 mt-2">
+                                        🔐 Meeting ID: {{ appointment.zoom_meeting_id }} | Password: {{ appointment.meeting_info.meeting_password }}
+                                    </p>
+                                    {% endif %}
                                 </div>
                                 
                                 <a href="{{ appointment.meeting_info.meet_link }}" 
                                    target="_blank" 
                                    class="btn-primary inline-flex items-center">
                                     <i class="fas fa-external-link-alt mr-2"></i>
-                                    Open Google Meet
+                                    Open Zoom Meeting
                                 </a>
                                 
+                                {% if appointment.meeting_info.dial_in %}
                                 <div class="mt-4 text-xs text-blue-100">
                                     📞 Dial-in: {{ appointment.meeting_info.dial_in }}
-                                    <br>
-                                    🔢 PIN: {{ appointment.meeting_info.dial_in_pin }}
                                 </div>
+                                {% endif %}
+                                {% else %}
+                                <!-- Fallback Meeting Info -->
+                                <div class="bg-yellow-600 bg-opacity-20 rounded-lg p-4 mb-4">
+                                    <p class="text-sm text-yellow-100 mb-2">⚠️ Meeting Setup:</p>
+                                    <p class="text-yellow-200 text-sm">{{ appointment.meeting_info.note or 'Your therapist will provide the actual Zoom meeting link before your session.' }}</p>
+                                </div>
+                                
+                                <div class="bg-blue-600 bg-opacity-20 rounded-lg p-3 mb-4">
+                                    <p class="text-blue-200 text-sm">
+                                        <i class="fas fa-info-circle mr-2"></i>
+                                        Meeting details will be sent to your email or provided by your therapist.
+                                    </p>
+                                </div>
+                                
+                                <button onclick="refreshMeetingInfo()" class="btn-primary inline-flex items-center">
+                                    <i class="fas fa-refresh mr-2"></i>
+                                    Refresh Meeting Info
+                                </button>
+                                {% endif %}
                             </div>
                             {% endif %}
                             
@@ -453,7 +516,7 @@
                         </div>
                         <div>
                             <h4 class="font-semibold text-white mb-1">Join 5 Minutes Early</h4>
-                            <p class="text-sm text-purple-300">Test your connection, get comfortable, and settle in</p>
+                            <p class="text-sm text-purple-300">Test your Zoom connection, get comfortable, and settle in</p>
                         </div>
                     </div>
                     
@@ -469,11 +532,11 @@
                     
                     <div class="flex items-start space-x-4">
                         <div class="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full flex items-center justify-center flex-shrink-0">
-                            <i class="fas fa-sticky-note text-white"></i>
+                            <i class="fas fa-video text-white"></i>
                         </div>
                         <div>
-                            <h4 class="font-semibold text-white mb-1">Bring a Journal</h4>
-                            <p class="text-sm text-purple-300">Capture insights, breakthroughs, and action items</p>
+                            <h4 class="font-semibold text-white mb-1">Test Your Setup</h4>
+                            <p class="text-sm text-purple-300">Check camera, microphone, and internet connection</p>
                         </div>
                     </div>
                     
@@ -521,12 +584,19 @@
             <div class="text-center space-y-6">
                 <div class="flex flex-wrap justify-center gap-4">
                     {% if appointment.meeting_info %}
-                    <a href="{{ appointment.meeting_info.meet_link }}" 
-                       target="_blank"
-                       class="btn-primary">
-                        <i class="fas fa-video mr-2"></i>
-                        Join Session Now
-                    </a>
+                        {% if zoom_integrated %}
+                        <a href="{{ appointment.meeting_info.meet_link }}" 
+                           target="_blank"
+                           class="btn-primary">
+                            <i class="fas fa-video mr-2"></i>
+                            Join Zoom Session
+                        </a>
+                        {% else %}
+                        <button onclick="refreshMeetingInfo()" class="btn-primary">
+                            <i class="fas fa-refresh mr-2"></i>
+                            Refresh Meeting Info
+                        </button>
+                        {% endif %}
                     {% endif %}
                     
                     <a href="{{ url_for('dashboard.therapist_info') }}" 
@@ -543,14 +613,25 @@
                 </div>
                 
                 <div class="text-sm text-purple-300 space-y-2">
+                    {% if zoom_integrated %}
+                    <p>
+                        <i class="fas fa-envelope mr-2"></i>
+                        📧 Zoom meeting details sent to your email
+                    </p>
+                    <p>
+                        <i class="fas fa-video mr-2"></i>
+                        🔗 Real Zoom meeting created with password protection
+                    </p>
+                    {% else %}
                     <p>
                         <i class="fas fa-envelope mr-2"></i>
                         📧 Confirmation details sent to your email
                     </p>
                     <p>
-                        <i class="fas fa-calendar-plus mr-2"></i>
-                        📅 Calendar invite sent automatically
+                        <i class="fas fa-user-md mr-2"></i>
+                        👨‍⚕️ Your therapist will provide the Zoom meeting link
                     </p>
+                    {% endif %}
                     <p>
                         <i class="fas fa-bell mr-2"></i>
                         🔔 You'll receive reminders 24h and 1h before your session
@@ -593,6 +674,44 @@
                     copyBtn.innerHTML = originalHTML;
                     copyBtn.style.background = '';
                 }, 2000);
+            });
+        }
+
+        // Refresh meeting info functionality
+        function refreshMeetingInfo() {
+            const appointmentId = '{{ appointment._id }}';
+            
+            // Show loading state
+            const refreshBtn = event.target;
+            const originalHTML = refreshBtn.innerHTML;
+            refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Refreshing...';
+            refreshBtn.disabled = true;
+            
+            fetch(`/api/refresh-zoom-meeting`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    appointment_id: appointmentId
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('✅ Meeting info refreshed! Reloading page...');
+                    window.location.reload();
+                } else {
+                    alert('⚠️ Could not refresh meeting info. Your therapist will provide the link.');
+                }
+            })
+            .catch(error => {
+                console.error('Error refreshing meeting info:', error);
+                alert('⚠️ Could not refresh meeting info. Your therapist will provide the link.');
+            })
+            .finally(() => {
+                refreshBtn.innerHTML = originalHTML;
+                refreshBtn.disabled = false;
             });
         }
 

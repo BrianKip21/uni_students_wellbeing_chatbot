@@ -3,6 +3,7 @@ Main application entry point.
 This imports and creates the app using the factory pattern.
 """
 from wellbeing import create_app, mongo
+from wellbeing.extensions import socketio
 
 # Create the Flask app
 app = create_app()
@@ -18,4 +19,4 @@ if __name__ == '__main__':
         os.makedirs('static/uploads/videos')
         
     # Run the application
-    app.run(host='0.0.0.0', port=5001, debug=True)
+    socketio.run(app, host='0.0.0.0', port=5001, debug=True)

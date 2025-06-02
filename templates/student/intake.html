@@ -141,6 +141,14 @@
             border-radius: 2px;
             transition: width 0.5s ease;
         }
+        
+        .virtual-session-highlight {
+            background: linear-gradient(135deg, #3b82f6, #1e40af);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
     </style>
 </head>
 <body class="min-h-screen py-8">
@@ -159,6 +167,17 @@
             <p class="text-sm text-purple-400">
                 ⚡ Instant therapist matching • 🤖 AI-powered analysis • 🔒 Completely confidential
             </p>
+            
+            <!-- Virtual Session Highlight -->
+            <div class="virtual-session-highlight max-w-lg mx-auto mt-6">
+                <div class="flex items-center justify-center mb-3">
+                    <i class="fas fa-video text-2xl text-white mr-3"></i>
+                    <h3 class="text-lg font-bold text-white">All Sessions Are Virtual</h3>
+                </div>
+                <p class="text-blue-100 text-sm">
+                    🔗 Secure Zoom meetings • 🏠 Join from home • 🌍 Accessible anywhere
+                </p>
+            </div>
         </div>
 
         <!-- Assessment Form -->
@@ -275,7 +294,7 @@
                         <span class="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-sm mr-3">6</span>
                         Do you have any preferences for your therapist?
                     </h2>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="grid grid-cols-1 gap-6">
                         <div>
                             <label class="block text-sm font-medium mb-2">👤 Gender Preference</label>
                             <select name="therapist_gender" class="form-select w-full">
@@ -285,8 +304,19 @@
                                 <option value="non_binary">Non-binary</option>
                             </select>
                         </div>
-                         <i class="fas fa-video mr-2"></i>
-                         All therapy sessions are conducted virtually for your safety and convenience
+                        
+                        <!-- Virtual Session Notice -->
+                        <div class="bg-blue-600 bg-opacity-20 rounded-lg p-4 border border-blue-400">
+                            <div class="flex items-center">
+                                <i class="fas fa-video text-blue-400 mr-3 text-xl"></i>
+                                <div>
+                                    <h4 class="font-semibold text-blue-200 mb-1">Virtual Sessions Only</h4>
+                                    <p class="text-blue-100 text-sm">
+                                        All therapy sessions are conducted via secure Zoom meetings for your safety and convenience
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -380,8 +410,22 @@
                         Complete Assessment & Get Matched
                     </button>
                     <p class="text-sm text-purple-300 mt-4">
-                        ⚡ Instant AI matching • 📅 Automatic scheduling • 🔒 Complete privacy
+                        ⚡ Instant AI matching • 📅 Automatic Zoom scheduling • 🔒 Complete privacy
                     </p>
+                    
+                    <!-- What Happens Next -->
+                    <div class="mt-6 bg-green-600 bg-opacity-20 rounded-lg p-4 border border-green-400 max-w-md mx-auto">
+                        <h4 class="font-semibold text-green-200 mb-2">
+                            <i class="fas fa-magic mr-2"></i>
+                            What Happens Next?
+                        </h4>
+                        <div class="text-green-100 text-sm space-y-1">
+                            <p>✅ AI analyzes your responses instantly</p>
+                            <p>✅ Perfect therapist match found automatically</p>
+                            <p>✅ Zoom session scheduled immediately</p>
+                            <p>✅ Secure meeting link sent to your email</p>
+                        </div>
+                    </div>
                 </div>
             </form>
         </div>
@@ -465,17 +509,30 @@
             const severity = parseInt(document.getElementById('severity-input').value);
             
             if (severity >= 8 || checkedCrisis.length > 0) {
-                if (!confirm('🚨 Based on your responses, we recommend immediate support. Would you like to proceed with priority assignment to a counselor?')) {
+                if (!confirm('🚨 Based on your responses, we recommend immediate support. Would you like to proceed with priority assignment to a counselor with automatic Zoom scheduling?')) {
                     submitBtn.innerHTML = originalText;
                     submitBtn.disabled = false;
                     return;
                 }
             }
             
+            // Add processing steps simulation
+            setTimeout(() => {
+                submitBtn.innerHTML = '<i class="fas fa-brain mr-2"></i>AI Analyzing Responses...';
+            }, 1000);
+            
+            setTimeout(() => {
+                submitBtn.innerHTML = '<i class="fas fa-user-md mr-2"></i>Finding Perfect Therapist...';
+            }, 2000);
+            
+            setTimeout(() => {
+                submitBtn.innerHTML = '<i class="fas fa-video mr-2"></i>Creating Zoom Session...';
+            }, 3000);
+            
             // Submit form
             setTimeout(() => {
                 this.submit();
-            }, 2000);
+            }, 4000);
         });
 
         // Initialize
@@ -485,6 +542,9 @@
                 element.addEventListener('change', updateProgress);
                 element.addEventListener('input', updateProgress);
             });
+            
+            // Initial progress update
+            updateProgress();
         });
     </script>
 </body>
