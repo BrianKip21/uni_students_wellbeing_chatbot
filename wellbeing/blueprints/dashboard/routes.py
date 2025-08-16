@@ -9,6 +9,7 @@ import csv
 import io
 import uuid
 import json
+import redis
 from functools import wraps
 from typing import Dict, List, Optional, Tuple, Any
 from wellbeing.blueprints.dashboard import dashboard_bp
@@ -67,6 +68,968 @@ BUSINESS_HOURS = {
 # - rating: Integer (5, not 5.0)
 # - years_experience: Integer (0, 1, 2, etc.)
 
+
+try:
+    redis_client = redis.Redis(host='localhost', port=6379, db=0, decode_responses=True)
+except:
+    redis_client = None
+    logger.warning("Redis not available - using in-memory session tracking")
+
+# In-memory fallback for session tracking (use Redis in production)
+waiting_room_sessions = {}
+session_participants = {}
+
+# Enhanced session control constants
+SESSION_CONTROL = {
+    'EARLY_JOIN_MINUTES': 2,  # Can join 2 minutes early
+    'SESSION_DURATION_MINUTES': 60,  # Session lasts 60 minutes
+    'LATE_JOIN_CUTOFF_MINUTES': 15,  # Can't join if more than 15 minutes late
+    'WAITING_ROOM_TIMEOUT_MINUTES': 10,  # Auto-exit waiting room after 10 minutes
+}
+
+@dashboard_bp.route('/api/user-appointments')
+@login_required
+def get_user_appointments():
+    """Get user's appointments with enhanced session control info"""
+    try:
+        user_id = ObjectId(session['user'])
+        user = find_user_by_id(user_id)
+        
+        if not user:
+            return jsonify({'success': False, 'error': 'User not found'}), 404
+        
+        # Get assigned therapist
+        assigned_therapist = _get_assigned_therapist(user)
+        if not assigned_therapist:
+            return jsonify({
+                'success': True,
+                'appointments': [],
+                'upcoming_appointment': None,
+                'has_therapist': False
+            })
+        
+        # Get all appointments
+        appointments = list(mongo.db.appointments.find({
+            'student_id': user_id,
+            'therapist_id': assigned_therapist['therapist_id']
+        }).sort('datetime', -1))
+        
+        # Process appointments for frontend
+        processed_appointments = []
+        upcoming_appointment = None
+        now = datetime.now()
+        
+        for apt in appointments:
+            # Enhanced appointment data
+            appointment_data = {
+                'id': str(apt['_id']),
+                'datetime': apt['datetime'].isoformat() if apt.get('datetime') else None,
+                'formatted_time': apt.get('formatted_time', 'Time TBD'),
+                'status': apt.get('status', 'pending'),
+                'crisis_level': apt.get('crisis_level', 'normal'),
+                'meeting_link': apt.get('meeting_info', {}).get('meet_link'),
+                'zoom_integrated': is_zoom_integrated(apt.get('zoom_meeting_id')),
+                'type': 'virtual'
+            }
+            
+            # Calculate session access status
+            if apt.get('datetime'):
+                session_time = apt['datetime']
+                time_diff_minutes = (session_time - now).total_seconds() / 60
+                
+                appointment_data.update({
+                    'time_until_session': time_diff_minutes,
+                    'can_join': _can_join_session(time_diff_minutes, apt.get('status')),
+                    'access_status': _get_access_status(time_diff_minutes, apt.get('status'))
+                })
+                
+                # Identify upcoming appointment
+                if (apt.get('status') == 'confirmed' and 
+                    time_diff_minutes > -SESSION_CONTROL['SESSION_DURATION_MINUTES'] and 
+                    not upcoming_appointment):
+                    upcoming_appointment = appointment_data
+            
+            processed_appointments.append(appointment_data)
+        
+        return jsonify({
+            'success': True,
+            'appointments': processed_appointments,
+            'upcoming_appointment': upcoming_appointment,
+            'has_therapist': True
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting user appointments: {str(e)}")
+        return jsonify({'success': False, 'error': 'Failed to load appointments'}), 500
+
+@dashboard_bp.route('/api/session-status')
+@login_required
+def get_session_status():
+    """Get real-time session status for current user"""
+    try:
+        user_id = ObjectId(session['user'])
+        appointment_id = request.args.get('appointment_id')
+        
+        if not appointment_id:
+            return jsonify({'success': False, 'error': 'Appointment ID required'}), 400
+        
+        # Get appointment
+        appointment = mongo.db.appointments.find_one({
+            '_id': ObjectId(appointment_id),
+            'student_id': user_id
+        })
+        
+        if not appointment:
+            return jsonify({'success': False, 'error': 'Appointment not found'}), 404
+        
+        now = datetime.now()
+        session_time = appointment.get('datetime')
+        
+        if not session_time:
+            return jsonify({
+                'success': True,
+                'status': 'pending',
+                'message': 'Session time not confirmed'
+            })
+        
+        time_diff_minutes = (session_time - now).total_seconds() / 60
+        can_join = _can_join_session(time_diff_minutes, appointment.get('status'))
+        access_status = _get_access_status(time_diff_minutes, appointment.get('status'))
+        
+        # Check if user is in waiting room
+        in_waiting_room = _is_user_in_waiting_room(appointment_id, str(user_id))
+        
+        return jsonify({
+            'success': True,
+            'appointment_id': appointment_id,
+            'status': appointment.get('status'),
+            'time_until_session': time_diff_minutes,
+            'can_join': can_join,
+            'access_status': access_status,
+            'in_waiting_room': in_waiting_room,
+            'meeting_link': appointment.get('meeting_info', {}).get('meet_link'),
+            'formatted_time': appointment.get('formatted_time')
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting session status: {str(e)}")
+        return jsonify({'success': False, 'error': 'Failed to get session status'}), 500
+
+@dashboard_bp.route('/api/join-session', methods=['POST'])
+@login_required
+def join_session_api_smart():
+    """Handle session join requests with smart user feedback for late attempts"""
+    try:
+        # Enhanced debugging
+        logger.debug("=== JOIN SESSION API CALLED ===")
+        logger.debug(f"Request method: {request.method}")
+        logger.debug(f"Content-Type: {request.content_type}")
+        
+        # Get data from request (handle both JSON and form data)
+        if request.is_json:
+            data = request.get_json()
+            logger.debug(f"JSON data: {data}")
+        else:
+            data = {
+                'appointment_id': request.form.get('appointment_id'),
+                'action': request.form.get('action', 'enter_waiting_room')
+            }
+            logger.debug(f"Form data: {data}")
+        
+        # Validate required parameters
+        if not data:
+            logger.error("No data provided in request")
+            return jsonify({'success': False, 'error': 'No data provided'}), 400
+        
+        appointment_id = data.get('appointment_id')
+        action = data.get('action', 'enter_waiting_room')
+        user_id = str(session['user'])
+        
+        logger.debug(f"Appointment ID: {appointment_id}")
+        logger.debug(f"Action: {action}")
+        logger.debug(f"User ID: {user_id}")
+        
+        # Validate appointment_id
+        if not appointment_id:
+            logger.error("Missing appointment_id parameter")
+            return jsonify({'success': False, 'error': 'Appointment ID is required'}), 400
+        
+        # Validate ObjectId format
+        try:
+            appointment_obj_id = ObjectId(appointment_id)
+        except Exception as e:
+            logger.error(f"Invalid appointment ID format: {appointment_id}, error: {e}")
+            return jsonify({'success': False, 'error': 'Invalid appointment ID format'}), 400
+        
+        # Get appointment
+        appointment = mongo.db.appointments.find_one({
+            '_id': appointment_obj_id,
+            'student_id': ObjectId(user_id)
+        })
+        
+        if not appointment:
+            logger.error(f"Appointment not found: {appointment_id} for user: {user_id}")
+            return jsonify({'success': False, 'error': 'Appointment not found'}), 404
+        
+        logger.debug(f"Found appointment: {appointment.get('formatted_time')}")
+        
+        # Validate session timing with SMART FEEDBACK
+        now = datetime.now()
+        session_time = appointment.get('datetime')
+        
+        if not session_time:
+            logger.error("Session time not confirmed")
+            return jsonify({
+                'success': False, 
+                'error': 'Session time not confirmed',
+                'user_action': 'contact_therapist',
+                'message': 'Your session time hasn\'t been confirmed yet. Please contact your therapist.'
+            }), 400
+        
+        time_diff_minutes = (session_time - now).total_seconds() / 60
+        logger.debug(f"Time until session: {time_diff_minutes} minutes")
+        
+        # ENHANCED: Smart feedback based on timing
+        access_result = _get_smart_access_feedback(time_diff_minutes, appointment.get('status'), appointment)
+        
+        if not access_result['can_join']:
+            logger.warning(f"Session not available for joining: {access_result['reason']}")
+            return jsonify({
+                'success': False,
+                'error': access_result['message'],
+                'user_action': access_result['recommended_action'],
+                'feedback_type': access_result['feedback_type'],
+                'time_info': {
+                    'session_time': session_time.strftime('%I:%M %p'),
+                    'current_time': now.strftime('%I:%M %p'),
+                    'minutes_late': abs(time_diff_minutes) if time_diff_minutes < 0 else 0,
+                    'minutes_early': time_diff_minutes if time_diff_minutes > 0 else 0
+                },
+                'next_steps': access_result['next_steps']
+            }), 400
+        
+        # If we get here, user can join - proceed with original logic
+        if action == 'enter_waiting_room':
+            _add_user_to_waiting_room(appointment_id, user_id, 'student')
+            logger.info(f"User {user_id} entered waiting room for appointment {appointment_id}")
+            
+            return jsonify({
+                'success': True,
+                'message': 'Entered waiting room',
+                'waiting_room_id': appointment_id,
+                'action': 'entered_waiting_room'
+            })
+        
+        elif action == 'leave_waiting_room':
+            _remove_user_from_waiting_room(appointment_id, user_id)
+            logger.info(f"User {user_id} left waiting room for appointment {appointment_id}")
+            
+            return jsonify({
+                'success': True,
+                'message': 'Left waiting room',
+                'action': 'left_waiting_room'
+            })
+        
+        else:
+            logger.error(f"Invalid action: {action}")
+            return jsonify({'success': False, 'error': f'Invalid action: {action}'}), 400
+            
+    except Exception as e:
+        logger.error(f"Error in join session API: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': f'Internal server error: {str(e)}'}), 500
+
+def _get_smart_access_feedback(time_diff_minutes, status, appointment):
+    """
+    Provide smart feedback based on timing and context
+    Returns: {
+        'can_join': bool,
+        'message': str,
+        'recommended_action': str,
+        'feedback_type': str,
+        'reason': str,
+        'next_steps': list
+    }
+    """
+    
+    # Status validation
+    if status != 'confirmed':
+        return {
+            'can_join': False,
+            'message': 'This session hasn\'t been confirmed yet.',
+            'recommended_action': 'wait_for_confirmation',
+            'feedback_type': 'status_pending',
+            'reason': f'Status is {status}, not confirmed',
+            'next_steps': [
+                'Wait for your therapist to confirm the session',
+                'Check your email for updates',
+                'Contact your therapist if needed'
+            ]
+        }
+    
+    early_limit = SESSION_CONTROL['EARLY_JOIN_MINUTES']
+    late_limit = SESSION_CONTROL['LATE_JOIN_CUTOFF_MINUTES']
+    
+    # Too early
+    if time_diff_minutes > early_limit:
+        minutes_to_wait = int(time_diff_minutes - early_limit)
+        return {
+            'can_join': False,
+            'message': f'Your session starts in {int(time_diff_minutes)} minutes. You can join {early_limit} minutes before the start time.',
+            'recommended_action': 'wait_and_prepare',
+            'feedback_type': 'too_early',
+            'reason': f'Session starts in {time_diff_minutes:.1f} minutes',
+            'next_steps': [
+                f'Wait {minutes_to_wait} more minutes before joining',
+                'Test your camera and microphone',
+                'Find a quiet, private space',
+                'Ensure stable internet connection'
+            ]
+        }
+    
+    # Too late - SMART FEEDBACK BASED ON HOW LATE
+    if time_diff_minutes < -late_limit:
+        minutes_late = abs(int(time_diff_minutes))
+        
+        # Very late (more than 30 minutes)
+        if minutes_late > 30:
+            return {
+                'can_join': False,
+                'message': f'You are {minutes_late} minutes late for your session. The session window has closed.',
+                'recommended_action': 'reschedule_session',
+                'feedback_type': 'very_late',
+                'reason': f'{minutes_late} minutes late, exceeds {late_limit} minute limit',
+                'next_steps': [
+                    'Contact your therapist to reschedule',
+                    'Send an apology message explaining your delay',
+                    'Book a new session time that works better',
+                    'Set reminders for your next session'
+                ]
+            }
+        
+        # Moderately late (15-30 minutes)
+        elif minutes_late > 15:
+            return {
+                'can_join': False,
+                'message': f'You are {minutes_late} minutes late for your session. Your therapist may no longer be available.',
+                'recommended_action': 'contact_therapist',
+                'feedback_type': 'moderately_late',
+                'reason': f'{minutes_late} minutes late, exceeds {late_limit} minute limit',
+                'next_steps': [
+                    'Send an urgent message to your therapist',
+                    'Call if you have their contact number',
+                    'Explain your situation and ask if they can still meet',
+                    'Be prepared to reschedule if they\'re unavailable'
+                ]
+            }
+        
+        # Just past limit (15+ minutes but not too much)
+        else:
+            return {
+                'can_join': False,
+                'message': f'You are {minutes_late} minutes late. The session access window has closed.',
+                'recommended_action': 'contact_therapist_urgent',
+                'feedback_type': 'just_late',
+                'reason': f'{minutes_late} minutes late, exceeds {late_limit} minute limit',
+                'next_steps': [
+                    'Immediately contact your therapist',
+                    'Apologize for the delay',
+                    'Ask if they can extend the session',
+                    'Reschedule if necessary'
+                ]
+            }
+    
+    # Session ended (way past session duration)
+    if time_diff_minutes < -(SESSION_CONTROL['SESSION_DURATION_MINUTES'] + 15):
+        hours_past = abs(time_diff_minutes) / 60
+        return {
+            'can_join': False,
+            'message': f'This session ended {int(hours_past)} hours ago.',
+            'recommended_action': 'schedule_new_session',
+            'feedback_type': 'session_ended',
+            'reason': f'Session ended {hours_past:.1f} hours ago',
+            'next_steps': [
+                'Schedule a new session with your therapist',
+                'Review what caused you to miss this session',
+                'Set up calendar reminders for future sessions',
+                'Consider adjusting your schedule'
+            ]
+        }
+    
+    # Can join!
+    return {
+        'can_join': True,
+        'message': 'You can join the session now',
+        'recommended_action': 'join_session',
+        'feedback_type': 'available',
+        'reason': 'Within acceptable time window',
+        'next_steps': ['Click to enter the waiting room']
+    }
+
+# Enhanced rescheduling helper API
+@dashboard_bp.route('/api/reschedule-suggestion', methods=['POST'])
+@login_required
+def get_reschedule_suggestion():
+    """Provide smart rescheduling suggestions when user is late"""
+    try:
+        data = request.get_json()
+        appointment_id = data.get('appointment_id')
+        
+        if not appointment_id:
+            return jsonify({'success': False, 'error': 'Appointment ID required'}), 400
+        
+        user_id = ObjectId(session['user'])
+        appointment = mongo.db.appointments.find_one({
+            '_id': ObjectId(appointment_id),
+            'student_id': user_id
+        })
+        
+        if not appointment:
+            return jsonify({'success': False, 'error': 'Appointment not found'}), 404
+        
+        # Get therapist info
+        therapist = mongo.db.therapists.find_one({'_id': appointment['therapist_id']})
+        
+        # Generate suggestions
+        suggestions = _generate_reschedule_suggestions(appointment, therapist)
+        
+        return jsonify({
+            'success': True,
+            'suggestions': suggestions,
+            'therapist_contact': {
+                'name': therapist.get('name', 'Your Therapist') if therapist else 'Your Therapist',
+                'can_message': True,  # Based on your chat system
+                'emergency_available': therapist.get('emergency_hours', False) if therapist else False
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting reschedule suggestions: {str(e)}")
+        return jsonify({'success': False, 'error': 'Failed to get suggestions'}), 500
+
+def _generate_reschedule_suggestions(appointment, therapist):
+    """Generate smart reschedule suggestions"""
+    now = datetime.now()
+    suggestions = []
+    
+    # Same day later
+    if now.hour < 16:  # Before 4 PM
+        same_day_time = now.replace(hour=now.hour + 2, minute=0, second=0, microsecond=0)
+        suggestions.append({
+            'time': same_day_time.strftime('%I:%M %p'),
+            'date': same_day_time.strftime('%A, %B %d'),
+            'type': 'same_day',
+            'urgency': 'high',
+            'message': 'Later today - might still be available'
+        })
+    
+    # Tomorrow same time
+    tomorrow = (now + timedelta(days=1)).replace(
+        hour=appointment['datetime'].hour, 
+        minute=appointment['datetime'].minute,
+        second=0, microsecond=0
+    )
+    suggestions.append({
+        'time': tomorrow.strftime('%I:%M %p'),
+        'date': tomorrow.strftime('%A, %B %d'),
+        'type': 'next_day',
+        'urgency': 'medium',
+        'message': 'Same time tomorrow'
+    })
+    
+    # Next few days
+    for days_ahead in [2, 3, 7]:
+        future_date = (now + timedelta(days=days_ahead)).replace(
+            hour=appointment['datetime'].hour,
+            minute=appointment['datetime'].minute,
+            second=0, microsecond=0
+        )
+        
+        suggestions.append({
+            'time': future_date.strftime('%I:%M %p'),
+            'date': future_date.strftime('%A, %B %d'),
+            'type': 'future',
+            'urgency': 'low',
+            'message': f'In {days_ahead} days'
+        })
+    
+    return suggestions[:3]
+
+@dashboard_bp.route('/api/waiting-room-status')
+@login_required
+def get_waiting_room_status():
+    """Get waiting room status for an appointment"""
+    try:
+        appointment_id = request.args.get('appointment_id')
+        
+        logger.debug(f"Getting waiting room status for appointment: {appointment_id}")
+        
+        if not appointment_id:
+            return jsonify({'success': False, 'error': 'Appointment ID required'}), 400
+        
+        # Get appointment to verify access
+        user_id = str(session['user'])
+        appointment = mongo.db.appointments.find_one({
+            '_id': ObjectId(appointment_id),
+            '$or': [
+                {'student_id': ObjectId(user_id)},
+                {'therapist_id': ObjectId(user_id)}
+            ]
+        })
+        
+        if not appointment:
+            logger.error(f"Appointment not found or access denied: {appointment_id}")
+            return jsonify({'success': False, 'error': 'Appointment not found'}), 404
+        
+        # Get waiting room participants
+        participants = _get_waiting_room_participants(appointment_id)
+        
+        student_joined = any(p['role'] == 'student' for p in participants)
+        therapist_joined = any(p['role'] == 'therapist' for p in participants)
+        both_joined = student_joined and therapist_joined
+        
+        logger.debug(f"Waiting room status - Student: {student_joined}, Therapist: {therapist_joined}")
+        
+        response_data = {
+            'success': True,
+            'appointment_id': appointment_id,
+            'participants': participants,
+            'student_joined': student_joined,
+            'therapist_joined': therapist_joined,
+            'both_joined': both_joined,
+            'participant_count': len(participants)
+        }
+        
+        # If both joined, provide meeting link
+        if both_joined:
+            meeting_link = appointment.get('meeting_info', {}).get('meet_link')
+            if meeting_link:
+                response_data['meeting_link'] = meeting_link
+                logger.info(f"Both parties joined, providing meeting link for appointment {appointment_id}")
+                
+                # Log session start
+                _log_session_start(appointment_id, participants)
+        
+        return jsonify(response_data)
+        
+    except Exception as e:
+        logger.error(f"Error getting waiting room status: {str(e)}")
+        return jsonify({'success': False, 'error': 'Failed to get waiting room status'}), 500
+
+# Helper functions for session control
+def _can_join_session(time_diff_minutes, status):
+    """Check if user can join session based on timing and status"""
+    if status not in ['confirmed']:
+        logger.debug(f"Cannot join - status is {status}, not confirmed")
+        return False
+    
+    # Can join from EARLY_JOIN_MINUTES before until LATE_JOIN_CUTOFF_MINUTES after
+    can_join = (-SESSION_CONTROL['LATE_JOIN_CUTOFF_MINUTES'] <= 
+                time_diff_minutes <= 
+                SESSION_CONTROL['EARLY_JOIN_MINUTES'])
+    
+    logger.debug(f"Can join session: {can_join} (time_diff: {time_diff_minutes})")
+    return can_join
+
+def _get_access_status(time_diff_minutes, status):
+    """Get descriptive access status"""
+    if status != 'confirmed':
+        return 'not_confirmed'
+    
+    if time_diff_minutes > SESSION_CONTROL['EARLY_JOIN_MINUTES']:
+        return 'too_early'
+    elif time_diff_minutes < -SESSION_CONTROL['LATE_JOIN_CUTOFF_MINUTES']:
+        return 'too_late'
+    elif -SESSION_CONTROL['SESSION_DURATION_MINUTES'] <= time_diff_minutes <= SESSION_CONTROL['EARLY_JOIN_MINUTES']:
+        return 'available'
+    else:
+        return 'session_ended'
+
+def _add_user_to_waiting_room(appointment_id, user_id, role):
+    """Add user to waiting room"""
+    participant_data = {
+        'user_id': user_id,
+        'role': role,
+        'joined_at': datetime.now().isoformat(),
+        'last_ping': datetime.now().isoformat()
+    }
+    
+    # Use in-memory storage for simplicity
+    if appointment_id not in waiting_room_sessions:
+        waiting_room_sessions[appointment_id] = {}
+    waiting_room_sessions[appointment_id][user_id] = participant_data
+    
+    logger.debug(f"Added {role} {user_id} to waiting room {appointment_id}")
+
+def _remove_user_from_waiting_room(appointment_id, user_id):
+    """Remove user from waiting room"""
+    if appointment_id in waiting_room_sessions:
+        waiting_room_sessions[appointment_id].pop(user_id, None)
+        logger.debug(f"Removed user {user_id} from waiting room {appointment_id}")
+
+def _get_waiting_room_participants(appointment_id):
+    """Get all participants in waiting room"""
+    participants = []
+    
+    if appointment_id in waiting_room_sessions:
+        for user_id, data in waiting_room_sessions[appointment_id].items():
+            # Check if participant is still active (last ping within 30 seconds)
+            try:
+                last_ping = datetime.fromisoformat(data['last_ping'])
+                if (datetime.now() - last_ping).total_seconds() < 30:
+                    participants.append(data)
+                else:
+                    # Remove inactive participant
+                    del waiting_room_sessions[appointment_id][user_id]
+            except:
+                continue
+    
+    return participants
+
+def _log_session_start(appointment_id, participants):
+    """Log when session actually starts (both parties joined)"""
+    try:
+        # Update appointment with session start time
+        mongo.db.appointments.update_one(
+            {'_id': ObjectId(appointment_id)},
+            {
+                '$set': {
+                    'session_started_at': datetime.now(),
+                    'both_parties_joined': True,
+                    'participants_at_start': participants
+                }
+            }
+        )
+        
+        logger.info(f"Session started for appointment {appointment_id} with {len(participants)} participants")
+        
+    except Exception as e:
+        logger.error(f"Error logging session start: {str(e)}")
+
+
+@dashboard_bp.route('/api/session-analytics', methods=['POST'])
+@login_required
+def log_session_analytics():
+    """Log session analytics events"""
+    try:
+        data = request.get_json()
+        appointment_id = data.get('appointment_id')
+        event_type = data.get('event_type')  # 'join_attempt', 'waiting_room_enter', 'session_start', etc.
+        user_id = str(session['user'])
+        
+        analytics_data = {
+            'appointment_id': ObjectId(appointment_id) if appointment_id else None,
+            'user_id': ObjectId(user_id),
+            'event_type': event_type,
+            'timestamp': datetime.now(),
+            'user_agent': request.headers.get('User-Agent', ''),
+            'ip_address': request.remote_addr,
+            'additional_data': data.get('additional_data', {})
+        }
+        
+        # Store analytics
+        mongo.db.session_analytics.insert_one(analytics_data)
+        
+        return jsonify({'success': True, 'message': 'Analytics logged'})
+        
+    except Exception as e:
+        logger.error(f"Error logging session analytics: {str(e)}")
+        return jsonify({'success': False, 'error': 'Failed to log analytics'}), 500
+
+# Helper functions for session control
+
+def _can_join_session(time_diff_minutes, status):
+    """Check if user can join session based on timing and status"""
+    if status not in ['confirmed']:
+        return False
+    
+    # Can join from EARLY_JOIN_MINUTES before until LATE_JOIN_CUTOFF_MINUTES after
+    return (-SESSION_CONTROL['LATE_JOIN_CUTOFF_MINUTES'] <= 
+            time_diff_minutes <= 
+            SESSION_CONTROL['EARLY_JOIN_MINUTES'])
+
+def _get_access_status(time_diff_minutes, status):
+    """Get descriptive access status"""
+    if status != 'confirmed':
+        return 'not_confirmed'
+    
+    if time_diff_minutes > SESSION_CONTROL['EARLY_JOIN_MINUTES']:
+        return 'too_early'
+    elif time_diff_minutes < -SESSION_CONTROL['LATE_JOIN_CUTOFF_MINUTES']:
+        return 'too_late'
+    elif -SESSION_CONTROL['SESSION_DURATION_MINUTES'] <= time_diff_minutes <= SESSION_CONTROL['EARLY_JOIN_MINUTES']:
+        return 'available'
+    else:
+        return 'session_ended'
+
+def _add_user_to_waiting_room(appointment_id, user_id, role):
+    """Add user to waiting room"""
+    participant_data = {
+        'user_id': user_id,
+        'role': role,
+        'joined_at': datetime.now().isoformat(),
+        'last_ping': datetime.now().isoformat()
+    }
+    
+    if redis_client:
+        # Use Redis for real-time tracking
+        key = f"waiting_room:{appointment_id}"
+        redis_client.hset(key, user_id, json.dumps(participant_data))
+        redis_client.expire(key, SESSION_CONTROL['WAITING_ROOM_TIMEOUT_MINUTES'] * 60)
+    else:
+        # Fallback to in-memory storage
+        if appointment_id not in waiting_room_sessions:
+            waiting_room_sessions[appointment_id] = {}
+        waiting_room_sessions[appointment_id][user_id] = participant_data
+
+def _remove_user_from_waiting_room(appointment_id, user_id):
+    """Remove user from waiting room"""
+    if redis_client:
+        key = f"waiting_room:{appointment_id}"
+        redis_client.hdel(key, user_id)
+    else:
+        if appointment_id in waiting_room_sessions:
+            waiting_room_sessions[appointment_id].pop(user_id, None)
+
+def _get_waiting_room_participants(appointment_id):
+    """Get all participants in waiting room"""
+    participants = []
+    
+    if redis_client:
+        key = f"waiting_room:{appointment_id}"
+        participant_data = redis_client.hgetall(key)
+        
+        for user_id, data_json in participant_data.items():
+            try:
+                data = json.loads(data_json)
+                # Check if participant is still active (last ping within 30 seconds)
+                last_ping = datetime.fromisoformat(data['last_ping'])
+                if (datetime.now() - last_ping).total_seconds() < 30:
+                    participants.append(data)
+                else:
+                    # Remove inactive participant
+                    redis_client.hdel(key, user_id)
+            except:
+                continue
+    else:
+        # Fallback to in-memory storage
+        if appointment_id in waiting_room_sessions:
+            for user_id, data in waiting_room_sessions[appointment_id].items():
+                last_ping = datetime.fromisoformat(data['last_ping'])
+                if (datetime.now() - last_ping).total_seconds() < 30:
+                    participants.append(data)
+    
+    return participants
+
+def _is_user_in_waiting_room(appointment_id, user_id):
+    """Check if user is currently in waiting room"""
+    if redis_client:
+        key = f"waiting_room:{appointment_id}"
+        return redis_client.hexists(key, user_id)
+    else:
+        return (appointment_id in waiting_room_sessions and 
+                user_id in waiting_room_sessions[appointment_id])
+
+def _log_session_start(appointment_id, participants):
+    """Log when session actually starts (both parties joined)"""
+    try:
+        # Update appointment with session start time
+        mongo.db.appointments.update_one(
+            {'_id': ObjectId(appointment_id)},
+            {
+                '$set': {
+                    'session_started_at': datetime.now(),
+                    'both_parties_joined': True,
+                    'participants_at_start': participants
+                }
+            }
+        )
+        
+        # Log analytics event
+        mongo.db.session_analytics.insert_one({
+            'appointment_id': ObjectId(appointment_id),
+            'event_type': 'session_started',
+            'timestamp': datetime.now(),
+            'participants': participants,
+            'both_parties_joined': True
+        })
+        
+        logger.info(f"Session started for appointment {appointment_id} with {len(participants)} participants")
+        
+    except Exception as e:
+        logger.error(f"Error logging session start: {str(e)}")
+
+# Enhanced appointment creation with session control
+def create_enhanced_appointment_with_session_control(
+    student_id, 
+    therapist, 
+    appointment_slot, 
+    crisis_level='normal'
+):
+    """Create appointment with enhanced session control features"""
+    try:
+        # Create appointment using existing logic
+        appointment_id, appointment_doc, zoom_success = AppointmentManager.create_appointment_with_zoom(
+            student_id, therapist, appointment_slot, crisis_level
+        )
+        
+        if appointment_id:
+            # Add session control metadata
+            session_control_data = {
+                'session_control_enabled': True,
+                'early_join_minutes': SESSION_CONTROL['EARLY_JOIN_MINUTES'],
+                'session_duration_minutes': SESSION_CONTROL['SESSION_DURATION_MINUTES'],
+                'late_join_cutoff_minutes': SESSION_CONTROL['LATE_JOIN_CUTOFF_MINUTES'],
+                'waiting_room_required': True,
+                'both_parties_required': True,
+                'session_analytics_enabled': True
+            }
+            
+            # Update appointment with session control settings
+            mongo.db.appointments.update_one(
+                {'_id': appointment_id},
+                {'$set': session_control_data}
+            )
+            
+            logger.info(f"Created appointment {appointment_id} with enhanced session control")
+        
+        return appointment_id, appointment_doc, zoom_success
+        
+    except Exception as e:
+        logger.error(f"Error creating enhanced appointment: {str(e)}")
+        return None, None, False
+
+# Cleanup function for expired waiting rooms
+def cleanup_expired_waiting_rooms():
+    """Clean up expired waiting room sessions"""
+    try:
+        if redis_client:
+            # Redis handles expiration automatically
+            return
+        
+        # Manual cleanup for in-memory storage
+        current_time = datetime.now()
+        expired_sessions = []
+        
+        for appointment_id, participants in waiting_room_sessions.items():
+            for user_id, data in list(participants.items()):
+                try:
+                    last_ping = datetime.fromisoformat(data['last_ping'])
+                    if (current_time - last_ping).total_seconds() > 60:  # 1 minute timeout
+                        del participants[user_id]
+                except:
+                    del participants[user_id]
+            
+            if not participants:  # No active participants
+                expired_sessions.append(appointment_id)
+        
+        for appointment_id in expired_sessions:
+            del waiting_room_sessions[appointment_id]
+        
+        if expired_sessions:
+            logger.info(f"Cleaned up {len(expired_sessions)} expired waiting room sessions")
+            
+    except Exception as e:
+        logger.error(f"Error cleaning up waiting rooms: {str(e)}")
+
+# Schedule cleanup to run periodically
+import threading
+import time
+
+def run_cleanup_scheduler():
+    """Run cleanup scheduler in background"""
+    while True:
+        try:
+            cleanup_expired_waiting_rooms()
+            time.sleep(60)  # Run every minute
+        except Exception as e:
+            logger.error(f"Error in cleanup scheduler: {str(e)}")
+            time.sleep(60)
+
+# Start cleanup scheduler thread
+cleanup_thread = threading.Thread(target=run_cleanup_scheduler, daemon=True)
+cleanup_thread.start()
+
+# API endpoint for admin to monitor session health
+@dashboard_bp.route('/api/admin/session-health')
+@login_required
+def get_session_health():
+    """Get session system health status (admin only)"""
+    try:
+        # In production, add admin role check here
+        
+        health_data = {
+            'timestamp': datetime.now().isoformat(),
+            'redis_available': redis_client is not None,
+            'active_waiting_rooms': len(waiting_room_sessions) if not redis_client else 'N/A (Redis)',
+            'session_control_config': SESSION_CONTROL,
+            'recent_sessions': []
+        }
+        
+        # Get recent session starts
+        recent_sessions = list(mongo.db.session_analytics.find({
+            'event_type': 'session_started',
+            'timestamp': {'$gte': datetime.now() - timedelta(hours=24)}
+        }).sort('timestamp', -1).limit(10))
+        
+        for session_data in recent_sessions:
+            health_data['recent_sessions'].append({
+                'appointment_id': str(session_data['appointment_id']),
+                'timestamp': session_data['timestamp'].isoformat(),
+                'participants': len(session_data.get('participants', []))
+            })
+        
+        return jsonify(health_data)
+        
+    except Exception as e:
+        logger.error(f"Error getting session health: {str(e)}")
+
+@dashboard_bp.route('/api/debug/session-info')
+@login_required
+def debug_session_info():
+    """Debug endpoint to check session and appointment status"""
+    try:
+        user_id = str(session['user'])
+        appointment_id = request.args.get('appointment_id')
+        
+        debug_info = {
+            'user_id': user_id,
+            'session_data': dict(session),
+            'appointment_id': appointment_id,
+            'waiting_rooms': waiting_room_sessions,
+            'timestamp': datetime.now().isoformat()
+        }
+        
+        if appointment_id:
+            appointment = mongo.db.appointments.find_one({'_id': ObjectId(appointment_id)})
+            debug_info['appointment'] = {
+                'found': bool(appointment),
+                'status': appointment.get('status') if appointment else None,
+                'datetime': appointment.get('datetime').isoformat() if appointment and appointment.get('datetime') else None
+            }
+        
+        return jsonify(debug_info)
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# ENHANCED: Add route to test basic functionality
+@dashboard_bp.route('/api/test/basic', methods=['GET', 'POST'])
+@login_required
+def test_basic_api():
+    """Test endpoint to verify API is working"""
+    try:
+        return jsonify({
+            'success': True,
+            'message': 'API is working',
+            'method': request.method,
+            'user_id': str(session['user']),
+            'timestamp': datetime.now().isoformat()
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    
 # ===== HELPER DECORATORS =====
 def student_required(f):
     """Decorator to ensure user is a student"""
@@ -1006,21 +1969,49 @@ def therapist_info():
     try:
         user = _get_user_with_fallback(user_id)
         therapist = _get_therapist_with_defaults(user)
-        appointments = _get_formatted_appointments(user_id, therapist)
+        
+        # Enhanced appointment processing with categorization
+        all_appointments = _get_formatted_appointments(user_id, therapist)
+        categorized_appointments = _categorize_and_enhance_appointments(all_appointments)
+        
         appointment_status = get_user_appointment_status(user_id, mongo.db)
+        
+        # Get additional data for enhanced features
+        available_slots = []
+        if appointment_status.get('can_schedule', False) and therapist:
+            available_slots = get_therapist_available_slots(therapist, limit=5)
+        
+        # Check for pending reschedule requests
+        pending_reschedule = mongo.db.reschedule_requests.find_one({
+            'student_id': user_id,
+            'status': 'pending'
+        }) if therapist else None
+        
+        # Get assignment date if available
+        assignment_date = None
+        if therapist:
+            assignment = mongo.db.therapist_assignments.find_one({'student_id': user_id})
+            assignment_date = assignment.get('assigned_date') if assignment else None
         
         return render_template('student/therapist_info.html',
                              therapist=therapist,
-                             appointments=appointments,
+                             upcoming_appointments=categorized_appointments['upcoming'],
+                             completed_cancelled_appointments=categorized_appointments['completed_cancelled'],
+                             next_appointment=categorized_appointments['next_appointment'],
                              user=user,
                              appointment_status=appointment_status,
-                             can_book_new=appointment_status['can_schedule'])
+                             can_schedule_new=appointment_status.get('can_schedule', False),
+                             available_slots=available_slots,
+                             pending_reschedule=pending_reschedule,
+                             assignment_date=assignment_date,
+                             total_sessions=len(all_appointments))
                              
     except Exception as e:
         logger.error(f"Error loading therapist info for {user_id}: {str(e)}")
         flash('Unable to load therapist information. Please try again.', 'error')
         return redirect(url_for('dashboard.index'))
 
+# Keep your existing helper functions but enhance them
 def _get_user_with_fallback(user_id: ObjectId) -> Dict[str, Any]:
     """Get user with fallback between collections"""
     user = mongo.db.students.find_one({'_id': user_id})
@@ -1068,18 +2059,32 @@ def _get_therapist_with_defaults(user: Dict[str, Any]) -> Optional[Dict[str, Any
     return therapist
 
 def _get_formatted_appointments(user_id: ObjectId, therapist: Optional[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    """Get and format appointments"""
+    """Get and format appointments with enhanced features"""
     if not therapist:
         return []
     
+    # Exclude soft-deleted appointments
     raw_appointments = list(mongo.db.appointments.find({
         'student_id': user_id,
-        'therapist_id': therapist['_id']
+        'therapist_id': therapist['_id'],
+        'deleted': {'$ne': True}  # Exclude deleted appointments
     }).sort('datetime', 1))
     
     appointments = []
+    now = datetime.now()
+    
     for apt in raw_appointments:
         apt['type'] = 'virtual'  # Force virtual
+        
+        # Auto-complete expired appointments
+        if apt.get('datetime') and apt['datetime'] < now - timedelta(hours=2):
+            if apt.get('status') == 'confirmed':
+                mongo.db.appointments.update_one(
+                    {'_id': apt['_id']},
+                    {'$set': {'status': 'completed', 'auto_completed': True}}
+                )
+                apt['status'] = 'completed'
+                apt['auto_completed'] = True
         
         # Format datetime
         if apt.get('datetime'):
@@ -1092,10 +2097,48 @@ def _get_formatted_appointments(user_id: ObjectId, therapist: Optional[Dict[str,
         
         # Ensure meeting info exists
         _ensure_meeting_info(apt)
+        
+        # Add enhanced session controls
+        apt['session_controls'] = _get_enhanced_session_controls(apt)
+        
+        # Add reminder status
+        apt['reminder_status'] = _get_reminder_status(apt)
+        
+        # Add zoom status
+        apt['zoom_status'] = _get_zoom_status(apt)
+        
         appointments.append(apt)
     
     return appointments
 
+# NEW FUNCTION - Categorize and enhance appointments
+def _categorize_and_enhance_appointments(appointments: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """Categorize appointments into upcoming and completed/cancelled with proper ordering"""
+    upcoming_appointments = []
+    completed_cancelled_appointments = []
+    
+    for apt in appointments:
+        if apt.get('status') in ['completed', 'cancelled']:
+            completed_cancelled_appointments.append(apt)
+        else:
+            upcoming_appointments.append(apt)
+    
+    # Sort upcoming by datetime (earliest first)
+    upcoming_appointments.sort(key=lambda x: x.get('datetime', datetime.max))
+    
+    # Sort completed/cancelled by datetime (most recent first)
+    completed_cancelled_appointments.sort(key=lambda x: x.get('datetime', datetime.min), reverse=True)
+    
+    # Get next appointment
+    next_appointment = upcoming_appointments[0] if upcoming_appointments else None
+    
+    return {
+        'upcoming': upcoming_appointments,
+        'completed_cancelled': completed_cancelled_appointments,
+        'next_appointment': next_appointment
+    }
+
+# Keep your existing _ensure_meeting_info function as is
 def _ensure_meeting_info(appointment: Dict[str, Any]):
     """Ensure appointment has meeting info"""
     if not appointment.get('meeting_info'):
@@ -1118,6 +2161,137 @@ def _ensure_meeting_info(appointment: Dict[str, Any]):
             {'_id': appointment['_id']},
             {'$set': {'meeting_info': meeting_info, 'type': 'virtual'}}
         )
+
+# NEW ENHANCED FUNCTIONS - Add these to your existing code
+
+def _get_enhanced_session_controls(appointment: Dict[str, Any]) -> Dict[str, Any]:
+    """Get enhanced session controls with 5-minute window logic"""
+    if not appointment.get('datetime'):
+        return {
+            'status': 'pending',
+            'message': 'Time to be confirmed',
+            'can_join': False,
+            'button_class': 'btn-secondary',
+            'icon': 'fas fa-clock'
+        }
+    
+    now = datetime.now()
+    session_time = appointment['datetime']
+    time_diff = (session_time - now).total_seconds() / 60  # minutes
+    
+    status = appointment.get('status', 'confirmed')
+    
+    if status in ['cancelled', 'completed']:
+        return {
+            'status': status,
+            'message': f'Session {status}',
+            'can_join': False,
+            'button_class': 'btn-secondary opacity-50',
+            'icon': 'fas fa-check-circle' if status == 'completed' else 'fas fa-times-circle'
+        }
+    
+    # 5-minute window logic
+    join_window_start = 5  # 5 minutes before
+    join_window_end = 5    # 5 minutes after start
+    
+    if time_diff > join_window_start:
+        minutes_to_wait = int(time_diff - join_window_start)
+        return {
+            'status': 'waiting',
+            'message': f'Available in {minutes_to_wait} minutes',
+            'can_join': False,
+            'button_class': 'btn-secondary',
+            'icon': 'fas fa-clock',
+            'countdown': True
+        }
+    elif -join_window_end <= time_diff <= join_window_start:
+        return {
+            'status': 'available',
+            'message': 'Join Session Now',
+            'can_join': True,
+            'button_class': 'btn-success pulse',
+            'icon': 'fas fa-video',
+            'urgent': time_diff <= 0
+        }
+    else:
+        return {
+            'status': 'expired',
+            'message': 'Session window closed',
+            'can_join': False,
+            'button_class': 'btn-warning',
+            'icon': 'fas fa-exclamation-triangle'
+        }
+
+def _get_reminder_status(appointment: Dict[str, Any]) -> Dict[str, bool]:
+    """Get reminder status for appointment"""
+    if not appointment.get('datetime'):
+        return {'sent': False, 'scheduled': False}
+    
+    # Check if reminders were sent
+    reminders_sent = mongo.db.appointment_reminders.count_documents({
+        'appointment_id': appointment['_id']
+    })
+    
+    session_time = appointment['datetime']
+    now = datetime.now()
+    
+    # Schedule reminders if not already done and session is in future
+    if reminders_sent == 0 and session_time > now:
+        _schedule_appointment_reminders(appointment)
+        return {'sent': False, 'scheduled': True}
+    
+    return {'sent': reminders_sent > 0, 'scheduled': True}
+
+def _get_zoom_status(appointment: Dict[str, Any]) -> Dict[str, Any]:
+    """Get Zoom integration status"""
+    meeting_info = appointment.get('meeting_info', {})
+    zoom_meeting_id = appointment.get('zoom_meeting_id')
+    
+    return {
+        'integrated': bool(zoom_meeting_id and not str(zoom_meeting_id).startswith('fallback')),
+        'link_available': bool(meeting_info.get('meet_link')),
+        'platform': meeting_info.get('platform', 'Unknown')
+    }
+
+def _schedule_appointment_reminders(appointment: Dict[str, Any]):
+    """Schedule reminders for appointment"""
+    try:
+        session_time = appointment['datetime']
+        student_id = appointment['student_id']
+        therapist_id = appointment['therapist_id']
+        
+        # Get student and therapist info
+        student = mongo.db.students.find_one({'_id': student_id}) or mongo.db.users.find_one({'_id': student_id})
+        therapist = mongo.db.therapists.find_one({'_id': therapist_id})
+        
+        if not student or not therapist:
+            return False
+        
+        # Schedule multiple reminders
+        reminder_times = [
+            (session_time - timedelta(hours=24), '24 hours'),
+            (session_time - timedelta(hours=2), '2 hours'),
+            (session_time - timedelta(minutes=15), '15 minutes')
+        ]
+        
+        for reminder_time, reminder_label in reminder_times:
+            if reminder_time > datetime.now():
+                reminder_doc = {
+                    'appointment_id': appointment['_id'],
+                    'student_id': student_id,
+                    'therapist_id': therapist_id,
+                    'reminder_time': reminder_time,
+                    'reminder_label': reminder_label,
+                    'status': 'scheduled',
+                    'created_at': datetime.now()
+                }
+                mongo.db.appointment_reminders.insert_one(reminder_doc)
+        
+        return True
+        
+    except Exception as e:
+        logger.error(f"Error scheduling reminders: {str(e)}")
+        return False
 
 @dashboard_bp.route('/student/match-results/<license_id>')
 @login_required  
@@ -1410,19 +2584,18 @@ def book_specific_slot():
         return redirect(url_for('dashboard.therapist_info'))
     
 # ===== API ROUTES =====
-
 @dashboard_bp.route('/api/auto-schedule-appointment', methods=['POST'])
 @login_required
 @student_required
 def api_auto_schedule_appointment():
-    """Enhanced API endpoint for auto-scheduling with better validation"""
+    """Enhanced API endpoint for auto-scheduling with better validation and session management"""
     try:
         user_id = session['user']
         
         # Debug logging
         logger.info(f"Auto-schedule request from user {user_id}")
         
-        # Check if user can schedule
+        # Check if user can schedule (your existing function)
         can_schedule, reason = can_schedule_appointment(user_id, mongo.db)
         if not can_schedule:
             logger.warning(f"Cannot schedule for user {user_id}: {reason}")
@@ -1437,7 +2610,7 @@ def api_auto_schedule_appointment():
         if not license_id:
             return jsonify({'error': 'Therapist license ID is required'}), 400
         
-        # Get therapist using the helper function
+        # Get therapist using your existing helper function
         therapist = get_therapist_by_identifier(license_id)
         if not therapist:
             logger.error(f"Therapist not found for license_id: {license_id}")
@@ -1445,29 +2618,50 @@ def api_auto_schedule_appointment():
         
         logger.info(f"Found therapist: {therapist['name']} (License: {therapist['license_number']})")
         
-        # Get available slots
+        # Get available slots using your existing function
         available_slots = get_therapist_available_slots(therapist, crisis_level=crisis_level)
         if not available_slots:
             return jsonify({'error': 'No available slots found'}), 400
         
         logger.info(f"Found {len(available_slots)} available slots")
         
-        # Create appointment
+        # Create appointment using your existing function
         selected_slot = available_slots[0]
         appointment_id, appointment_doc, zoom_success = AppointmentManager.create_appointment_with_zoom(
             user_id, therapist, selected_slot, crisis_level
         )
         
         if appointment_id:
+            # ENHANCED: Mark as auto-scheduled and add tracking
+            mongo.db.appointments.update_one(
+                {'_id': appointment_id},
+                {
+                    '$set': {
+                        'auto_scheduled': True,
+                        'is_auto_scheduled': True,
+                        'scheduling_method': 'auto',
+                        'type': 'virtual',
+                        'created_via': 'student_portal'
+                    }
+                }
+            )
+            
+            # ENHANCED: Schedule automatic reminders
+            updated_appointment = mongo.db.appointments.find_one({'_id': appointment_id})
+            if updated_appointment:
+                _schedule_appointment_reminders(updated_appointment)
+            
             logger.info(f"Successfully created appointment {appointment_id} with Zoom: {zoom_success}")
             return jsonify({
                 'success': True,
                 'appointment_id': str(appointment_id),
-                'scheduled_time': selected_slot['datetime'].isoformat(),
+                'scheduled_time': selected_slot['datetime'].isoformat() if hasattr(selected_slot, 'datetime') else selected_slot.get('datetime', ''),
                 'formatted_time': appointment_doc['formatted_time'],
                 'zoom_integrated': zoom_success,
                 'meeting_link': appointment_doc.get('meeting_info', {}).get('meet_link'),
-                'therapist_license': therapist['license_number']
+                'therapist_license': therapist['license_number'],
+                'reminders_scheduled': True,
+                'session_controls': _get_enhanced_session_controls(updated_appointment) if updated_appointment else None
             })
         else:
             logger.error(f"Failed to create appointment for user {user_id}")
@@ -1476,45 +2670,56 @@ def api_auto_schedule_appointment():
     except Exception as e:
         logger.error(f"Auto-scheduling error for user {session.get('user')}: {str(e)}")
         return jsonify({'error': f'Scheduling failed: {str(e)}'}), 500
+    
 
 @dashboard_bp.route('/api/therapist-availability/<license_id>')
 @login_required
 def get_therapist_availability(license_id):
-    """Get real-time therapist availability by license ID"""
+    """Enhanced real-time therapist availability by license ID"""
     try:
         therapist = get_therapist_by_identifier(license_id)
         if not therapist:
             return jsonify({'error': 'Therapist not found'}), 404
         
         crisis_level = request.args.get('crisis_level', 'normal')
-        available_slots = get_therapist_available_slots(therapist, crisis_level=crisis_level)
+        limit = int(request.args.get('limit', 10))
         
-        slots_data = [
-            {
-                'date': slot['date'],
-                'time': slot['time'],
-                'formatted': slot['formatted'],
-                'day_name': slot['day_name']
+        available_slots = get_therapist_available_slots(therapist, crisis_level=crisis_level, limit=limit)
+        
+        slots_data = []
+        for slot in available_slots:
+            slot_data = {
+                'date': slot.get('date', ''),
+                'time': slot.get('time', ''),
+                'formatted': slot.get('formatted', ''),
+                'day_name': slot.get('day_name', ''),
+                'datetime': slot.get('datetime').isoformat() if slot.get('datetime') else None
             }
-            for slot in available_slots
-        ]
+            
+            # Add session timing info for each slot
+            if slot.get('datetime'):
+                fake_appointment = {'datetime': slot['datetime'], 'status': 'confirmed'}
+                slot_data['session_controls'] = _get_enhanced_session_controls(fake_appointment)
+            
+            slots_data.append(slot_data)
         
         return jsonify({
             'therapist_name': therapist['name'],
-            'license_number': therapist['license_number'],  # Format: "KE-CL-123456"
+            'license_number': therapist['license_number'],
             'email': therapist['email'],
             'specializations': therapist.get('specializations', []),
             'rating': therapist.get('rating', 5),
             'phone': therapist.get('phone', ''),
             'emergency_hours': therapist.get('emergency_hours', False),
             'available_slots': slots_data,
-            'total_slots': len(slots_data)
+            'total_slots': len(slots_data),
+            'next_available': slots_data[0] if slots_data else None
         })
         
     except Exception as e:
         logger.error(f"Error getting therapist availability: {str(e)}")
         return jsonify({'error': 'Unable to get availability'}), 500
-
+    
 @dashboard_bp.route('/api/upcoming-session')
 def get_upcoming_session():
     """Get student's next upcoming session with Zoom integration status"""
@@ -1589,7 +2794,6 @@ def get_appointment_status(appointment_id, appointment=None):
         logger.error(f"Error getting appointment status: {str(e)}")
         return jsonify({'error': 'Failed to get appointment status'}), 500
     
-# ===== ENHANCED API ROUTES =====
 
 @dashboard_bp.route('/api/reschedule-appointment', methods=['POST'])
 @login_required
@@ -1869,6 +3073,273 @@ def validate_appointment_time():
         logger.error(f"Error validating appointment time: {str(e)}")
         return jsonify({'error': 'Unable to validate appointment time'}), 500
 
+@dashboard_bp.route('/api/auto-schedule-session', methods=['POST'])
+@login_required
+@student_required
+def api_auto_schedule_session():
+    """Simplified auto-schedule for students with assigned therapists"""
+    try:
+        user_id = ObjectId(session['user'])
+        
+        # Get user and their assigned therapist
+        user = _get_user_with_fallback(user_id)
+        if not user.get('assigned_therapist_id'):
+            return jsonify({
+                'success': False,
+                'error': 'No therapist assigned. Please complete intake assessment first.'
+            }), 400
+        
+        # Check if user can schedule (using your existing function)
+        can_schedule, reason = can_schedule_appointment(str(user_id), mongo.db)
+        if not can_schedule:
+            return jsonify({'success': False, 'error': reason}), 400
+        
+        # Get assigned therapist
+        therapist = mongo.db.therapists.find_one({'_id': user['assigned_therapist_id']})
+        if not therapist:
+            return jsonify({'success': False, 'error': 'Assigned therapist not found'}), 400
+        
+        # Get next available slot using your existing function
+        available_slots = get_therapist_available_slots(therapist, limit=1)
+        if not available_slots:
+            return jsonify({'success': False, 'error': 'No available slots with your therapist'}), 400
+        
+        selected_slot = available_slots[0]
+        
+        # Create appointment using your existing function
+        appointment_id, appointment_doc, zoom_success = AppointmentManager.create_appointment_with_zoom(
+            str(user_id), therapist, selected_slot, 'normal'
+        )
+        
+        if appointment_id:
+            # Mark as auto-scheduled
+            mongo.db.appointments.update_one(
+                {'_id': appointment_id},
+                {
+                    '$set': {
+                        'auto_scheduled': True,
+                        'is_auto_scheduled': True,
+                        'scheduling_method': 'auto_assigned_therapist',
+                        'type': 'virtual'
+                    }
+                }
+            )
+            
+            # Schedule reminders
+            updated_appointment = mongo.db.appointments.find_one({'_id': appointment_id})
+            _schedule_appointment_reminders(updated_appointment)
+            
+            return jsonify({
+                'success': True,
+                'appointment_id': str(appointment_id),
+                'scheduled_time': selected_slot.get('formatted', ''),
+                'zoom_integrated': zoom_success,
+                'reminders_scheduled': True,
+                'therapist_name': therapist['name']
+            })
+        
+        return jsonify({'success': False, 'error': 'Failed to create appointment'}), 500
+        
+    except Exception as e:
+        logger.error(f"Auto-schedule session error: {str(e)}")
+        return jsonify({'success': False, 'error': 'Scheduling failed'}), 500
+
+@dashboard_bp.route('/api/cancel-session', methods=['POST'])
+@login_required
+@student_required
+def api_cancel_session():
+    """Cancel session with detailed reason"""
+    try:
+        data = request.get_json()
+        appointment_id = data.get('appointment_id')
+        cancellation_reason = data.get('reason', '').strip()
+        
+        if not appointment_id or not cancellation_reason:
+            return jsonify({
+                'success': False,
+                'error': 'Appointment ID and cancellation reason are required'
+            }), 400
+        
+        if len(cancellation_reason) < 10:
+            return jsonify({
+                'success': False,
+                'error': 'Please provide a detailed reason (at least 10 characters)'
+            }), 400
+        
+        user_id = ObjectId(session['user'])
+        
+        # Get appointment
+        appointment = mongo.db.appointments.find_one({
+            '_id': ObjectId(appointment_id),
+            'student_id': user_id
+        })
+        
+        if not appointment:
+            return jsonify({'success': False, 'error': 'Appointment not found'}), 404
+        
+        # Check if appointment can be cancelled (not already completed/cancelled)
+        if appointment.get('status') in ['completed', 'cancelled']:
+            return jsonify({
+                'success': False,
+                'error': f'Cannot cancel a {appointment.get("status")} session'
+            }), 400
+        
+        # Update appointment
+        mongo.db.appointments.update_one(
+            {'_id': ObjectId(appointment_id)},
+            {
+                '$set': {
+                    'status': 'cancelled',
+                    'cancellation_reason': cancellation_reason,
+                    'cancelled_at': datetime.now(),
+                    'cancelled_by': 'student'
+                }
+            }
+        )
+        
+        # Cancel Zoom meeting if exists (using your existing function)
+        if appointment.get('zoom_meeting_id'):
+            try:
+                cancel_zoom_meeting_in_appointment(ObjectId(appointment_id))
+            except Exception as e:
+                logger.warning(f"Failed to cancel Zoom meeting: {str(e)}")
+        
+        # Notify therapist
+        _send_cancellation_notification(appointment, cancellation_reason)
+        
+        logger.info(f"Session {appointment_id} cancelled by student {user_id}")
+        
+        return jsonify({
+            'success': True,
+            'message': 'Session cancelled successfully'
+        })
+        
+    except Exception as e:
+        logger.error(f"Cancel session error: {str(e)}")
+        return jsonify({'success': False, 'error': 'Failed to cancel session'}), 500
+
+@dashboard_bp.route('/api/delete-appointment', methods=['POST'])
+@login_required
+@student_required
+def api_delete_appointment():
+    """Soft delete completed/cancelled appointments"""
+    try:
+        data = request.get_json()
+        appointment_id = data.get('appointment_id')
+        
+        if not appointment_id:
+            return jsonify({'success': False, 'error': 'Appointment ID required'}), 400
+        
+        user_id = ObjectId(session['user'])
+        
+        # Get appointment
+        appointment = mongo.db.appointments.find_one({
+            '_id': ObjectId(appointment_id),
+            'student_id': user_id
+        })
+        
+        if not appointment:
+            return jsonify({'success': False, 'error': 'Appointment not found'}), 404
+        
+        # Only allow deletion of completed/cancelled appointments
+        if appointment.get('status') not in ['completed', 'cancelled']:
+            return jsonify({
+                'success': False,
+                'error': 'Only completed or cancelled sessions can be removed'
+            }), 400
+        
+        # Soft delete - mark as deleted
+        mongo.db.appointments.update_one(
+            {'_id': ObjectId(appointment_id)},
+            {
+                '$set': {
+                    'deleted': True,
+                    'deleted_at': datetime.now(),
+                    'deleted_by': 'student'
+                }
+            }
+        )
+        
+        logger.info(f"Appointment {appointment_id} soft-deleted by student {user_id}")
+        
+        return jsonify({
+            'success': True,
+            'message': 'Session removed from your list'
+        })
+        
+    except Exception as e:
+        logger.error(f"Delete appointment error: {str(e)}")
+        return jsonify({'success': False, 'error': 'Failed to remove session'}), 500
+
+@dashboard_bp.route('/api/join-session/<appointment_id>')
+@login_required
+@student_required
+def api_join_session(appointment_id):
+    """Enhanced join session with 5-minute window validation"""
+    try:
+        user_id = ObjectId(session['user'])
+        
+        appointment = mongo.db.appointments.find_one({
+            '_id': ObjectId(appointment_id),
+            'student_id': user_id
+        })
+        
+        if not appointment:
+            return jsonify({'success': False, 'error': 'Session not found'}), 404
+        
+        # Check session timing with 5-minute window
+        session_controls = _get_enhanced_session_controls(appointment)
+        if not session_controls['can_join']:
+            return jsonify({
+                'success': False,
+                'error': session_controls['message'],
+                'status': session_controls['status']
+            }), 400
+        
+        # Get meeting link
+        meeting_info = appointment.get('meeting_info', {})
+        meet_link = meeting_info.get('meet_link')
+        
+        if not meet_link:
+            # Try to refresh Zoom meeting using your existing function
+            if appointment.get('zoom_meeting_id'):
+                try:
+                    refresh_success = refresh_zoom_meeting_for_appointment(ObjectId(appointment_id))
+                    if refresh_success:
+                        updated_appointment = mongo.db.appointments.find_one({'_id': ObjectId(appointment_id)})
+                        meet_link = updated_appointment.get('meeting_info', {}).get('meet_link')
+                except Exception as e:
+                    logger.warning(f"Failed to refresh Zoom meeting: {str(e)}")
+        
+        if not meet_link:
+            return jsonify({
+                'success': False,
+                'error': 'Meeting link not available. Please contact support.'
+            }), 400
+        
+        # Log session join attempt
+        mongo.db.appointments.update_one(
+            {'_id': ObjectId(appointment_id)},
+            {
+                '$set': {'last_joined_at': datetime.now()},
+                '$inc': {'join_attempts': 1}
+            }
+        )
+        
+        logger.info(f"Student {user_id} joining session {appointment_id}")
+        
+        return jsonify({
+            'success': True,
+            'meeting_link': meet_link,
+            'platform': meeting_info.get('platform', 'Zoom'),
+            'meeting_password': meeting_info.get('meeting_password'),
+            'dial_in': meeting_info.get('dial_in')
+        })
+        
+    except Exception as e:
+        logger.error(f"Join session error: {str(e)}")
+        return jsonify({'success': False, 'error': 'Failed to join session'}), 500
+
 # ===== UTILITY FUNCTIONS =====
 
 def find_next_available_slot(therapist_id: str) -> Optional[datetime]:
@@ -2089,6 +3560,149 @@ def get_system_health_status():
     except Exception as e:
         logger.error(f"Error getting system health status: {str(e)}")
         return {'error': str(e), 'timestamp': datetime.now().isoformat()}
+
+def _get_enhanced_session_controls(appointment: Dict[str, Any]) -> Dict[str, Any]:
+    """Get enhanced session controls with 5-minute window logic"""
+    if not appointment.get('datetime'):
+        return {
+            'status': 'pending',
+            'message': 'Time to be confirmed',
+            'can_join': False,
+            'button_class': 'btn-secondary',
+            'icon': 'fas fa-clock'
+        }
+    
+    now = datetime.now()
+    session_time = appointment['datetime']
+    time_diff = (session_time - now).total_seconds() / 60  # minutes
+    
+    status = appointment.get('status', 'confirmed')
+    
+    if status in ['cancelled', 'completed']:
+        return {
+            'status': status,
+            'message': f'Session {status}',
+            'can_join': False,
+            'button_class': 'btn-secondary opacity-50',
+            'icon': 'fas fa-check-circle' if status == 'completed' else 'fas fa-times-circle'
+        }
+    
+    # 5-minute window logic
+    join_window_start = 5  # 5 minutes before
+    join_window_end = 5    # 5 minutes after start
+    
+    if time_diff > join_window_start:
+        minutes_to_wait = int(time_diff - join_window_start)
+        return {
+            'status': 'waiting',
+            'message': f'Available in {minutes_to_wait} minutes',
+            'can_join': False,
+            'button_class': 'btn-secondary',
+            'icon': 'fas fa-clock',
+            'countdown': True,
+            'time_diff': time_diff
+        }
+    elif -join_window_end <= time_diff <= join_window_start:
+        return {
+            'status': 'available',
+            'message': 'Join Session Now',
+            'can_join': True,
+            'button_class': 'btn-success pulse',
+            'icon': 'fas fa-video',
+            'urgent': time_diff <= 0
+        }
+    else:
+        return {
+            'status': 'expired',
+            'message': 'Session window closed',
+            'can_join': False,
+            'button_class': 'btn-warning',
+            'icon': 'fas fa-exclamation-triangle'
+        }
+
+def _schedule_appointment_reminders(appointment: Dict[str, Any]):
+    """Schedule automatic reminders for appointment"""
+    try:
+        if not appointment.get('datetime'):
+            return False
+            
+        session_time = appointment['datetime']
+        student_id = appointment['student_id']
+        therapist_id = appointment['therapist_id']
+        
+        # Get student and therapist info
+        student = mongo.db.students.find_one({'_id': student_id}) or mongo.db.users.find_one({'_id': student_id})
+        therapist = mongo.db.therapists.find_one({'_id': therapist_id})
+        
+        if not student or not therapist:
+            return False
+        
+        # Schedule multiple reminders
+        reminder_times = [
+            (session_time - timedelta(hours=24), '24 hours'),
+            (session_time - timedelta(hours=2), '2 hours'),
+            (session_time - timedelta(minutes=15), '15 minutes')
+        ]
+        
+        for reminder_time, reminder_label in reminder_times:
+            if reminder_time > datetime.now():
+                reminder_doc = {
+                    'appointment_id': appointment['_id'],
+                    'student_id': student_id,
+                    'therapist_id': therapist_id,
+                    'reminder_time': reminder_time,
+                    'reminder_label': reminder_label,
+                    'status': 'scheduled',
+                    'created_at': datetime.now(),
+                    'student_email': student.get('email'),
+                    'therapist_email': therapist.get('email')
+                }
+                mongo.db.appointment_reminders.insert_one(reminder_doc)
+        
+        logger.info(f"Scheduled reminders for appointment {appointment['_id']}")
+        return True
+        
+    except Exception as e:
+        logger.error(f"Error scheduling reminders: {str(e)}")
+        return False
+
+def _send_cancellation_notification(appointment: Dict[str, Any], reason: str):
+    """Send notification to therapist about cancellation"""
+    try:
+        therapist = mongo.db.therapists.find_one({'_id': appointment['therapist_id']})
+        student = mongo.db.students.find_one({'_id': appointment['student_id']}) or mongo.db.users.find_one({'_id': appointment['student_id']})
+        
+        if therapist and student:
+            # Create therapist notification
+            notification = {
+                'therapist_id': therapist['_id'],
+                'type': 'session_cancelled',
+                'title': 'Session Cancelled by Student',
+                'message': f"{student.get('first_name', 'Student')} cancelled their session scheduled for {appointment.get('formatted_time', 'Unknown time')}. Reason: {reason}",
+                'appointment_id': appointment['_id'],
+                'student_id': student['_id'],
+                'created_at': datetime.now(),
+                'read': False,
+                'priority': 'normal'
+            }
+            mongo.db.therapist_notifications.insert_one(notification)
+            
+            # Also create a chat message for immediate visibility
+            chat_message = {
+                'student_id': student['_id'],
+                'therapist_id': therapist['_id'],
+                'sender': 'system',
+                'message': f"🚫 SESSION CANCELLED\n\nStudent cancelled their session scheduled for {appointment.get('formatted_time', 'Unknown time')}.\n\nReason: {reason}",
+                'timestamp': datetime.now(),
+                'message_type': 'cancellation_notice',
+                'read': False
+            }
+            mongo.db.therapist_chats.insert_one(chat_message)
+            
+            logger.info(f"Cancellation notification sent to therapist {therapist['_id']}")
+            
+    except Exception as e:
+        logger.error(f"Error sending cancellation notification: {str(e)}")
 
 # ===== ADMIN/DEBUG ROUTES (for development) =====
 @dashboard_bp.route('/api/system-health')
@@ -2824,3 +4438,184 @@ def get_moderation_status():
             'rate_limit_status': 'unknown',
             'system_status': 'error'
         })
+
+
+@dashboard_bp.route('/api/auto-reschedule', methods=['POST'])
+@login_required
+@student_required
+def auto_reschedule_missed_session():
+    """Handle auto-reschedule requests for missed auto-scheduled sessions - SIMPLE VERSION"""
+    try:
+        user_id = ObjectId(session['user'])
+        data = request.get_json()
+        
+        appointment_id = data.get('appointment_id')
+        missed_reason = data.get('missed_reason', '').strip()
+        priority = data.get('priority', 'normal')  # 'normal' or 'high'
+        
+        # Basic validation
+        if not appointment_id or not missed_reason:
+            return jsonify({
+                'success': False, 
+                'error': 'Appointment ID and reason are required'
+            }), 400
+        
+        if len(missed_reason) < 10:
+            return jsonify({
+                'success': False, 
+                'error': 'Please provide a more detailed reason (at least 10 characters)'
+            }), 400
+        
+        # Get appointment
+        appointment = mongo.db.appointments.find_one({
+            '_id': ObjectId(appointment_id),
+            'student_id': user_id
+        })
+        
+        if not appointment:
+            return jsonify({
+                'success': False, 
+                'error': 'Appointment not found'
+            }), 404
+        
+        # Verify it was auto-scheduled
+        if not appointment.get('auto_scheduled') and not appointment.get('is_auto_scheduled'):
+            return jsonify({
+                'success': False, 
+                'error': 'This feature is only available for auto-scheduled sessions'
+            }), 400
+        
+        # Get therapist
+        therapist = mongo.db.therapists.find_one({'_id': appointment['therapist_id']})
+        if not therapist:
+            return jsonify({
+                'success': False, 
+                'error': 'Therapist not found'
+            }), 404
+        
+        # Create auto-reschedule request
+        reschedule_request = {
+            'original_appointment_id': ObjectId(appointment_id),
+            'student_id': user_id,
+            'therapist_id': appointment['therapist_id'],
+            'missed_reason': missed_reason,
+            'priority': priority,
+            'request_type': 'auto_reschedule',
+            'status': 'pending',
+            'created_at': datetime.now(),
+            'original_session_time': appointment.get('datetime'),
+            'student_name': session.get('username', 'Student'),
+            'therapist_name': therapist.get('name', 'Therapist')
+        }
+        
+        # Insert request
+        result = mongo.db.reschedule_requests.insert_one(reschedule_request)
+        request_id = result.inserted_id
+        
+        # Update original appointment status
+        mongo.db.appointments.update_one(
+            {'_id': ObjectId(appointment_id)},
+            {
+                '$set': {
+                    'status': 'missed_rescheduling',
+                    'reschedule_request_id': request_id,
+                    'missed_at': datetime.now(),
+                    'missed_reason': missed_reason
+                }
+            }
+        )
+        
+        # Send notification to therapist (simple version)
+        _send_simple_reschedule_notification(therapist, reschedule_request, priority)
+        
+        # Log the request
+        logger.info(f"Auto-reschedule request created: {request_id} for appointment {appointment_id}")
+        
+        return jsonify({
+            'success': True,
+            'message': 'Auto-reschedule request sent successfully',
+            'request_id': str(request_id),
+            'priority': priority,
+            'expected_response_time': '2-3 days' if priority == 'high' else '1-2 weeks'
+        })
+        
+    except Exception as e:
+        logger.error(f"Auto-reschedule error: {str(e)}")
+        return jsonify({
+            'success': False, 
+            'error': 'Failed to submit auto-reschedule request'
+        }), 500
+
+def _send_simple_reschedule_notification(therapist, reschedule_request, priority):
+    """Send simple notification to therapist about reschedule request"""
+    try:
+        # Create a simple notification in therapist_notifications collection
+        notification = {
+            'therapist_id': therapist['_id'],
+            'type': 'auto_reschedule_request',
+            'title': f"Auto-Reschedule Request - {priority.title()} Priority",
+            'message': f"Student missed auto-scheduled session. Reason: {reschedule_request['missed_reason'][:100]}...",
+            'priority': priority,
+            'student_id': reschedule_request['student_id'],
+            'student_name': reschedule_request['student_name'],
+            'original_session_time': reschedule_request['original_session_time'],
+            'reschedule_request_id': reschedule_request.get('_id'),
+            'created_at': datetime.now(),
+            'read': False,
+            'action_required': True
+        }
+        
+        mongo.db.therapist_notifications.insert_one(notification)
+        
+        # Also create a simple chat message for immediate visibility
+        chat_message = {
+            'student_id': reschedule_request['student_id'],
+            'therapist_id': therapist['_id'],
+            'sender': 'system',
+            'message': f"🔄 AUTO-RESCHEDULE REQUEST ({priority.upper()} PRIORITY)\n\n" +
+                      f"Student missed their auto-scheduled session and has requested to reschedule.\n\n" +
+                      f"Reason: {reschedule_request['missed_reason']}\n\n" +
+                      f"Original session time: {reschedule_request['original_session_time'].strftime('%A, %B %d at %I:%M %p') if reschedule_request['original_session_time'] else 'N/A'}\n\n" +
+                      f"Please provide 2-3 available time slots for rescheduling.",
+            'timestamp': datetime.now(),
+            'message_type': 'auto_reschedule_request',
+            'read': False,
+            'priority': priority
+        }
+        
+        mongo.db.therapist_chats.insert_one(chat_message)
+        
+        logger.info(f"Reschedule notification sent to therapist {therapist['_id']}")
+        
+    except Exception as e:
+        logger.error(f"Error sending reschedule notification: {str(e)}")
+       
+
+# Simple API to check reschedule request status
+@dashboard_bp.route('/api/reschedule-status/<request_id>')
+@login_required
+def get_reschedule_status(request_id):
+    """Get status of reschedule request"""
+    try:
+        user_id = ObjectId(session['user'])
+        
+        reschedule_request = mongo.db.reschedule_requests.find_one({
+            '_id': ObjectId(request_id),
+            'student_id': user_id
+        })
+        
+        if not reschedule_request:
+            return jsonify({'error': 'Request not found'}), 404
+        
+        return jsonify({
+            'success': True,
+            'status': reschedule_request.get('status', 'pending'),
+            'created_at': reschedule_request['created_at'].isoformat(),
+            'priority': reschedule_request.get('priority', 'normal'),
+            'therapist_response': reschedule_request.get('therapist_response'),
+            'suggested_times': reschedule_request.get('suggested_times', [])
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting reschedule status: {str(e)}")
+        return jsonify({'error': 'Failed to get status'}), 500

@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Respond to Reschedule Request | Therapist Portal</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 50%, #2d1b69 100%);
+            color: #e0e7ff;
+            min-height: 100vh;
+        }
+        
+        .sidebar {
+            background: rgba(15, 15, 35, 0.9);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 260px;
+            z-index: 1000;
+        }
+        
+        .sidebar-nav a {
+            color: #a78bfa;
+            padding: 0.75rem 1.5rem;
+            display: flex;
+            align-items: center;
+            transition: all 0.3s ease;
+            border-radius: 0 20px 20px 0;
+            margin-right: 1rem;
+        }
+        
+        .sidebar-nav a:hover {
+            background: rgba(139, 92, 246, 0.2);
+            color: #c4b5fd;
+            transform: translateX(8px);
+        }
+        
+        .main-content {
+            margin-left: 260px;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .glass-card:hover {
+            background: rgba(255, 255, 255, 0.08);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(139, 92, 246, 0.4);
+            color: white;
+            text-decoration: none;
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #10b981, #059669);
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+        }
+        
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(16, 185, 129, 0.4);
+            color: white;
+            text-decoration: none;
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+        }
+        
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(239, 68, 68, 0.4);
+            color: white;
+            text-decoration: none;
+        }
+        
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            color: #e0e7ff;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+        }
+        
+        .request-card {
+            background: rgba(245, 158, 11, 0.1);
+            border-left: 4px solid #f59e0b;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .priority-high {
+            border-left-color: #ef4444;
+            background: rgba(239, 68, 68, 0.1);
+        }
+        
+        .priority-critical {
+            border-left-color: #dc2626;
+            background: rgba(220, 38, 38, 0.1);
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.4); }
+            50% { box-shadow: 0 0 0 10px rgba(220, 38, 38, 0); }
+        }
+        
+        .response-option {
+            background: rgba(255, 255, 255, 0.03);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .response-option:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: #8b5cf6;
+        }
+        
+        .response-option.selected {
+            border-color: #10b981;
+            background: rgba(16, 185, 129, 0.1);
+        }
+        
+        .response-option.decline.selected {
+            border-color: #ef4444;
+            background: rgba(239, 68, 68, 0.1);
+        }
+        
+        .form-input {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            padding: 0.75rem 1rem;
+            color: #e0e7ff;
+            width: 100%;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: #8b5cf6;
+            background: rgba(255, 255, 255, 0.08);
+        }
+        
+        .form-textarea {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            padding: 1rem;
+            color: #e0e7ff;
+            width: 100%;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            resize: vertical;
+            min-height: 100px;
+        }
+        
+        .form-textarea:focus {
+            outline: none;
+            border-color: #8b5cf6;
+            background: rgba(255, 255, 255, 0.08);
+        }
+        
+        .auto-schedule-preview {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .decline-reasons {
+            display: none;
+            margin-top: 1rem;
+        }
+        
+        .decline-reasons.show {
+            display: block;
+        }
+        
+        .reason-option {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .reason-option:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: #ef4444;
+        }
+        
+        .reason-option.selected {
+            border-color: #ef4444;
+            background: rgba(239, 68, 68, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+        <div class="p-6">
+            <h1 class="text-2xl font-bold mb-8 bg-gradient-to-r from-purple-400 to-pink-600 bg-clip-text text-transparent">
+                Therapist Portal
+            </h1>
+        </div>
+        <nav class="sidebar-nav">
+            <ul class="space-y-2">
+                <li><a href="{{ url_for('therapist.index') }}" class="flex items-center">
+                    <i class="fas fa-chart-line w-5 mr-3"></i> Dashboard
+                </a></li>
+                <li><a href="{{ url_for('therapist.students') }}" class="flex items-center">
+                    <i class="fas fa-users w-5 mr-3"></i> My Students
+                </a></li>
+                <li><a href="{{ url_for('therapist.virtual_sessions') }}" class="flex items-center">
+                    <i class="fas fa-video w-5 mr-3"></i> Virtual Sessions
+                </a></li>
+                <li><a href="{{ url_for('therapist.availability') }}" class="flex items-center">
+                    <i class="fas fa-calendar-alt w-5 mr-3"></i> Availability
+                </a></li>
+                <li><a href="{{ url_for('therapist.resources') }}" class="flex items-center">
+                    <i class="fas fa-book w-5 mr-3"></i> Resources
+                </a></li>
+                <li><a href="{{ url_for('therapist.profile') }}" class="flex items-center">
+                    <i class="fas fa-user w-5 mr-3"></i> Profile
+                </a></li>
+            </ul>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="max-w-4xl mx-auto">
+            
+            <!-- Header -->
+            <div class="mb-8">
+                <a href="{{ url_for('therapist.index') }}" class="btn-secondary mb-4">
+                    <i class="fas fa-arrow-left mr-2"></i>
+                    Back to Dashboard
+                </a>
+                
+                <h1 class="text-4xl font-bold mb-2 bg-gradient-to-r from-purple-400 to-pink-600 bg-clip-text text-transparent">
+                    Respond to Reschedule Request
+                </h1>
+                <p class="text-purple-300">
+                    <i class="fas fa-calendar-alt mr-2"></i>
+                    Student Auto-Reschedule Request
+                </p>
+            </div>
+
+            <!-- Request Details -->
+            <div class="glass-card p-6 mb-8">
+                <div class="request-card {% if reschedule_request.priority == 'high' %}priority-high{% elif reschedule_request.priority == 'critical' %}priority-critical{% endif %}">
+                    <div class="flex items-start justify-between mb-4">
+                        <div>
+                            <h3 class="text-xl font-semibold text-white mb-2">
+                                <i class="fas fa-user mr-2"></i>
+                                {{ student.first_name }} {{ student.last_name }}
+                            </h3>
+                            <p class="text-orange-200 mb-1">
+                                <strong>Reason:</strong> {{ reschedule_request.missed_reason }}
+                            </p>
+                            <p class="text-orange-300 text-sm">
+                                <strong>Submitted:</strong> {{ reschedule_request.created_at.strftime('%A, %B %d at %I:%M %p') }}
+                            </p>
+                            <p class="text-orange-300 text-sm">
+                                <strong>Priority:</strong> 
+                                <span class="px-2 py-1 rounded-full text-xs font-semibold
+                                    {% if reschedule_request.priority == 'critical' %}bg-red-600 text-white
+                                    {% elif reschedule_request.priority == 'high' %}bg-orange-600 text-white
+                                    {% else %}bg-yellow-600 text-white{% endif %}">
+                                    {{ reschedule_request.priority.title() }}
+                                </span>
+                            </p>
+                        </div>
+                    </div>
+                    
+                    {% if original_appointment %}
+                    <div class="bg-black bg-opacity-20 rounded-lg p-3 mt-4">
+                        <p class="text-sm text-orange-200">
+                            <strong>Original Session:</strong> 
+                            {{ original_appointment.datetime.strftime('%A, %B %d at %I:%M %p') if original_appointment.datetime else 'Time TBD' }}
+                        </p>
+                        {% if original_appointment.crisis_level in ['high', 'critical'] %}
+                        <p class="text-sm text-red-300 mt-1">
+                            <i class="fas fa-exclamation-triangle mr-1"></i>
+                            <strong>Crisis Level:</strong> {{ original_appointment.crisis_level.title() }}
+                        </p>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Response Form -->
+            <div class="glass-card p-6">
+                <h3 class="text-2xl font-bold mb-6 text-white">
+                    <i class="fas fa-reply mr-2"></i>
+                    Your Response
+                </h3>
+                
+                <form action="{{ url_for('therapist.process_reschedule_response', request_id=reschedule_request._id) }}" method="POST" id="rescheduleForm">
+                    
+                    <!-- Response Options -->
+                    <div class="mb-6">
+                        <h4 class="text-lg font-semibold mb-4 text-white">Choose Your Response:</h4>
+                        
+                        <!-- Accept Option -->
+                        <div class="response-option" data-action="accept" onclick="selectResponse('accept')">
+                            <div class="flex items-start">
+                                <div class="w-6 h-6 rounded-full border-2 border-green-400 mr-4 mt-1 flex items-center justify-center">
+                                    <i class="fas fa-check text-green-400 text-xs hidden" id="accept-check"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <h5 class="font-semibold text-green-400 mb-2">
+                                        <i class="fas fa-magic mr-2"></i>
+                                        Accept & Auto-Reschedule
+                                    </h5>
+                                    <p class="text-green-200 text-sm mb-2">
+                                        Automatically reschedule the session to your next available slot with a new Zoom meeting.
+                                    </p>
+                                    
+                                    {% if auto_reschedule_enabled and next_available_slot %}
+                                    <div class="auto-schedule-preview">
+                                        <div class="flex items-center text-green-300">
+                                            <i class="fas fa-calendar-check mr-2"></i>
+                                            <strong>Next Available Slot:</strong>
+                                        </div>
+                                        <p class="text-white font-semibold text-lg mt-1">
+                                            {{ next_available_slot.strftime('%A, %B %d at %I:%M %p') }}
+                                        </p>
+                                        <p class="text-green-200 text-sm mt-2">
+                                            <i class="fas fa-video mr-1"></i>
+                                            New Zoom meeting will be created automatically
+                                        </p>
+                                    </div>
+                                    {% elif not auto_reschedule_enabled %}
+                                    <div class="bg-yellow-600 bg-opacity-20 border border-yellow-600 rounded-lg p-3 mt-2">
+                                        <p class="text-yellow-200 text-sm">
+                                            <i class="fas fa-exclamation-triangle mr-1"></i>
+                                            Auto-scheduling is disabled in your availability settings
+                                        </p>
+                                    </div>
+                                    {% else %}
+                                    <div class="bg-red-600 bg-opacity-20 border border-red-600 rounded-lg p-3 mt-2">
+                                        <p class="text-red-200 text-sm">
+                                            <i class="fas fa-times-circle mr-1"></i>
+                                            No available slots found in the next 2 weeks
+                                        </p>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Decline Option -->
+                        <div class="response-option decline" data-action="decline" onclick="selectResponse('decline')">
+                            <div class="flex items-start">
+                                <div class="w-6 h-6 rounded-full border-2 border-red-400 mr-4 mt-1 flex items-center justify-center">
+                                    <i class="fas fa-times text-red-400 text-xs hidden" id="decline-check"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <h5 class="font-semibold text-red-400 mb-2">
+                                        <i class="fas fa-times-circle mr-2"></i>
+                                        Decline Reschedule Request
+                                    </h5>
+                                    <p class="text-red-200 text-sm">
+                                        Decline the reschedule request and ask the student to book a new appointment.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Hidden input for selected action -->
+                    <input type="hidden" name="response_action" id="response_action" required>
+                    
+                    <!-- Decline Reasons (Hidden by default) -->
+                    <div class="decline-reasons" id="decline-reasons">
+                        <h4 class="text-lg font-semibold mb-4 text-red-400">Reason for Declining:</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+                            <div class="reason-option" data-reason="schedule_full" onclick="selectReason('schedule_full')">
+                                <i class="fas fa-calendar-times mr-2"></i>
+                                Schedule fully booked
+                            </div>
+                            <div class="reason-option" data-reason="policy_violation" onclick="selectReason('policy_violation')">
+                                <i class="fas fa-exclamation-triangle mr-2"></i>
+                                Policy violation
+                            </div>
+                            <div class="reason-option" data-reason="insufficient_notice" onclick="selectReason('insufficient_notice')">
+                                <i class="fas fa-clock mr-2"></i>
+                                Insufficient notice
+                            </div>
+                            <div class="reason-option" data-reason="multiple_reschedules" onclick="selectReason('multiple_reschedules')">
+                                <i class="fas fa-redo mr-2"></i>
+                                Too many reschedules
+                            </div>
+                            <div class="reason-option" data-reason="availability_conflict" onclick="selectReason('availability_conflict')">
+                                <i class="fas fa-user-times mr-2"></i>
+                                Availability conflict
+                            </div>
+                            <div class="reason-option" data-reason="other" onclick="selectReason('other')">
+                                <i class="fas fa-ellipsis-h mr-2"></i>
+                                Other reason
+                            </div>
+                        </div>
+                        <input type="hidden" name="decline_reason" id="decline_reason">
+                    </div>
+                    
+                    <!-- Optional Message -->
+                    <div class="mb-6">
+                        <label for="therapist_message" class="block text-lg font-semibold mb-3 text-white">
+                            <i class="fas fa-comment mr-2"></i>
+                            Additional Message (Optional)
+                        </label>
+                        <textarea name="therapist_message" id="therapist_message" 
+                                  class="form-textarea" 
+                                  placeholder="Add a personal message for the student..."></textarea>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="flex justify-between items-center">
+                        <a href="{{ url_for('therapist.index') }}" class="btn-secondary">
+                            <i class="fas fa-times mr-2"></i>
+                            Cancel
+                        </a>
+                        
+                        <button type="submit" class="btn-primary" id="submit-btn" disabled>
+                            <i class="fas fa-paper-plane mr-2"></i>
+                            Send Response
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let selectedAction = null;
+        let selectedReason = null;
+        
+        function selectResponse(action) {
+            selectedAction = action;
+            
+            // Update UI
+            document.querySelectorAll('.response-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            
+            document.querySelector(`[data-action="${action}"]`).classList.add('selected');
+            
+            // Show/hide appropriate icons
+            document.getElementById('accept-check').classList.toggle('hidden', action !== 'accept');
+            document.getElementById('decline-check').classList.toggle('hidden', action !== 'decline');
+            
+            // Show/hide decline reasons
+            const declineReasons = document.getElementById('decline-reasons');
+            if (action === 'decline') {
+                declineReasons.classList.add('show');
+            } else {
+                declineReasons.classList.remove('show');
+                selectedReason = null;
+                document.querySelectorAll('.reason-option').forEach(option => {
+                    option.classList.remove('selected');
+                });
+            }
+            
+            // Update hidden input
+            document.getElementById('response_action').value = action;
+            
+            // Update submit button
+            updateSubmitButton();
+        }
+        
+        function selectReason(reason) {
+            selectedReason = reason;
+            
+            // Update UI
+            document.querySelectorAll('.reason-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            
+            document.querySelector(`[data-reason="${reason}"]`).classList.add('selected');
+            
+            // Update hidden input
+            document.getElementById('decline_reason').value = reason;
+            
+            // Update submit button
+            updateSubmitButton();
+        }
+        
+        function updateSubmitButton() {
+            const submitBtn = document.getElementById('submit-btn');
+            const canSubmit = selectedAction && (selectedAction === 'accept' || selectedReason);
+            
+            submitBtn.disabled = !canSubmit;
+            
+            if (canSubmit) {
+                submitBtn.classList.remove('opacity-50');
+                if (selectedAction === 'accept') {
+                    submitBtn.innerHTML = '<i class="fas fa-magic mr-2"></i>Accept & Auto-Reschedule';
+                    submitBtn.className = 'btn-success';
+                } else {
+                    submitBtn.innerHTML = '<i class="fas fa-times-circle mr-2"></i>Decline Request';
+                    submitBtn.className = 'btn-danger';
+                }
+            } else {
+                submitBtn.classList.add('opacity-50');
+                submitBtn.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>Send Response';
+                submitBtn.className = 'btn-primary';
+            }
+        }
+        
+        // Auto-schedule availability check
+        {% if not auto_reschedule_enabled or not next_available_slot %}
+        document.addEventListener('DOMContentLoaded', function() {
+            const acceptOption = document.querySelector('[data-action="accept"]');
+            acceptOption.style.opacity = '0.5';
+            acceptOption.style.pointerEvents = 'none';
+        });
+        {% endif %}
+        
+        // Form submission validation
+        document.getElementById('rescheduleForm').addEventListener('submit', function(e) {
+            if (!selectedAction) {
+                e.preventDefault();
+                alert('Please select a response option');
+                return;
+            }
+            
+            if (selectedAction === 'decline' && !selectedReason) {
+                e.preventDefault();
+                alert('Please select a reason for declining');
+                return;
+            }
+            
+            // Show loading state
+            const submitBtn = document.getElementById('submit-btn');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing...';
+        });
+    </script>
+</body>
+</html>

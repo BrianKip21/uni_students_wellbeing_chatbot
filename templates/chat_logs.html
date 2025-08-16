@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chat Logs - Wellbeing Assistant Admin</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         
@@ -131,6 +132,131 @@
         
         .glass-card:hover {
             background: rgba(255, 255, 255, 0.08);
+        }
+
+        /* Tab Navigation */
+        .tab-navigation {
+            display: flex;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 8px;
+            margin-bottom: 30px;
+            overflow-x: auto;
+        }
+
+        .tab-button {
+            background: transparent;
+            border: none;
+            color: #a78bfa;
+            padding: 12px 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+        }
+
+        .tab-button i {
+            margin-right: 8px;
+        }
+
+        .tab-button.active {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            color: white;
+            box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+        }
+
+        .tab-button:hover:not(.active) {
+            background: rgba(139, 92, 246, 0.1);
+            color: #c4b5fd;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Report Generation Section */
+        .report-generator {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+
+        .report-controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .control-label {
+            color: #c4b5fd;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .control-input {
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            color: #e0e7ff;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .control-input:focus {
+            outline: none;
+            border-color: #8b5cf6;
+            background: rgba(255, 255, 255, 0.08);
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
+        }
+
+        .control-input option {
+            background: #1a1a3e;
+            color: #e0e7ff;
+        }
+
+        .generate-report-btn {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+        }
+
+        .generate-report-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(139, 92, 246, 0.4);
+        }
+
+        .generate-report-btn i {
+            margin-right: 8px;
         }
         
         /* Search and Filter Styles */
@@ -277,6 +403,65 @@
             color: #a78bfa;
             font-size: 14px;
             font-weight: 500;
+        }
+
+        /* Topic Analysis Cards */
+        .topic-analysis-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .topic-list {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 25px;
+        }
+
+        .topic-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .topic-item:last-child {
+            border-bottom: none;
+        }
+
+        .topic-name {
+            color: #e0e7ff;
+            font-weight: 500;
+        }
+
+        .topic-count {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .chart-container {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 25px;
+            height: 400px;
+        }
+
+        .chart-title {
+            color: #c4b5fd;
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            text-align: center;
         }
         
         /* Chat Logs Styles */
@@ -499,47 +684,82 @@
             padding: 0 16px;
             font-weight: 500;
         }
-        
-        /* Responsive design */
-        @media (max-width: 1024px) {
-            .sidebar {
-                transform: translateX(-100%);
-            }
-            
-            .main-content {
-                margin-left: 0;
-            }
-            
-            .search-filter-container form {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            
-            .search-container {
-                min-width: auto;
-            }
-            
-            .stats-section {
-                grid-template-columns: repeat(2, 1fr);
-            }
+
+        /* Report Preview */
+        .report-preview {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 25px;
+            margin-top: 30px;
+            display: none;
         }
-        
-        @media (max-width: 768px) {
-            .stats-section {
-                grid-template-columns: 1fr;
-            }
-            
-            .chat-header {
-                flex-direction: column;
-                gap: 10px;
-                align-items: flex-start;
-            }
-            
-            .pagination {
-                justify-content: flex-start;
-                overflow-x: auto;
-                padding-bottom: 10px;
-            }
+
+        .report-preview.active {
+            display: block;
+        }
+
+        .report-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .report-title {
+            color: #c4b5fd;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .export-buttons {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .export-btn {
+            background: rgba(255, 255, 255, 0.1);
+            color: #a78bfa;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+        }
+
+        .export-btn:hover {
+            background: rgba(139, 92, 246, 0.2);
+            color: #c4b5fd;
+        }
+
+        .export-btn i {
+            margin-right: 6px;
+        }
+
+        .report-content {
+            color: #e0e7ff;
+            line-height: 1.6;
+        }
+
+        .report-section {
+            margin-bottom: 25px;
+        }
+
+        .report-section h3 {
+            color: #8b5cf6;
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 12px;
         }
         
         /* Loading state */
@@ -565,6 +785,65 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        
+        /* Responsive design */
+        @media (max-width: 1024px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+            
+            .search-filter-container form {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .search-container {
+                min-width: auto;
+            }
+            
+            .stats-section {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .topic-analysis-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .report-controls {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .stats-section {
+                grid-template-columns: 1fr;
+            }
+            
+            .chat-header {
+                flex-direction: column;
+                gap: 10px;
+                align-items: flex-start;
+            }
+            
+            .pagination {
+                justify-content: flex-start;
+                overflow-x: auto;
+                padding-bottom: 10px;
+            }
+
+            .tab-navigation {
+                overflow-x: auto;
+            }
+
+            .report-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
     </style>
 </head>
 <body>
@@ -574,8 +853,10 @@
             <ul>
                 <li><a href="{{ url_for('admin.dashboard') }}"><i class="fas fa-chart-line"></i> Dashboard</a></li>
                 <li><a href="{{ url_for('admin.user_management') }}"><i class="fas fa-users"></i> User Management</a></li>
+                <li><a href="{{ url_for('admin.mood_reports') }}"><i class="fas fa-brain"></i> Mood Reports</a></li>
                 <li><a href="{{ url_for('admin.moderation_dashboard') }}"><i class="fas fa-shield-alt"></i> Moderation Center</a></li>
                 <li class="active"><a href="{{ url_for('admin.chat_logs') }}"><i class="fas fa-comments"></i> Chat Logs</a></li>
+                <li><a href="{{ url_for('admin.budget_dashboard') }}"><i class="fas fa-dollar-sign"></i> Budget Dashboard</a></li>
                 <li><a href="{{ url_for('admin.resources') }}"><i class="fas fa-book"></i> Resource Management</a></li>
                 <li><a href="{{ url_for('admin.settings') }}"><i class="fas fa-cog"></i> System Settings</a></li>
                 <li><a href="{{ url_for('auth.logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
@@ -585,206 +866,1459 @@
         <div class="main-content">
             <h1><i class="fas fa-comments"></i> Chat Logs Analytics</h1>
             
-            <!-- Statistics Cards -->
-            <div class="stats-section">
-                <div class="stat-card">
-                    <div class="stat-label">Total Conversations</div>
-                    <div class="stat-number">{{ chat_logs|length if chat_logs else 0 }}</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Today's Chats</div>
-                    <div class="stat-number">{{ chat_logs|length if chat_logs else 0 }}</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Average Confidence</div>
-                    <div class="stat-number">
-                        {% if chat_logs %}
-                            {{ "%.1f"|format((chat_logs|selectattr('confidence')|map(attribute='confidence')|sum / chat_logs|selectattr('confidence')|list|length) if chat_logs|selectattr('confidence')|list else 0) }}%
-                        {% else %}
-                            0%
-                        {% endif %}
+            <!-- Tab Navigation -->
+            <div class="tab-navigation">
+                <button class="tab-button active" data-tab="logs">
+                    <i class="fas fa-list"></i> Chat Logs
+                </button>
+                <button class="tab-button" data-tab="analytics">
+                    <i class="fas fa-chart-bar"></i> Analytics
+                </button>
+                <button class="tab-button" data-tab="reports">
+                    <i class="fas fa-file-alt"></i> Generate Reports
+                </button>
+            </div>
+
+            <!-- Chat Logs Tab (Original Content) -->
+            <div class="tab-content active" id="logs">
+                <!-- Statistics Cards -->
+                <div class="stats-section">
+                    <div class="stat-card">
+                        <div class="stat-label">Total Conversations</div>
+                        <div class="stat-number">{{ chat_logs|length if chat_logs else 0 }}</div>
                     </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Unique Users</div>
-                    <div class="stat-number">{{ chat_logs|map(attribute='user_id')|unique|list|length if chat_logs else 0 }}</div>
-                </div>
-            </div>
-            
-            <!-- Search and Filter Section -->
-            <div class="search-filter-container">
-                <form method="get" action="{{ url_for('admin.chat_logs') }}">
-                    <div class="search-container">
-                        <input type="text" name="search" class="search-box" placeholder="Search by user ID, message content, or keywords..." value="{{ request.args.get('search', '') }}">
+                    <div class="stat-card">
+                        <div class="stat-label">Today's Chats</div>
+                        <div class="stat-number">{{ chat_logs|length if chat_logs else 0 }}</div>
                     </div>
-                    <input type="date" name="date" class="date-picker" value="{{ request.args.get('date', '') }}" title="Filter by date">
-                    <select name="topic" class="dropdown" title="Filter by topic">
-                        <option value="">All Topics</option>
-                        {% for topic in topics %}
-                            <option value="{{ topic }}" {% if request.args.get('topic') == topic %}selected{% endif %}>{{ topic|title }}</option>
-                        {% endfor %}
-                    </select>
-                    <button type="submit" class="filter-button">
-                        <i class="fas fa-filter"></i> Apply Filters
-                    </button>
-                </form>
-            </div>
-            
-            <!-- Loading State -->
-            <div class="loading" id="chat-loading">
-                <div class="spinner"></div>
-                Loading chat conversations...
-            </div>
-            
-            <!-- Chat Logs Container -->
-            <div class="chat-logs-container">
-                {% if chat_logs %}
-                    {% for chat in chat_logs %}
-                        <div class="chat-log">
-                            <div class="chat-header">
-                                <span class="student-id">
-                                    <i class="fas fa-user-graduate"></i>
-                                    {% if chat.username %}
-                                        {{ chat.username }}
-                                    {% else %}
-                                        {{ chat.user_id[:12] + '...' if chat.user_id and chat.user_id|length > 12 else (chat.user_id or 'Anonymous User') }}
-                                    {% endif %}
-                                </span>
-                                <span class="chat-timestamp">
-                                    <i class="fas fa-clock"></i>
-                                    {% if chat.timestamp %}
-                                        {% if chat.timestamp.strftime is defined %}
-                                            {{ chat.timestamp.strftime('%d %b %Y, %H:%M') }}
-                                        {% else %}
-                                            {{ chat.timestamp }}
-                                        {% endif %}
-                                    {% else %}
-                                        Unknown date
-                                    {% endif %}
-                                </span>
-                            </div>
-                            <div class="chat-message">
-                                <strong>Student:</strong> {{ chat.message or 'No message content' }}
-                            </div>
-                            <div class="chat-response">
-                                <span class="bot-tag">
-                                    <i class="fas fa-robot"></i> AI ASSISTANT
-                                </span>
-                                {% if chat.confidence %}
-                                    {% set conf_class = 'confidence-high' if chat.confidence > 85 else ('confidence-medium' if chat.confidence > 50 else 'confidence-low') %}
-                                    <span class="confidence-indicator {{ conf_class }}">
-                                        <i class="fas fa-chart-line"></i>
-                                        {{ "%.1f"|format(chat.confidence) }}%
-                                    </span>
-                                {% endif %}
-                                {{ chat.response[:150] + '...' if chat.response and chat.response|length > 150 else (chat.response or 'No response available') }}
-                            </div>
-                            {% if chat._id %}
-                            <a href="{{ url_for('admin.view_chat', chat_id=chat._id) }}" class="view-full-button">
-                                <i class="fas fa-external-link-alt"></i> View Complete Conversation
-                            </a>
+                    <div class="stat-card">
+                        <div class="stat-label">Average Confidence</div>
+                        <div class="stat-number">
+                            {% if chat_logs %}
+                                {{ "%.1f"|format((chat_logs|selectattr('confidence')|map(attribute='confidence')|sum / chat_logs|selectattr('confidence')|list|length) if chat_logs|selectattr('confidence')|list else 0) }}%
+                            {% else %}
+                                0%
                             {% endif %}
                         </div>
-                    {% endfor %}
-                {% else %}
-                    <div class="empty-message">
-                        <i class="fas fa-comments"></i>
-                        <p>No chat logs found</p>
-                        <p>Try adjusting your search filters or check back later for new conversations.</p>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Unique Users</div>
+                        <div class="stat-number">{{ chat_logs|map(attribute='user_id')|unique|list|length if chat_logs else 0 }}</div>
+                    </div>
+                </div>
+                
+                <!-- Search and Filter Section -->
+                <div class="search-filter-container">
+                    <form method="get" action="{{ url_for('admin.chat_logs') }}">
+                        <div class="search-container">
+                            <input type="text" name="search" class="search-box" placeholder="Search by user ID, message content, or keywords..." value="{{ request.args.get('search', '') }}">
+                        </div>
+                        <input type="date" name="date" class="date-picker" value="{{ request.args.get('date', '') }}" title="Filter by date">
+                        <select name="topic" class="dropdown" title="Filter by topic">
+                            <option value="">All Topics</option>
+                            {% for topic in topics %}
+                                <option value="{{ topic }}" {% if request.args.get('topic') == topic %}selected{% endif %}>{{ topic|title }}</option>
+                            {% endfor %}
+                        </select>
+                        <button type="submit" class="filter-button">
+                            <i class="fas fa-filter"></i> Apply Filters
+                        </button>
+                    </form>
+                </div>
+                
+                <!-- Loading State -->
+                <div class="loading" id="chat-loading">
+                    <div class="spinner"></div>
+                    Loading chat conversations...
+                </div>
+                
+                <!-- Chat Logs Container -->
+                <div class="chat-logs-container">
+                    {% if chat_logs %}
+                        {% for chat in chat_logs %}
+                            <div class="chat-log">
+                                <div class="chat-header">
+                                    <span class="student-id">
+                                        <i class="fas fa-user-graduate"></i>
+                                        {% if chat.username %}
+                                            {{ chat.username }}
+                                        {% else %}
+                                            {{ chat.user_id[:12] + '...' if chat.user_id and chat.user_id|length > 12 else (chat.user_id or 'Anonymous User') }}
+                                        {% endif %}
+                                    </span>
+                                    <span class="chat-timestamp">
+                                        <i class="fas fa-clock"></i>
+                                        {% if chat.timestamp %}
+                                            {% if chat.timestamp.strftime is defined %}
+                                                {{ chat.timestamp.strftime('%d %b %Y, %H:%M') }}
+                                            {% else %}
+                                                {{ chat.timestamp }}
+                                            {% endif %}
+                                        {% else %}
+                                            Unknown date
+                                        {% endif %}
+                                    </span>
+                                </div>
+                                <div class="chat-message">
+                                    <strong>Student:</strong> {{ chat.message or 'No message content' }}
+                                </div>
+                                <div class="chat-response">
+                                    <span class="bot-tag">
+                                        <i class="fas fa-robot"></i> AI ASSISTANT
+                                    </span>
+                                    {% if chat.confidence %}
+                                        {% set conf_class = 'confidence-high' if chat.confidence > 85 else ('confidence-medium' if chat.confidence > 50 else 'confidence-low') %}
+                                        <span class="confidence-indicator {{ conf_class }}">
+                                            <i class="fas fa-chart-line"></i>
+                                            {{ "%.1f"|format(chat.confidence) }}%
+                                        </span>
+                                    {% endif %}
+                                    {{ chat.response[:150] + '...' if chat.response and chat.response|length > 150 else (chat.response or 'No response available') }}
+                                </div>
+                                {% if chat._id %}
+                                <a href="{{ url_for('admin.view_chat', chat_id=chat._id) }}" class="view-full-button">
+                                    <i class="fas fa-external-link-alt"></i> View Complete Conversation
+                                </a>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="empty-message">
+                            <i class="fas fa-comments"></i>
+                            <p>No chat logs found</p>
+                            <p>Try adjusting your search filters or check back later for new conversations.</p>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Pagination -->
+                {% if total_pages is defined and total_pages > 1 %}
+                    <div class="pagination">
+                        <a href="{{ url_for('admin.chat_logs', page=1, search=request.args.get('search', ''), date=request.args.get('date', ''), topic=request.args.get('topic', '')) }}" 
+                           class="pagination-button" {% if page == 1 %}disabled{% endif %}>
+                           <i class="fas fa-angle-double-left"></i> First
+                        </a>
+                        
+                        <a href="{{ url_for('admin.chat_logs', page=page-1, search=request.args.get('search', ''), date=request.args.get('date', ''), topic=request.args.get('topic', '')) }}" 
+                           class="pagination-button" {% if page <= 1 %}disabled{% endif %}>
+                           <i class="fas fa-angle-left"></i> Previous
+                        </a>
+                        
+                        <span>Page {{ page or 1 }} of {{ total_pages }}</span>
+                        
+                        <a href="{{ url_for('admin.chat_logs', page=page+1, search=request.args.get('search', ''), date=request.args.get('date', ''), topic=request.args.get('topic', '')) }}" 
+                           class="pagination-button" {% if page >= total_pages %}disabled{% endif %}>
+                           Next <i class="fas fa-angle-right"></i>
+                        </a>
+                        
+                        <a href="{{ url_for('admin.chat_logs', page=total_pages, search=request.args.get('search', ''), date=request.args.get('date', ''), topic=request.args.get('topic', '')) }}" 
+                           class="pagination-button" {% if page == total_pages %}disabled{% endif %}>
+                           Last <i class="fas fa-angle-double-right"></i>
+                        </a>
                     </div>
                 {% endif %}
             </div>
-            
-            <!-- Pagination -->
-            {% if total_pages is defined and total_pages > 1 %}
-                <div class="pagination">
-                    <a href="{{ url_for('admin.chat_logs', page=1, search=request.args.get('search', ''), date=request.args.get('date', ''), topic=request.args.get('topic', '')) }}" 
-                       class="pagination-button" {% if page == 1 %}disabled{% endif %}>
-                       <i class="fas fa-angle-double-left"></i> First
-                    </a>
-                    
-                    <a href="{{ url_for('admin.chat_logs', page=page-1, search=request.args.get('search', ''), date=request.args.get('date', ''), topic=request.args.get('topic', '')) }}" 
-                       class="pagination-button" {% if page <= 1 %}disabled{% endif %}>
-                       <i class="fas fa-angle-left"></i> Previous
-                    </a>
-                    
-                    <span>Page {{ page or 1 }} of {{ total_pages }}</span>
-                    
-                    <a href="{{ url_for('admin.chat_logs', page=page+1, search=request.args.get('search', ''), date=request.args.get('date', ''), topic=request.args.get('topic', '')) }}" 
-                       class="pagination-button" {% if page >= total_pages %}disabled{% endif %}>
-                       Next <i class="fas fa-angle-right"></i>
-                    </a>
-                    
-                    <a href="{{ url_for('admin.chat_logs', page=total_pages, search=request.args.get('search', ''), date=request.args.get('date', ''), topic=request.args.get('topic', '')) }}" 
-                       class="pagination-button" {% if page == total_pages %}disabled{% endif %}>
-                       Last <i class="fas fa-angle-double-right"></i>
-                    </a>
+
+            <!-- Analytics Tab -->
+            <div class="tab-content" id="analytics">
+                <!-- Topic Analysis -->
+                <div class="topic-analysis-grid">
+                    <div class="topic-list">
+                        <h3 style="color: #c4b5fd; margin-bottom: 20px;">Most Discussed Topics</h3>
+                        <div id="topicsList">
+                            <!-- Will be populated by JavaScript -->
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <div class="chart-title">Topic Distribution</div>
+                        <canvas id="topicChart"></canvas>
+                    </div>
                 </div>
-            {% endif %}
+
+                <!-- Charts Grid -->
+                <div class="topic-analysis-grid">
+                    <div class="chart-container">
+                        <div class="chart-title">Conversations Over Time</div>
+                        <canvas id="timeChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <div class="chart-title">Confidence Score Distribution</div>
+                        <canvas id="confidenceChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Insights Section -->
+                <div class="glass-card">
+                    <h3 style="color: #c4b5fd; margin-bottom: 15px;">📊 Key Insights</h3>
+                    <div id="insightsContent" style="color: #e0e7ff; line-height: 1.6;">
+                        <!-- Will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reports Tab -->
+            <div class="tab-content" id="reports">
+                <div class="report-generator">
+                    <h3 style="color: #c4b5fd; margin-bottom: 20px;">Generate Custom Report</h3>
+                    <div class="report-controls">
+                        <div class="control-group">
+                            <label class="control-label">Report Type</label>
+                            <select class="control-input" id="reportType">
+                                <option value="comprehensive">Comprehensive Analysis</option>
+                                <option value="topic-focused">Topic-Focused Report</option>
+                                <option value="user-engagement">User Engagement Report</option>
+                                <option value="wellbeing-trends">Wellbeing Trends</option>
+                                <option value="confidence-analysis">Confidence Score Analysis</option>
+                                <option value="crisis-detection">Crisis Detection Summary</option>
+                            </select>
+                        </div>
+                        <div class="control-group">
+                            <label class="control-label">Date Range</label>
+                            <select class="control-input" id="dateRange">
+                                <option value="7days">Last 7 Days</option>
+                                <option value="30days">Last 30 Days</option>
+                                <option value="3months">Last 3 Months</option>
+                                <option value="6months">Last 6 Months</option>
+                                <option value="1year">Last Year</option>
+                                <option value="all">All Time</option>
+                            </select>
+                        </div>
+                        <div class="control-group">
+                            <label class="control-label">Specific Topic</label>
+                            <select class="control-input" id="specificTopic">
+                                <option value="all">All Topics</option>
+                                {% for topic in topics %}
+                                    <option value="{{ topic }}">{{ topic|title }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="control-group">
+                            <label class="control-label">Report Format</label>
+                            <select class="control-input" id="reportFormat">
+                                <option value="detailed">Detailed Analysis</option>
+                                <option value="summary">Executive Summary</option>
+                                <option value="statistical">Statistical Overview</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button class="generate-report-btn" onclick="generateReport()">
+                        <i class="fas fa-chart-bar"></i> Generate Report
+                    </button>
+                </div>
+
+                <!-- Report Preview -->
+                <div class="report-preview" id="reportPreview">
+                    <div class="report-header">
+                        <div class="report-title" id="reportTitle">Chat Analysis Report</div>
+                        <div class="export-buttons">
+                            <a href="#" class="export-btn" onclick="exportReport('pdf')">
+                                <i class="fas fa-file-pdf"></i> Export PDF
+                            </a>
+                            <a href="#" class="export-btn" onclick="exportReport('csv')">
+                                <i class="fas fa-file-csv"></i> Export CSV
+                            </a>
+                            <a href="#" class="export-btn" onclick="printReport()">
+                                <i class="fas fa-print"></i> Print
+                            </a>
+                        </div>
+                    </div>
+                    <div class="report-content" id="reportContent">
+                        <!-- Generated report content will appear here -->
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
+        // Global variables for chat data
+        let chatData = {
+            logs: {{ chat_logs|tojson if chat_logs else '[]' }},
+            topics: {{ topics|tojson if topics else '[]' }}
+        };
+
+        // CSRF token handling - use safe fallback
+        let csrfToken = '';
+        try {
+            // Try to get CSRF token if available
+            const metaTag = document.querySelector('meta[name="csrf-token"]');
+            if (metaTag) {
+                csrfToken = metaTag.getAttribute('content');
+            }
+        } catch (e) {
+            console.log('CSRF token not found, continuing without it');
+        }
+
+        // API endpoints
+        const API_ENDPOINTS = {
+            analytics: '{{ url_for("admin.chat_analytics_data") }}',
+            generateReport: '{{ url_for("admin.generate_report") }}',
+            exportReport: '{{ url_for("admin.export_chat_report", format="csv") }}'
+        };
+
+        // Get CSRF token dynamically if needed
+        function getCSRFToken() {
+            if (csrfToken) return csrfToken;
+            
+            // Try to get from form
+            const csrfInput = document.querySelector('input[name="csrf_token"]');
+            if (csrfInput) {
+                return csrfInput.value;
+            }
+            
+            // Try to get from meta tag
+            const metaTag = document.querySelector('meta[name="csrf-token"]');
+            if (metaTag) {
+                return metaTag.getAttribute('content');
+            }
+            
+            return '';
+        }
+
+        // Tab Navigation
+        document.querySelectorAll('.tab-button').forEach(button => {
+            button.addEventListener('click', function() {
+                const tabId = this.dataset.tab;
+                
+                console.log(`🔄 Switching to tab: ${tabId}`);
+                
+                // Update active button
+                document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Update active content
+                document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+                document.getElementById(tabId).classList.add('active');
+
+                // Initialize tab-specific content
+                if (tabId === 'analytics') {
+                    console.log('🎯 Analytics tab activated, initializing...');
+                    setTimeout(() => {
+                        initializeAnalytics();
+                    }, 100);
+                }
+            });
+        });
+
+        // Initialize Analytics
+        async function initializeAnalytics() {
+            console.log('🔄 Initializing Analytics...');
+            
+            // Show loading state
+            showAnalyticsLoading(true);
+            
+            try {
+                const data = await loadAnalyticsData();
+                if (data && !data.error) {
+                    console.log('✅ Analytics data loaded from backend:', data);
+                    updateAnalyticsDisplay(data);
+                } else {
+                    console.warn('⚠️ Backend analytics failed, using fallback');
+                    const fallbackData = processClientSideAnalytics();
+                    updateAnalyticsDisplay(fallbackData);
+                }
+            } catch (error) {
+                console.error('❌ Error initializing analytics:', error);
+                // Fallback to client-side processing
+                const fallbackData = processClientSideAnalytics();
+                updateAnalyticsDisplay(fallbackData);
+            } finally {
+                showAnalyticsLoading(false);
+            }
+        }
+
+        // Load analytics data from backend
+        async function loadAnalyticsData(range = '30days', topic = 'all') {
+            try {
+                const url = `${API_ENDPOINTS.analytics}?range=${range}&topic=${topic}`;
+                console.log('📡 Fetching analytics from:', url);
+                
+                const response = await fetch(url);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                console.log('📊 Analytics response:', data);
+                
+                return data;
+            } catch (error) {
+                console.error('❌ Error loading analytics data:', error);
+                // Fallback to processing client-side data
+                return processClientSideAnalytics();
+            }
+        }
+
+        // Show/hide loading state for analytics
+        function showAnalyticsLoading(show) {
+            const containers = [
+                document.getElementById('topicsList'),
+                document.getElementById('topicChart'),
+                document.getElementById('timeChart'),
+                document.getElementById('confidenceChart'),
+                document.getElementById('insightsContent')
+            ];
+            
+            containers.forEach(container => {
+                if (container) {
+                    if (show) {
+                        container.innerHTML = '<div style="text-align: center; padding: 20px; color: #a78bfa;"><div class="spinner" style="margin: 0 auto 10px;"></div>Loading...</div>';
+                    }
+                }
+            });
+        }
+
+        // Update analytics display with real data
+        function updateAnalyticsDisplay(data) {
+            console.log('🔄 Updating analytics display with:', data);
+            
+            try {
+                // Update each component
+                generateTopicsList(data.topic_distribution);
+                createTopicChart(data.topic_distribution);
+                createTimeChart(data.daily_counts);
+                createConfidenceChart(data.confidence_distribution);
+                generateInsights(data);
+                
+                console.log('✅ Analytics display updated successfully');
+            } catch (error) {
+                console.error('❌ Error updating analytics display:', error);
+                
+                // Fallback: try to update what we can
+                try {
+                    generateInsights();
+                } catch (e) {
+                    console.error('❌ Even fallback insights failed:', e);
+                }
+            }
+        }
+
+        // Fallback to client-side processing if backend fails
+        function processClientSideAnalytics() {
+            const topicCounts = {};
+            chatData.logs.forEach(chat => {
+                if (chat.topic) {
+                    topicCounts[chat.topic] = (topicCounts[chat.topic] || 0) + 1;
+                }
+            });
+
+            const confidenceRanges = { high: 0, medium: 0, low: 0 };
+            chatData.logs.forEach(chat => {
+                if (chat.confidence !== undefined) {
+                    if (chat.confidence >= 80) confidenceRanges.high++;
+                    else if (chat.confidence >= 50) confidenceRanges.medium++;
+                    else confidenceRanges.low++;
+                }
+            });
+
+            return {
+                total_conversations: chatData.logs.length,
+                unique_users: new Set(chatData.logs.map(chat => chat.user_id)).size,
+                average_confidence: chatData.logs.reduce((sum, chat) => sum + (chat.confidence || 0), 0) / chatData.logs.length,
+                topic_distribution: Object.entries(topicCounts).map(([topic, count]) => ({
+                    topic,
+                    count,
+                    percentage: ((count / chatData.logs.length) * 100).toFixed(1)
+                })),
+                confidence_distribution: confidenceRanges,
+                daily_counts: generateDailyCounts(),
+                insights: ['📊 Data processed locally due to connectivity issues']
+            };
+        }
+
+        function generateDailyCounts() {
+            const dailyCounts = {};
+            chatData.logs.forEach(chat => {
+                if (chat.timestamp) {
+                    const date = new Date(chat.timestamp).toDateString();
+                    dailyCounts[date] = (dailyCounts[date] || 0) + 1;
+                }
+            });
+
+            const last7Days = Array.from({length: 7}, (_, i) => {
+                const date = new Date();
+                date.setDate(date.getDate() - i);
+                return {
+                    date: date.toDateString(),
+                    count: dailyCounts[date.toDateString()] || 0
+                };
+            }).reverse();
+
+            return last7Days;
+        }
+
+        // Generate Topics List
+        function generateTopicsList(topicData = null) {
+            console.log('📋 Generating topics list with data:', topicData);
+            
+            let topics;
+            
+            if (topicData && Array.isArray(topicData) && topicData.length > 0) {
+                topics = topicData.slice(0, 8);
+                console.log('✅ Using backend topic data:', topics);
+            } else {
+                console.log('⚠️ No backend topic data, processing client-side');
+                const topicCounts = {};
+                chatData.logs.forEach(chat => {
+                    let topic = null;
+                    
+                    // Try different ways to extract topic
+                    if (chat.conversation_context && chat.conversation_context.topic) {
+                        topic = chat.conversation_context.topic;
+                    } else if (chat.topic) {
+                        topic = chat.topic;
+                    } else if (chat.category) {
+                        topic = chat.category;
+                    } else {
+                        // Infer topic from message content
+                        const message = (chat.message || '').toLowerCase();
+                        if (message.includes('stress') || message.includes('anxiety')) {
+                            topic = 'stress-management';
+                        } else if (message.includes('study') || message.includes('exam')) {
+                            topic = 'academic';
+                        } else if (message.includes('health') || message.includes('wellbeing')) {
+                            topic = 'health';
+                        } else if (message.includes('relationship') || message.includes('friend')) {
+                            topic = 'relationships';
+                        } else {
+                            topic = 'general';
+                        }
+                    }
+                    
+                    if (topic) {
+                        topicCounts[topic] = (topicCounts[topic] || 0) + 1;
+                    }
+                });
+                
+                topics = Object.entries(topicCounts)
+                    .sort(([,a], [,b]) => b - a)
+                    .slice(0, 8)
+                    .map(([topic, count]) => ({ topic, count }));
+                
+                console.log('🔄 Client-side topic counts:', topicCounts);
+                console.log('🎯 Final topics for display:', topics);
+            }
+
+            const topicsList = document.getElementById('topicsList');
+            if (topicsList) {
+                if (topics && topics.length > 0) {
+                    topicsList.innerHTML = topics.map(item => `
+                        <div class="topic-item">
+                            <span class="topic-name">${formatTopicName(item.topic)}</span>
+                            <span class="topic-count">${item.count}</span>
+                        </div>
+                    `).join('');
+                } else {
+                    topicsList.innerHTML = `
+                        <div style="text-align: center; padding: 20px; color: #a78bfa;">
+                            <i class="fas fa-info-circle" style="margin-bottom: 10px; font-size: 24px;"></i>
+                            <p>No topic data available</p>
+                            <p style="font-size: 12px; opacity: 0.7;">Start conversations to see topic analysis</p>
+                        </div>
+                    `;
+                }
+            }
+        }
+
+        // Helper function to format topic names
+        function formatTopicName(topic) {
+            if (!topic) return 'Unknown';
+            
+            return topic
+                .replace(/[-_]/g, ' ')
+                .split(' ')
+                .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                .join(' ');
+        }
+
+        // Create Topic Distribution Chart
+        function createTopicChart(topicData = null) {
+            const ctx = document.getElementById('topicChart');
+            if (!ctx) {
+                console.error('❌ Topic chart canvas not found');
+                return;
+            }
+            
+            console.log('📊 Creating topic chart with data:', topicData);
+            
+            let labels = [];
+            let data = [];
+            let hasData = false;
+            
+            if (topicData && Array.isArray(topicData) && topicData.length > 0) {
+                // Use backend data
+                const chartData = topicData.slice(0, 6);
+                labels = chartData.map(item => formatTopicName(item.topic));
+                data = chartData.map(item => item.count);
+                hasData = true;
+                console.log('✅ Using backend data for chart:', { labels, data });
+            } else {
+                // Process client-side data
+                console.log('🔄 Processing client-side data for chart');
+                const topicCounts = {};
+                
+                chatData.logs.forEach(chat => {
+                    let topic = null;
+                    
+                    // Extract topic using same logic as generateTopicsList
+                    if (chat.conversation_context && chat.conversation_context.topic) {
+                        topic = chat.conversation_context.topic;
+                    } else if (chat.topic) {
+                        topic = chat.topic;
+                    } else if (chat.category) {
+                        topic = chat.category;
+                    } else {
+                        // Infer topic from message content
+                        const message = (chat.message || '').toLowerCase();
+                        if (message.includes('stress') || message.includes('anxiety')) {
+                            topic = 'stress-management';
+                        } else if (message.includes('study') || message.includes('exam')) {
+                            topic = 'academic';
+                        } else if (message.includes('health') || message.includes('wellbeing')) {
+                            topic = 'health';
+                        } else if (message.includes('relationship') || message.includes('friend')) {
+                            topic = 'relationships';
+                        } else {
+                            topic = 'general';
+                        }
+                    }
+                    
+                    if (topic) {
+                        topicCounts[topic] = (topicCounts[topic] || 0) + 1;
+                    }
+                });
+                
+                const sortedTopics = Object.entries(topicCounts)
+                    .sort(([,a], [,b]) => b - a)
+                    .slice(0, 6);
+                
+                if (sortedTopics.length > 0) {
+                    labels = sortedTopics.map(([topic]) => formatTopicName(topic));
+                    data = sortedTopics.map(([, count]) => count);
+                    hasData = true;
+                }
+                
+                console.log('🎯 Client-side chart data:', { topicCounts, labels, data });
+            }
+
+            // Clear any existing chart
+            if (window.topicChartInstance) {
+                window.topicChartInstance.destroy();
+            }
+
+            if (!hasData || data.length === 0) {
+                // Show no data message
+                ctx.style.display = 'none';
+                const container = ctx.parentElement;
+                if (container) {
+                    let noDataDiv = container.querySelector('.no-data-message');
+                    if (!noDataDiv) {
+                        noDataDiv = document.createElement('div');
+                        noDataDiv.className = 'no-data-message';
+                        noDataDiv.style.cssText = 'text-align: center; padding: 40px; color: #a78bfa;';
+                        noDataDiv.innerHTML = `
+                            <i class="fas fa-chart-pie" style="font-size: 48px; margin-bottom: 15px; opacity: 0.3;"></i>
+                            <p>No topic data available</p>
+                            <p style="font-size: 12px; opacity: 0.7;">Start conversations to see topic distribution</p>
+                        `;
+                        container.appendChild(noDataDiv);
+                    }
+                }
+                return;
+            }
+
+            // Show canvas and hide no data message
+            ctx.style.display = 'block';
+            const container = ctx.parentElement;
+            if (container) {
+                const noDataDiv = container.querySelector('.no-data-message');
+                if (noDataDiv) {
+                    noDataDiv.remove();
+                }
+            }
+
+            // Create the chart
+            try {
+                window.topicChartInstance = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: data,
+                            backgroundColor: [
+                                '#8b5cf6', '#ec4899', '#06b6d4', '#10b981', '#f59e0b', '#ef4444'
+                            ],
+                            borderWidth: 0,
+                            hoverBorderWidth: 2,
+                            hoverBorderColor: '#ffffff'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: { 
+                                    color: '#e0e7ff',
+                                    padding: 15,
+                                    usePointStyle: true,
+                                    font: {
+                                        size: 12
+                                    }
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                        const percentage = ((context.parsed * 100) / total).toFixed(1);
+                                        return `${context.label}: ${context.parsed} (${percentage}%)`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+                
+                console.log('✅ Topic chart created successfully');
+            } catch (error) {
+                console.error('❌ Error creating topic chart:', error);
+            }
+        }
+
+        // Create Time Chart
+        function createTimeChart(dailyData = null) {
+            const ctx = document.getElementById('timeChart');
+            if (!ctx) return;
+            
+            let labels, data;
+            
+            if (dailyData) {
+                labels = dailyData.map(item => new Date(item.date).toLocaleDateString('en-US', {month: 'short', day: 'numeric'}));
+                data = dailyData.map(item => item.count);
+            } else {
+                const dailyCounts = {};
+                chatData.logs.forEach(chat => {
+                    if (chat.timestamp) {
+                        const date = new Date(chat.timestamp).toDateString();
+                        dailyCounts[date] = (dailyCounts[date] || 0) + 1;
+                    }
+                });
+
+                const last7Days = Array.from({length: 7}, (_, i) => {
+                    const date = new Date();
+                    date.setDate(date.getDate() - i);
+                    return date.toDateString();
+                }).reverse();
+
+                labels = last7Days.map(date => new Date(date).toLocaleDateString('en-US', {month: 'short', day: 'numeric'}));
+                data = last7Days.map(date => dailyCounts[date] || 0);
+            }
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Conversations',
+                        data: data,
+                        borderColor: '#8b5cf6',
+                        backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#e0e7ff' } }
+                    },
+                    scales: {
+                        x: { ticks: { color: '#a78bfa' } },
+                        y: { ticks: { color: '#a78bfa' } }
+                    }
+                }
+            });
+        }
+
+        // Create Confidence Chart
+        function createConfidenceChart(confidenceData = null) {
+            const ctx = document.getElementById('confidenceChart');
+            if (!ctx) return;
+            
+            let confidenceRanges;
+            
+            if (confidenceData) {
+                confidenceRanges = {
+                    'High (80-100%)': confidenceData.high,
+                    'Medium (50-79%)': confidenceData.medium,
+                    'Low (0-49%)': confidenceData.low
+                };
+            } else {
+                confidenceRanges = { 'High (80-100%)': 0, 'Medium (50-79%)': 0, 'Low (0-49%)': 0 };
+                chatData.logs.forEach(chat => {
+                    if (chat.confidence !== undefined) {
+                        if (chat.confidence >= 80) confidenceRanges['High (80-100%)']++;
+                        else if (chat.confidence >= 50) confidenceRanges['Medium (50-79%)']++;
+                        else confidenceRanges['Low (0-49%)']++;
+                    }
+                });
+            }
+
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(confidenceRanges),
+                    datasets: [{
+                        label: 'Number of Conversations',
+                        data: Object.values(confidenceRanges),
+                        backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#e0e7ff' } }
+                    },
+                    scales: {
+                        x: { ticks: { color: '#a78bfa' } },
+                        y: { ticks: { color: '#a78bfa' } }
+                    }
+                }
+            });
+        }
+
+        // Generate Insights
+        function generateInsights(analyticsData = null) {
+            console.log('💡 Generating insights with data:', analyticsData);
+            
+            let insights = [];
+            
+            if (analyticsData && analyticsData.insights && Array.isArray(analyticsData.insights)) {
+                // Use backend-provided insights
+                insights = analyticsData.insights;
+                console.log('✅ Using backend insights:', insights);
+            } else {
+                // Generate client-side insights
+                console.log('🔄 Generating client-side insights');
+                
+                const totalChats = chatData.logs.length;
+                const uniqueUsers = new Set(chatData.logs.map(chat => chat.user_id)).size;
+                
+                // Calculate average confidence
+                const confidences = chatData.logs
+                    .map(chat => parseFloat(chat.confidence) || 0)
+                    .filter(conf => conf > 0);
+                const avgConfidence = confidences.length > 0 ? 
+                    confidences.reduce((sum, conf) => sum + conf, 0) / confidences.length : 0;
+                
+                // Generate insights based on data
+                insights = [];
+                
+                if (totalChats > 0) {
+                    insights.push(`📈 <strong>Total Engagement:</strong> ${totalChats} conversations from ${uniqueUsers} unique users`);
+                    
+                    if (avgConfidence > 0) {
+                        if (avgConfidence >= 80) {
+                            insights.push(`🎯 <strong>Excellent Response Quality:</strong> ${avgConfidence.toFixed(1)}% average confidence indicates high-quality AI responses`);
+                        } else if (avgConfidence >= 60) {
+                            insights.push(`🎯 <strong>Good Response Quality:</strong> ${avgConfidence.toFixed(1)}% average confidence shows solid AI performance`);
+                        } else {
+                            insights.push(`⚠️ <strong>Response Quality Needs Attention:</strong> ${avgConfidence.toFixed(1)}% average confidence suggests room for improvement`);
+                        }
+                    }
+                    
+                    // User retention insight
+                    const avgConversationsPerUser = totalChats / uniqueUsers;
+                    if (avgConversationsPerUser > 2) {
+                        insights.push(`💬 <strong>Strong User Retention:</strong> ${avgConversationsPerUser.toFixed(1)} average conversations per user shows good engagement`);
+                    } else if (avgConversationsPerUser > 1.5) {
+                        insights.push(`💬 <strong>Moderate User Retention:</strong> ${avgConversationsPerUser.toFixed(1)} average conversations per user`);
+                    } else {
+                        insights.push(`💬 <strong>Focus on Retention:</strong> ${avgConversationsPerUser.toFixed(1)} conversations per user - consider engagement strategies`);
+                    }
+                    
+                    // Topic analysis insight
+                    const topicCounts = {};
+                    chatData.logs.forEach(chat => {
+                        let topic = extractTopicFromChat(chat);
+                        if (topic) {
+                            topicCounts[topic] = (topicCounts[topic] || 0) + 1;
+                        }
+                    });
+                    
+                    const topTopics = Object.entries(topicCounts)
+                        .sort(([,a], [,b]) => b - a)
+                        .slice(0, 3);
+                    
+                    if (topTopics.length > 0) {
+                        const topTopic = topTopics[0];
+                        const percentage = ((topTopic[1] / totalChats) * 100).toFixed(1);
+                        insights.push(`🔥 <strong>Top Discussion Topic:</strong> ${formatTopicName(topTopic[0])} (${percentage}% of conversations)`);
+                    }
+                    
+                    // Activity pattern insight
+                    const recentChats = chatData.logs.filter(chat => {
+                        if (!chat.timestamp) return false;
+                        const chatDate = new Date(chat.timestamp);
+                        const weekAgo = new Date();
+                        weekAgo.setDate(weekAgo.getDate() - 7);
+                        return chatDate >= weekAgo;
+                    });
+                    
+                    if (recentChats.length > 0) {
+                        const recentPercentage = ((recentChats.length / totalChats) * 100).toFixed(1);
+                        insights.push(`⚡ <strong>Recent Activity:</strong> ${recentChats.length} conversations in the last week (${recentPercentage}% of total activity)`);
+                    }
+                    
+                    // High confidence responses insight
+                    const highConfidenceChats = chatData.logs.filter(chat => {
+                        const confidence = parseFloat(chat.confidence) || 0;
+                        return confidence >= 85;
+                    });
+                    
+                    if (highConfidenceChats.length > 0) {
+                        const highConfPercentage = ((highConfidenceChats.length / totalChats) * 100).toFixed(1);
+                        insights.push(`✨ <strong>High-Quality Responses:</strong> ${highConfidenceChats.length} conversations (${highConfPercentage}%) had excellent AI confidence scores`);
+                    }
+                } else {
+                    insights.push('📊 <strong>Getting Started:</strong> No conversation data available yet');
+                    insights.push('💬 <strong>Next Steps:</strong> Start engaging with the AI assistant to generate insights');
+                    insights.push('📈 <strong>Analytics Ready:</strong> Charts and statistics will populate as conversations increase');
+                }
+                
+                console.log('🎯 Generated insights:', insights);
+            }
+
+            const insightsContent = document.getElementById('insightsContent');
+            if (insightsContent) {
+                if (insights && insights.length > 0) {
+                    insightsContent.innerHTML = insights.map(insight => `<p style="margin-bottom: 12px; line-height: 1.6;">${insight}</p>`).join('');
+                } else {
+                    insightsContent.innerHTML = `
+                        <div style="text-align: center; padding: 20px; color: #a78bfa;">
+                            <i class="fas fa-lightbulb" style="font-size: 48px; margin-bottom: 15px; opacity: 0.3;"></i>
+                            <p>No insights available</p>
+                            <p style="font-size: 12px; opacity: 0.7;">Insights will appear as conversation data is analyzed</p>
+                        </div>
+                    `;
+                }
+            } else {
+                console.error('❌ Insights content container not found');
+            }
+        }
+
+        // Helper function to extract topic from chat
+        function extractTopicFromChat(chat) {
+            // Try different ways to extract topic (same logic used elsewhere)
+            if (chat.conversation_context && chat.conversation_context.topic) {
+                return chat.conversation_context.topic;
+            } else if (chat.topic) {
+                return chat.topic;
+            } else if (chat.category) {
+                return chat.category;
+            } else {
+                // Infer topic from message content
+                const message = (chat.message || '').toLowerCase();
+                if (message.includes('stress') || message.includes('anxiety')) {
+                    return 'stress-management';
+                } else if (message.includes('study') || message.includes('exam')) {
+                    return 'academic';
+                } else if (message.includes('health') || message.includes('wellbeing')) {
+                    return 'health';
+                } else if (message.includes('relationship') || message.includes('friend')) {
+                    return 'relationships';
+                } else if (message.includes('sleep') || message.includes('tired')) {
+                    return 'sleep';
+                } else if (message.includes('work') || message.includes('job')) {
+                    return 'career';
+                } else {
+                    return 'general';
+                }
+            }
+        }
+
+        // Generate Report Function
+        async function generateReport() {
+            const reportType = document.getElementById('reportType').value;
+            const dateRange = document.getElementById('dateRange').value;
+            const specificTopic = document.getElementById('specificTopic').value;
+            const reportFormat = document.getElementById('reportFormat').value;
+
+            // Show loading
+            const loadingOverlay = document.createElement('div');
+            loadingOverlay.className = 'loading';
+            loadingOverlay.style.display = 'block';
+            loadingOverlay.innerHTML = `
+                <div class="spinner"></div>
+                Generating ${reportType} report...
+            `;
+            document.body.appendChild(loadingOverlay);
+
+            try {
+                const token = getCSRFToken();
+                const headers = {
+                    'Content-Type': 'application/json'
+                };
+                
+                // Only add CSRF token if we have one
+                if (token) {
+                    headers['X-CSRFToken'] = token;
+                }
+
+                const response = await fetch(API_ENDPOINTS.generateReport, {
+                    method: 'POST',
+                    headers: headers,
+                    body: JSON.stringify({
+                        reportType,
+                        dateRange,
+                        specificTopic,
+                        reportFormat
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to generate report');
+                }
+
+                const reportData = await response.json();
+                
+                if (reportData.error) {
+                    throw new Error(reportData.error);
+                }
+
+                // Display the report
+                displayReport(reportData);
+                
+            } catch (error) {
+                console.error('Error generating report:', error);
+                // Fallback to client-side report generation
+                const reportContent = generateClientSideReport(reportType, dateRange, specificTopic, reportFormat);
+                document.getElementById('reportContent').innerHTML = reportContent;
+                document.getElementById('reportTitle').textContent = getReportTitle(reportType, dateRange);
+                document.getElementById('reportPreview').classList.add('active');
+            } finally {
+                // Remove loading
+                document.body.removeChild(loadingOverlay);
+                
+                // Scroll to report
+                document.getElementById('reportPreview').scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
+        // Display report from backend data
+        function displayReport(reportData) {
+            document.getElementById('reportTitle').textContent = reportData.title;
+            document.getElementById('reportContent').innerHTML = formatReportContent(reportData);
+            document.getElementById('reportPreview').classList.add('active');
+        }
+
+        // Format report content from backend response
+        function formatReportContent(reportData) {
+            let content = '';
+            
+            if (reportData.summary) {
+                content += `
+                    <div class="report-section">
+                        <h3>Executive Summary</h3>
+                        <p><strong>Total Conversations:</strong> ${reportData.summary.total_conversations}</p>
+                        <p><strong>Unique Users:</strong> ${reportData.summary.unique_users}</p>
+                        <p><strong>Average Confidence Score:</strong> ${reportData.summary.average_confidence}%</p>
+                        <p><strong>Reporting Period:</strong> ${reportData.summary.date_range}</p>
+                    </div>
+                `;
+            }
+
+            if (reportData.metrics) {
+                content += `
+                    <div class="report-section">
+                        <h3>Key Metrics</h3>
+                        <p><strong>User Engagement Rate:</strong> ${reportData.metrics.user_engagement_rate} conversations per user</p>
+                        <p><strong>High Confidence Responses:</strong> ${reportData.metrics.high_confidence_responses}</p>
+                        <p><strong>Return User Rate:</strong> ${reportData.metrics.return_user_rate}%</p>
+                    </div>
+                `;
+            }
+
+            if (reportData.top_topics && reportData.top_topics.length > 0) {
+                content += `
+                    <div class="report-section">
+                        <h3>Top Discussion Topics</h3>
+                        ${reportData.top_topics.map((topic, index) => 
+                            `<p><strong>${index + 1}.</strong> ${topic.topic}: ${topic.count} conversations (${topic.percentage}%)</p>`
+                        ).join('')}
+                    </div>
+                `;
+            }
+
+            if (reportData.insights && reportData.insights.length > 0) {
+                content += `
+                    <div class="report-section">
+                        <h3>Key Insights</h3>
+                        ${reportData.insights.map(insight => `<p>• ${insight}</p>`).join('')}
+                    </div>
+                `;
+            }
+
+            if (reportData.recommendations && reportData.recommendations.length > 0) {
+                content += `
+                    <div class="report-section">
+                        <h3>Recommendations</h3>
+                        ${reportData.recommendations.map(rec => `<p>• ${rec}</p>`).join('')}
+                    </div>
+                `;
+            }
+
+            content += `
+                <div class="report-section">
+                    <h3>Data Notes</h3>
+                    <p><em>This report is generated from real-time chat log data. All metrics are calculated based on actual user interactions with the wellbeing assistant system.</em></p>
+                </div>
+            `;
+
+            return content;
+        }
+
+        // Client-side fallback report generation
+        function generateClientSideReport(type, dateRange, topic, format) {
+            const filteredData = filterDataByRange(chatData.logs, dateRange);
+            const topicData = topic === 'all' ? filteredData : filteredData.filter(chat => chat.topic === topic);
+            
+            const stats = {
+                totalChats: topicData.length,
+                uniqueUsers: new Set(topicData.map(chat => chat.user_id)).size,
+                avgConfidence: topicData.reduce((sum, chat) => sum + (chat.confidence || 0), 0) / topicData.length || 0,
+                topTopics: getTopTopics(topicData, 5)
+            };
+
+            return `
+                <div class="report-section">
+                    <h3>Executive Summary</h3>
+                    <p><strong>Reporting Period:</strong> ${getDateRangeText(dateRange)}</p>
+                    <p><strong>Total Conversations:</strong> ${stats.totalChats}</p>
+                    <p><strong>Unique Users:</strong> ${stats.uniqueUsers}</p>
+                    <p><strong>Average Confidence Score:</strong> ${stats.avgConfidence.toFixed(1)}%</p>
+                </div>
+
+                <div class="report-section">
+                    <h3>Key Metrics</h3>
+                    <p><strong>User Engagement Rate:</strong> ${(stats.totalChats / stats.uniqueUsers).toFixed(1)} conversations per user</p>
+                    <p><strong>High Confidence Responses:</strong> ${topicData.filter(chat => chat.confidence > 80).length} (${((topicData.filter(chat => chat.confidence > 80).length / stats.totalChats) * 100).toFixed(1)}%)</p>
+                    <p><strong>Response Quality:</strong> ${stats.avgConfidence > 75 ? 'Excellent' : stats.avgConfidence > 60 ? 'Good' : 'Needs Improvement'}</p>
+                </div>
+
+                <div class="report-section">
+                    <h3>Top Discussion Topics</h3>
+                    ${stats.topTopics.map((topic, index) => 
+                        `<p><strong>${index + 1}.</strong> ${topic.name}: ${topic.count} conversations (${topic.percentage}%)</p>`
+                    ).join('')}
+                </div>
+
+                <div class="report-section">
+                    <h3>Recommendations</h3>
+                    <p>• <strong>Content Optimization:</strong> Focus on ${stats.topTopics[0]?.name || 'popular topics'} which show highest user engagement</p>
+                    <p>• <strong>Quality Improvement:</strong> ${stats.avgConfidence < 70 ? 'Review and enhance AI responses for better confidence scores' : 'Maintain current response quality standards'}</p>
+                    <p>• <strong>User Support:</strong> Consider implementing proactive outreach for users with multiple low-confidence interactions</p>
+                    <p>• <strong>Resource Allocation:</strong> Scale support capacity based on conversation volume trends</p>
+                </div>
+
+                <div class="report-section">
+                    <h3>Data Notes</h3>
+                    <p><em>This report is generated from chat log data spanning ${getDateRangeText(dateRange).toLowerCase()}. Note: This is a client-side generated report due to backend connectivity issues.</em></p>
+                </div>
+            `;
+        }
+
+        function filterDataByRange(data, range) {
+            const now = new Date();
+            const cutoffDate = new Date();
+            
+            switch(range) {
+                case '7days': cutoffDate.setDate(now.getDate() - 7); break;
+                case '30days': cutoffDate.setDate(now.getDate() - 30); break;
+                case '3months': cutoffDate.setMonth(now.getMonth() - 3); break;
+                case '6months': cutoffDate.setMonth(now.getMonth() - 6); break;
+                case '1year': cutoffDate.setFullYear(now.getFullYear() - 1); break;
+                default: return data;
+            }
+            
+            return data.filter(chat => new Date(chat.timestamp) >= cutoffDate);
+        }
+
+        function getTopTopics(data, limit) {
+            const topicCounts = {};
+            data.forEach(chat => {
+                if (chat.topic) {
+                    topicCounts[chat.topic] = (topicCounts[chat.topic] || 0) + 1;
+                }
+            });
+            
+            return Object.entries(topicCounts)
+                .sort(([,a], [,b]) => b - a)
+                .slice(0, limit)
+                .map(([name, count]) => ({
+                    name: name.replace(/[-_]/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+                    count,
+                    percentage: ((count / data.length) * 100).toFixed(1)
+                }));
+        }
+
+        function getReportTitle(type, dateRange) {
+            const typeNames = {
+                'comprehensive': 'Comprehensive Analysis',
+                'topic-focused': 'Topic-Focused',
+                'user-engagement': 'User Engagement',
+                'wellbeing-trends': 'Wellbeing Trends',
+                'confidence-analysis': 'Confidence Analysis',
+                'crisis-detection': 'Crisis Detection'
+            };
+            return `${typeNames[type]} Report - ${getDateRangeText(dateRange)}`;
+        }
+
+        function getDateRangeText(range) {
+            const ranges = {
+                '7days': 'Last 7 Days',
+                '30days': 'Last 30 Days',
+                '3months': 'Last 3 Months',
+                '6months': 'Last 6 Months',
+                '1year': 'Last Year',
+                'all': 'All Time'
+            };
+            return ranges[range] || 'Custom Range';
+        }
+
+        // Export Functions - Updated to use export_chat_report
+        async function exportReport(format) {
+            const reportType = document.getElementById('reportType').value;
+            const dateRange = document.getElementById('dateRange').value;
+            const specificTopic = document.getElementById('specificTopic').value;
+            
+            try {
+                if (format === 'csv') {
+                    // Use backend CSV export with updated route
+                    const url = `{{ url_for('admin.export_chat_report', format='csv') }}?type=${reportType}&range=${dateRange}&topic=${specificTopic}`;
+                    window.open(url, '_blank');
+                } else if (format === 'pdf') {
+                    // Use backend PDF export with updated route
+                    const url = `{{ url_for('admin.export_chat_report', format='pdf') }}?type=${reportType}&range=${dateRange}&topic=${specificTopic}`;
+                    window.open(url, '_blank');
+                }
+            } catch (error) {
+                console.error('Error exporting report:', error);
+                // Fallback to client-side export
+                if (format === 'csv') {
+                    const csvData = generateCSVReport();
+                    downloadCSV(csvData, `chat_report_${reportType}_${new Date().toISOString().split('T')[0]}.csv`);
+                } else {
+                    alert('Export functionality temporarily unavailable. Please try again later.');
+                }
+            }
+        }
+
+        function generateCSVReport() {
+            const headers = ['User ID', 'Timestamp', 'Message', 'Response', 'Confidence', 'Topic'];
+            const rows = chatData.logs.map(chat => [
+                chat.user_id || '',
+                chat.timestamp || '',
+                (chat.message || '').replace(/,/g, ';'),
+                (chat.response || '').replace(/,/g, ';'),
+                chat.confidence || '',
+                chat.topic || ''
+            ]);
+            
+            return [headers, ...rows].map(row => row.join(',')).join('\n');
+        }
+
+        function downloadCSV(csvData, filename) {
+            const blob = new Blob([csvData], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.setAttribute('hidden', '');
+            a.setAttribute('href', url);
+            a.setAttribute('download', filename);
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        function printReport() {
+            const reportContent = document.getElementById('reportPreview').innerHTML;
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <html>
+                    <head>
+                        <title>Chat Analysis Report</title>
+                        <style>
+                            body { font-family: Arial, sans-serif; margin: 20px; color: #333; }
+                            h3 { color: #8b5cf6; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
+                            .report-section { margin-bottom: 20px; }
+                            .export-buttons { display: none; }
+                        </style>
+                    </head>
+                    <body>${reportContent}</body>
+                </html>
+            `);
+            printWindow.document.close();
+            printWindow.print();
+        }
+
+        // Refresh analytics data
+        async function refreshAnalytics() {
+            const dateRange = document.getElementById('analyticsDateRange')?.value || '30days';
+            const topic = document.getElementById('analyticsTopicFilter')?.value || 'all';
+            
+            console.log(`🔄 Refreshing analytics: range=${dateRange}, topic=${topic}`);
+            
+            showAnalyticsLoading(true);
+            
+            try {
+                const data = await loadAnalyticsData(dateRange, topic);
+                if (data && !data.error) {
+                    console.log('✅ Analytics refreshed successfully');
+                    updateAnalyticsDisplay(data);
+                } else {
+                    console.warn('⚠️ Using fallback data for refresh');
+                    const fallbackData = processClientSideAnalytics();
+                    updateAnalyticsDisplay(fallbackData);
+                }
+            } catch (error) {
+                console.error('❌ Error refreshing analytics:', error);
+                const fallbackData = processClientSideAnalytics();
+                updateAnalyticsDisplay(fallbackData);
+            } finally {
+                showAnalyticsLoading(false);
+            }
+        }
+
+        // Add test data if no real data exists
+        function ensureTestData() {
+            if (!chatData.logs || chatData.logs.length === 0) {
+                console.log('📝 Adding test data for demonstration');
+                chatData.logs = [
+                    {
+                        user_id: 'test_user_1',
+                        message: 'I feel stressed about my exams',
+                        response: 'I understand exam stress can be overwhelming...',
+                        timestamp: new Date().toISOString(),
+                        confidence: 85,
+                        topic: 'academic-stress'
+                    },
+                    {
+                        user_id: 'test_user_2', 
+                        message: 'I have been feeling anxious lately',
+                        response: 'Anxiety is very common...',
+                        timestamp: new Date().toISOString(),
+                        confidence: 92,
+                        topic: 'mental-health'
+                    },
+                    {
+                        user_id: 'test_user_3',
+                        message: 'How can I improve my wellbeing?',
+                        response: 'There are many ways to improve wellbeing...',
+                        timestamp: new Date().toISOString(),
+                        confidence: 88,
+                        topic: 'wellbeing'
+                    },
+                    {
+                        user_id: 'test_user_1',
+                        message: 'I need help with study techniques',
+                        response: 'Effective study techniques include...',
+                        timestamp: new Date().toISOString(),
+                        confidence: 78,
+                        topic: 'academic'
+                    },
+                    {
+                        user_id: 'test_user_4',
+                        message: 'I have relationship problems',
+                        response: 'Relationship challenges are part of life...',
+                        timestamp: new Date().toISOString(),
+                        confidence: 82,
+                        topic: 'relationships'
+                    }
+                ];
+                
+                chatData.topics = ['academic-stress', 'mental-health', 'wellbeing', 'academic', 'relationships'];
+            }
+        }
+
+        // Add analytics filter controls
+        function addAnalyticsFilters() {
+            const analyticsTab = document.getElementById('analytics');
+            if (analyticsTab) {
+                const filterContainer = document.createElement('div');
+                filterContainer.className = 'search-filter-container';
+                filterContainer.innerHTML = `
+                    <div style="display: flex; gap: 20px; align-items: center; flex-wrap: wrap;">
+                        <div class="control-group">
+                            <label class="control-label">Date Range</label>
+                            <select class="control-input" id="analyticsDateRange" onchange="refreshAnalytics()">
+                                <option value="7days">Last 7 Days</option>
+                                <option value="30days" selected>Last 30 Days</option>
+                                <option value="3months">Last 3 Months</option>
+                                <option value="6months">Last 6 Months</option>
+                                <option value="1year">Last Year</option>
+                                <option value="all">All Time</option>
+                            </select>
+                        </div>
+                        <div class="control-group">
+                            <label class="control-label">Topic Filter</label>
+                            <select class="control-input" id="analyticsTopicFilter" onchange="refreshAnalytics()">
+                                <option value="all">All Topics</option>
+                                ${chatData.topics.map(topic => 
+                                    `<option value="${topic}">${topic.charAt(0).toUpperCase() + topic.slice(1).replace(/[-_]/g, ' ')}</option>`
+                                ).join('')}
+                            </select>
+                        </div>
+                        <button type="button" class="filter-button" onclick="refreshAnalytics()">
+                            <i class="fas fa-sync-alt"></i> Refresh Data
+                        </button>
+                    </div>
+                `;
+                
+                // Insert filter container at the beginning of analytics tab
+                const firstChild = analyticsTab.firstElementChild;
+                analyticsTab.insertBefore(filterContainer, firstChild);
+            }
+        }
+
+        // Initialize the page
         document.addEventListener('DOMContentLoaded', function() {
-            // Enhanced search functionality
+            console.log('🚀 Initializing Chat Logs Analytics System...');
+            
+            // Ensure we have some data to work with
+            ensureTestData();
+            
+            console.log('📊 Available chat data:', chatData);
+            
             const searchBox = document.querySelector('.search-box');
             let searchTimeout;
             
-            // Auto-search with debounce
-            searchBox.addEventListener('input', function() {
-                clearTimeout(searchTimeout);
-                searchTimeout = setTimeout(() => {
-                    // You could implement live search here
-                    console.log('Searching for:', this.value);
-                }, 500);
-            });
+            if (searchBox) {
+                searchBox.addEventListener('input', function() {
+                    clearTimeout(searchTimeout);
+                    searchTimeout = setTimeout(() => {
+                        console.log('🔍 Searching for:', this.value);
+                    }, 500);
+                });
+            }
             
             // Filter form enhancements
             const filterForm = document.querySelector('.search-filter-container form');
             const loadingIndicator = document.getElementById('chat-loading');
             
-            filterForm.addEventListener('submit', function() {
-                loadingIndicator.style.display = 'block';
-                setTimeout(() => {
-                    loadingIndicator.style.display = 'none';
-                }, 1000);
-            });
-            
-            // Auto-refresh functionality (optional)
-            let autoRefresh = false;
-            
-            function toggleAutoRefresh() {
-                autoRefresh = !autoRefresh;
-                if (autoRefresh) {
-                    refreshInterval = setInterval(refreshChatLogs, 30000); // 30 seconds
-                    console.log('Auto-refresh enabled');
-                } else {
-                    clearInterval(refreshInterval);
-                    console.log('Auto-refresh disabled');
-                }
+            if (filterForm && loadingIndicator) {
+                filterForm.addEventListener('submit', function() {
+                    loadingIndicator.style.display = 'block';
+                    setTimeout(() => {
+                        loadingIndicator.style.display = 'none';
+                    }, 1000);
+                });
             }
-            
-            function refreshChatLogs() {
-                if (document.hidden) return; // Don't refresh if tab is not active
-                
-                // You could implement automatic refresh here
-                console.log('Refreshing chat logs...');
-            }
-            
-            // Keyboard shortcuts
-            document.addEventListener('keydown', function(e) {
-                // Ctrl/Cmd + K to focus search
-                if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-                    e.preventDefault();
-                    searchBox.focus();
-                }
-                
-                // Ctrl/Cmd + R to toggle auto-refresh
-                if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
-                    e.preventDefault();
-                    toggleAutoRefresh();
-                }
-            });
             
             // Enhanced pagination
             document.querySelectorAll('.pagination-button').forEach(button => {
@@ -794,7 +2328,9 @@
                         return false;
                     }
                     
-                    loadingIndicator.style.display = 'block';
+                    if (loadingIndicator) {
+                        loadingIndicator.style.display = 'block';
+                    }
                 });
             });
             
@@ -802,8 +2338,43 @@
             if (window.location.search.includes('page=')) {
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             }
+
+            // Add analytics filters
+            addAnalyticsFilters();
             
-            console.log('Chat logs analytics loaded');
+            // Keyboard shortcuts
+            document.addEventListener('keydown', function(e) {
+                // Ctrl/Cmd + K to focus search
+                if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                    e.preventDefault();
+                    if (searchBox) searchBox.focus();
+                }
+                
+                // Ctrl/Cmd + G to generate report (only in reports tab)
+                if ((e.ctrlKey || e.metaKey) && e.key === 'g' && document.querySelector('.tab-button[data-tab="reports"]').classList.contains('active')) {
+                    e.preventDefault();
+                    generateReport();
+                }
+            });
+            
+            // Initialize analytics if on analytics tab
+            const analyticsTab = document.querySelector('.tab-button[data-tab="analytics"]');
+            if (analyticsTab && analyticsTab.classList.contains('active')) {
+                console.log('🎯 Analytics tab is active, initializing...');
+                setTimeout(initializeAnalytics, 100);
+            }
+            
+            console.log('✅ Chat Logs Analytics System fully loaded and ready!');
+        });
+
+        // Global error handler
+        window.addEventListener('error', function(e) {
+            console.error('Global error caught:', e.error);
+        });
+
+        // Handle unhandled promise rejections
+        window.addEventListener('unhandledrejection', function(e) {
+            console.error('Unhandled promise rejection:', e.reason);
         });
     </script>
 </body>

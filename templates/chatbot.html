@@ -127,10 +127,15 @@
         
         .message-bubble {
             max-width: 70%;
+            min-height: 3rem;
             padding: 1rem 1.25rem;
             border-radius: 20px;
             position: relative;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            line-height: 1.5; /* Better line spacing */
         }
         
         .assistant-message .message-bubble {
@@ -144,6 +149,83 @@
             background: linear-gradient(135deg, #8b5cf6, #7c3aed);
             color: white;
             margin-left: auto;
+            min-width: 8rem;
+            max-width: 60%; /* Reduced max width for better appearance */
+            word-wrap: break-word; /* Break long words if needed */
+            hyphens: auto; /* Add hyphens for better text wrapping */
+        }
+
+        /* UPDATED: Message content styling for line break rendering */
+        .message-content {
+            line-height: 1.6;
+            white-space: pre-line; /* This preserves line breaks */
+        }
+
+        .message-content p {
+            margin-bottom: 0.75rem;
+        }
+
+        .message-content p:last-child {
+            margin-bottom: 0;
+        }
+        
+        /* Message metadata */
+        .message-meta {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+            font-size: 0.75rem;
+            opacity: 0.6;
+        }
+        
+        /* Crisis message styling */
+        .crisis-message {
+            background: linear-gradient(135deg, #dc2626, #b91c1c) !important;
+            border: 2px solid #fca5a5 !important;
+            box-shadow: 0 0 20px rgba(220, 38, 38, 0.3) !important;
+        }
+        
+        .crisis-message::before {
+            content: "🚨 Crisis Support";
+            display: block;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+        
+        /* Loading indicator */
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 1rem 1.25rem;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            color: #a78bfa;
+        }
+        
+        .typing-dots {
+            display: flex;
+            gap: 0.25rem;
+        }
+        
+        .typing-dots span {
+            width: 6px;
+            height: 6px;
+            background: #8b5cf6;
+            border-radius: 50%;
+            animation: typingBounce 1.4s infinite ease-in-out;
+        }
+        
+        .typing-dots span:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dots span:nth-child(2) { animation-delay: -0.16s; }
+        
+        @keyframes typingBounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
         }
         
         /* Chat buttons */
@@ -172,67 +254,15 @@
             transform: translateY(-2px);
         }
         
-        /* Feedback styling */
-        .feedback-container {
-            margin-top: 0.75rem;
-            padding: 0.75rem;
-            background: rgba(255, 255, 255, 0.03);
-            border-radius: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
+        /* Error message */
+        .error-message {
+            background: rgba(239, 68, 68, 0.1) !important;
+            border: 1px solid rgba(239, 68, 68, 0.3) !important;
+            color: #fca5a5 !important;
         }
         
-        .feedback-buttons {
-            display: flex;
-            gap: 0.5rem;
-            margin-top: 0.5rem;
-        }
-        
-        .feedback-btn {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: #a78bfa;
-            padding: 0.5rem 0.75rem;
-            border-radius: 8px;
-            font-size: 0.875rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        
-        .feedback-btn:hover {
-            background: rgba(139, 92, 246, 0.1);
-            border-color: #8b5cf6;
-        }
-        
-        .feedback-btn[data-helpful="true"]:hover {
-            background: rgba(16, 185, 129, 0.1);
-            border-color: #10b981;
-            color: #6ee7b7;
-        }
-        
-        .feedback-btn[data-helpful="false"]:hover {
-            background: rgba(239, 68, 68, 0.1);
-            border-color: #ef4444;
-            color: #fca5a5;
-        }
-        
-        /* Star rating */
-        .star-rating {
-            display: flex;
-            gap: 0.25rem;
-            margin: 0.5rem 0;
-        }
-        
-        .star-rating span {
-            cursor: pointer;
-            font-size: 1.25rem;
-            transition: all 0.3s ease;
-            opacity: 0.4;
-        }
-        
-        .star-rating span:hover,
-        .star-rating span.selected {
-            opacity: 1;
-            transform: scale(1.1);
+        .error-message::before {
+            content: "⚠️ ";
         }
         
         /* Chat input area */
@@ -285,9 +315,15 @@
             justify-content: center;
         }
         
-        .send-button:hover {
+        .send-button:hover:not(:disabled) {
             transform: translateY(-2px);
             box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4);
+        }
+        
+        .send-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
         }
         
         /* Animations */
@@ -338,7 +374,7 @@
             color: #ffffff !important;
         }
         
-        .chat-button, .feedback-btn {
+        .chat-button {
             border: 2px solid #ffffff !important;
             color: #ffffff !important;
         }
@@ -427,6 +463,9 @@
                 <li><a href="{{ url_for('dashboard.therapist_info') }}" class="flex items-center">
                     <i class="fas fa-user-md w-5 mr-3"></i> Your Therapist
                 </a></li>
+                <li><a href="{{ url_for('dashboard.student_chat') }}" class="flex items-center">
+                    <i class="fas fa-comments w-5 mr-3"></i> Chat with Therapist
+                </a></li>
                 <li><a href="{{ url_for('dashboard.profile') }}" class="flex items-center">
                     <i class="fas fa-user w-5 mr-3"></i> Profile
                 </a></li>
@@ -467,14 +506,10 @@
                     <i class="fas fa-robot"></i>
                 </div>
                 <div class="message-bubble">
-                    <p class="mb-3">Hi there! I'm your AI Wellbeing Assistant. 🌟</p>
-                    <p class="mb-3">I'm here to provide you with personalized mental health support, coping strategies, and a safe space to share your thoughts and feelings.</p>
-                    <p class="text-sm opacity-75">How can I help you today?</p>
-                    <div class="chat-buttons">
-                        <button class="chat-button">I'm feeling stressed</button>
-                        <button class="chat-button">Help with sleep</button>
-                        <button class="chat-button">Need motivation</button>
-                        <button class="chat-button">Anxiety support</button>
+                    <div class="message-content">
+                        <p>Hi there! I'm your AI Wellbeing Assistant. 🌟</p>
+                        <p>I'm here to provide you with personalized mental health support, coping strategies, and a safe space to share your thoughts and feelings.</p>
+                        <p class="text-sm opacity-75">How can I help you today?</p>
                     </div>
                 </div>
             </div>
@@ -488,39 +523,24 @@
                     <i class="fas fa-user"></i>
                 </div>
                 <div class="message-bubble">
-                    <p>{{ message.message }}</p>
+                    <div class="message-content">
+                        <p>{{ message.message }}</p>
+                    </div>
+                    <div class="message-meta">
+                        <span>{{ message.timestamp|format_datetime if message.timestamp else 'Just now' }}</span>
+                    </div>
                 </div>
                 {% else %}
                 <!-- Assistant message -->
                 <div class="assistant-avatar">
                     <i class="fas fa-robot"></i>
                 </div>
-                <div class="message-bubble">
-                    <p>{{ message.response }}</p>
-                    <div class="feedback-container" id="feedback-{{ message._id }}">
-                        <p class="text-sm text-a78bfa opacity-75">Was this response helpful?</p>
-                        <div class="feedback-buttons">
-                            <button data-id="{{ message._id }}" data-helpful="true" class="feedback-btn">
-                                <i class="fas fa-thumbs-up mr-1"></i> Yes
-                            </button>
-                            <button data-id="{{ message._id }}" data-helpful="false" class="feedback-btn">
-                                <i class="fas fa-thumbs-down mr-1"></i> No
-                            </button>
-                        </div>
-                        <div class="rating-container mt-3" id="rating-{{ message._id }}" style="display:none;">
-                            <p class="text-sm text-a78bfa opacity-75">How would you rate this response?</p>
-                            <div class="star-rating" data-id="{{ message._id }}">
-                                <span data-rating="1">⭐</span>
-                                <span data-rating="2">⭐</span>
-                                <span data-rating="3">⭐</span>
-                                <span data-rating="4">⭐</span>
-                                <span data-rating="5">⭐</span>
-                            </div>
-                            <textarea id="feedback-text-{{ message._id }}" class="w-full p-2 mt-2 bg-transparent border border-white border-opacity-20 rounded-lg text-e0e7ff placeholder-a78bfa" placeholder="Any additional feedback? (optional)"></textarea>
-                            <button data-id="{{ message._id }}" class="submit-feedback mt-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-lg hover:from-purple-600 hover:to-purple-700 transition">
-                                <i class="fas fa-paper-plane mr-1"></i> Submit
-                            </button>
-                        </div>
+                <div class="message-bubble {% if message.topic == 'crisis' %}crisis-message{% endif %}">
+                    <div class="message-content">
+                        {{ message.response }}
+                    </div>
+                    <div class="message-meta">
+                        <span>{{ message.timestamp|format_datetime if message.timestamp else 'Just now' }}</span>
                     </div>
                 </div>
                 {% endif %}
@@ -544,92 +564,13 @@
         const chatMessages = document.getElementById('chat-messages');
         const messageInput = document.getElementById('message-input');
         const sendButton = document.getElementById('send-button');
-        const chatButtons = document.querySelectorAll('.chat-button');
-        
-        // Feedback state object
-        const feedbackState = {};
         
         // Auto-scroll to bottom
         function scrollToBottom() {
             chatMessages.scrollTop = chatMessages.scrollHeight;
         }
         
-        // Event delegation for feedback interactions
-        document.addEventListener('click', function(event) {
-            // Handle feedback buttons (Yes/No)
-            if (event.target.classList.contains('feedback-btn') || event.target.parentElement.classList.contains('feedback-btn')) {
-                const button = event.target.classList.contains('feedback-btn') ? event.target : event.target.parentElement;
-                const chatId = button.dataset.id;
-                const isHelpful = button.dataset.helpful === 'true';
-                
-                document.getElementById('rating-' + chatId).style.display = 'block';
-                feedbackState[chatId] = {
-                    helpful: isHelpful,
-                    rating: 0,
-                    feedback: ''
-                };
-                
-                // Visual feedback
-                button.style.opacity = '0.5';
-                button.disabled = true;
-            }
-            
-            // Handle star ratings
-            if (event.target.parentElement && event.target.parentElement.classList.contains('star-rating')) {
-                const chatId = event.target.parentElement.dataset.id;
-                const rating = parseInt(event.target.dataset.rating);
-                
-                // Update feedback state
-                if (feedbackState[chatId]) {
-                    feedbackState[chatId].rating = rating;
-                }
-                
-                // Highlight selected stars
-                const stars = document.querySelectorAll(`#rating-${chatId} .star-rating span`);
-                stars.forEach((star, index) => {
-                    star.classList.toggle('selected', index < rating);
-                });
-            }
-            
-            // Handle submit feedback button
-            if (event.target.classList.contains('submit-feedback') || event.target.parentElement.classList.contains('submit-feedback')) {
-                const button = event.target.classList.contains('submit-feedback') ? event.target : event.target.parentElement;
-                const chatId = button.dataset.id;
-                submitFeedback(chatId);
-            }
-        });
-        
-        function submitFeedback(chatId) {
-            if (!feedbackState[chatId]) return;
-            
-            // Get feedback text
-            feedbackState[chatId].feedback = document.getElementById('feedback-text-' + chatId).value;
-            
-            fetch('/api/feedback', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    chat_id: chatId,
-                    helpful: feedbackState[chatId].helpful,
-                    rating: feedbackState[chatId].rating,
-                    feedback: feedbackState[chatId].feedback
-                }),
-            })
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById('feedback-' + chatId).innerHTML = 
-                    '<p class="text-green-400 text-sm"><i class="fas fa-check-circle mr-1"></i>Thank you for your feedback!</p>';
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                document.getElementById('feedback-' + chatId).innerHTML = 
-                    '<p class="text-red-400 text-sm"><i class="fas fa-exclamation-circle mr-1"></i>Error submitting feedback. Please try again.</p>';
-            });
-        }
-        
-        function addMessage(message, isUser = false, chatId = null) {
+        function addMessage(message, isUser = false, isCrisis = false, isError = false) {
             const messageDiv = document.createElement('div');
             messageDiv.className = `message-container ${isUser ? 'user-message' : 'assistant-message'}`;
             
@@ -640,77 +581,116 @@
                         <i class="fas fa-user"></i>
                     </div>
                     <div class="message-bubble">
-                        <p>${message}</p>
+                        <div class="message-content">
+                            <p>${escapeHtml(message)}</p>
+                        </div>
+                        <div class="message-meta">
+                            <span>Just now</span>
+                        </div>
                     </div>
                 `;
             } else {
+                const bubbleClasses = `message-bubble ${isCrisis ? 'crisis-message' : ''} ${isError ? 'error-message' : ''}`;
                 messageHTML = `
                     <div class="assistant-avatar">
                         <i class="fas fa-robot"></i>
                     </div>
-                    <div class="message-bubble">
-                        <p>${message}</p>
-                `;
-                
-                // Add feedback UI if this is a bot message and we have a chatId
-                if (chatId) {
-                    messageHTML += `
-                        <div class="feedback-container" id="feedback-${chatId}">
-                            <p class="text-sm text-a78bfa opacity-75">Was this response helpful?</p>
-                            <div class="feedback-buttons">
-                                <button data-id="${chatId}" data-helpful="true" class="feedback-btn">
-                                    <i class="fas fa-thumbs-up mr-1"></i> Yes
-                                </button>
-                                <button data-id="${chatId}" data-helpful="false" class="feedback-btn">
-                                    <i class="fas fa-thumbs-down mr-1"></i> No
-                                </button>
-                            </div>
-                            <div class="rating-container mt-3" id="rating-${chatId}" style="display:none;">
-                                <p class="text-sm text-a78bfa opacity-75">How would you rate this response?</p>
-                                <div class="star-rating" data-id="${chatId}">
-                                    <span data-rating="1">⭐</span>
-                                    <span data-rating="2">⭐</span>
-                                    <span data-rating="3">⭐</span>
-                                    <span data-rating="4">⭐</span>
-                                    <span data-rating="5">⭐</span>
-                                </div>
-                                <textarea id="feedback-text-${chatId}" class="w-full p-2 mt-2 bg-transparent border border-white border-opacity-20 rounded-lg text-e0e7ff placeholder-a78bfa" placeholder="Any additional feedback? (optional)"></textarea>
-                                <button data-id="${chatId}" class="submit-feedback mt-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-lg hover:from-purple-600 hover:to-purple-700 transition">
-                                    <i class="fas fa-paper-plane mr-1"></i> Submit
-                                </button>
-                            </div>
+                    <div class="${bubbleClasses}">
+                        <div class="message-content">
+                            ${message}
                         </div>
-                    `;
-                }
-                
-                messageHTML += `</div>`;
+                        <div class="message-meta">
+                            <span>Just now</span>
+                        </div>
+                    </div>
+                `;
             }
             
             messageDiv.innerHTML = messageHTML;
             chatMessages.appendChild(messageDiv);
             scrollToBottom();
         }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        function addTypingIndicator() {
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'message-container assistant-message';
+            typingDiv.id = 'typing-indicator';
+            typingDiv.innerHTML = `
+                <div class="assistant-avatar">
+                    <i class="fas fa-robot"></i>
+                </div>
+                <div class="typing-indicator">
+                    <span>AI is thinking</span>
+                    <div class="typing-dots">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                </div>
+            `;
+            chatMessages.appendChild(typingDiv);
+            scrollToBottom();
+        }
+        
+        function removeTypingIndicator() {
+            const typingIndicator = document.getElementById('typing-indicator');
+            if (typingIndicator) {
+                typingIndicator.remove();
+            }
+        }
     
         async function sendMessage(message) {
-            if (!message) return;
+            if (!message || sendButton.disabled) return;
             
             addMessage(message, true);
             messageInput.value = '';
             sendButton.disabled = true;
             sendButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
             
+            // Add typing indicator
+            addTypingIndicator();
+            
             try {
+                // SEND TO API
                 const response = await fetch('/api/chat', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({message: message})
                 });
+                
                 const data = await response.json();
-                addMessage(data.response || "I apologize, but I'm having trouble processing your request right now. Please try again.", false, data.chat_id);
+                
+                if (response.ok) {
+                    const isCrisis = data.detected_intent === 'crisis' || data.model === 'crisis_detection';
+                    addMessage(
+                        data.response || "I apologize, but I'm having trouble processing your request right now.", 
+                        false, 
+                        isCrisis
+                    );
+                } else {
+                    addMessage(
+                        data.error || 'I\'m sorry, but I\'m experiencing technical difficulties. Please try again in a moment.', 
+                        false, 
+                        false, 
+                        true
+                    );
+                }
             } catch (error) {
                 console.error('Error:', error);
-                addMessage('I\'m sorry, but I\'m experiencing technical difficulties. Please try again in a moment.', false);
+                addMessage(
+                    'I\'m sorry, but I\'m experiencing connection issues. Please check your internet connection and try again.',
+                    false,
+                    false,
+                    true
+                );
             } finally {
+                removeTypingIndicator();
                 sendButton.disabled = false;
                 sendButton.innerHTML = '<i class="fas fa-paper-plane"></i>';
                 messageInput.focus();
@@ -720,15 +700,11 @@
         // Event listeners
         sendButton.addEventListener('click', () => sendMessage(messageInput.value.trim()));
         messageInput.addEventListener('keypress', (e) => { 
-            if (e.key === 'Enter' && !e.shiftKey) {
+            if (e.key === 'Enter' && !e.shiftKey && !sendButton.disabled) {
                 e.preventDefault();
                 sendMessage(messageInput.value.trim()); 
             }
         });
-        
-        chatButtons.forEach(button => 
-            button.addEventListener('click', () => sendMessage(button.textContent.trim()))
-        );
         
         // Focus input on load
         messageInput.focus();

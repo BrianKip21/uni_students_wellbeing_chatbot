@@ -294,30 +294,6 @@
             to { transform: rotate(360deg); }
         }
 
-        /* Demo accounts section */
-        .demo-section {
-            margin-top: 2rem;
-            padding-top: 1.5rem;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .demo-btn {
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: #a78bfa;
-            padding: 0.5rem 1rem;
-            border-radius: 8px;
-            font-size: 0.875rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin: 0.25rem;
-        }
-
-        .demo-btn:hover {
-            background: rgba(255, 255, 255, 0.15);
-            border-color: #8b5cf6;
-        }
-
         /* Responsive design */
         @media (max-width: 640px) {
             .login-container {
@@ -408,22 +384,6 @@
                 </p>
             </div>
         </form>
-
-        <!-- Demo accounts section (development only) -->
-        <div class="demo-section">
-            <p class="text-center text-sm text-purple-400 mb-3">🚧 Development Mode - Quick Login</p>
-            <div class="text-center">
-                <button type="button" class="demo-btn" onclick="fillDemoStudent()">
-                    🎓 Demo Student
-                </button>
-                <button type="button" class="demo-btn" onclick="fillDemoTherapist()">
-                    👨‍⚕️ Demo Therapist
-                </button>
-                <button type="button" class="demo-btn" onclick="fillDemoAdmin()">
-                    👑 Demo Admin
-                </button>
-            </div>
-        </div>
     </div>
 
     <script>
@@ -464,25 +424,6 @@
             errorDiv.classList.remove('show');
             successDiv.textContent = message;
             successDiv.classList.add('show');
-        }
-
-        // Demo account functions
-        function fillDemoStudent() {
-            document.getElementById('email').value = 'student@test.com';
-            document.getElementById('password').value = 'password123';
-            document.getElementById('role').value = 'student';
-        }
-
-        function fillDemoTherapist() {
-            document.getElementById('email').value = 'therapist@test.com';
-            document.getElementById('password').value = 'password123';
-            document.getElementById('role').value = 'therapist';
-        }
-
-        function fillDemoAdmin() {
-            document.getElementById('email').value = 'admin@test.com';
-            document.getElementById('password').value = 'password123';
-            document.getElementById('role').value = 'admin';
         }
 
         // Form submission

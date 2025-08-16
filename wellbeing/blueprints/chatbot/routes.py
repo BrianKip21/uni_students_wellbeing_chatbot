@@ -1,7 +1,8 @@
 """
-Chatbot routes - BERT only implementation.
+Chatbot routes - Claude API implementation.
 This file contains all the chatbot-related routes.
 """
+import anthropic
 from bson.objectid import ObjectId
 from flask import render_template, session, redirect, url_for, jsonify, request, flash, current_app
 from wellbeing.models.user import find_user_by_id
@@ -39,7 +40,7 @@ def chatbot_page():
         settings = {**default_settings, **settings}
         
         # Get recent chat messages, excluding archived ones
-        recent_chats = get_recent_chats(user_id, limit=20)
+        recent_chats = []
         
         # Convert ObjectIds to strings for template rendering
         for chat in recent_chats:
@@ -63,33 +64,60 @@ def chatbot_page():
 
 @chatbot_bp.route('/model-status')
 def model_status():
-    """Check if the BERT model is properly loaded."""
+    """Check if the Claude API is properly configured and accessible."""
     try:
-        # Get BERT model from app context
-        bert_model = getattr(current_app, 'bert_model', None)
+        # Check if Claude API key is configured
+        api_key = current_app.config.get('CLAUDE_API_KEY')
+        api_key_configured = bool(api_key and api_key.strip() and api_key.startswith('sk-ant-'))
         
-        # Check if model exists and is loaded
-        model_exists = bert_model is not None
-        model_loaded = False
+        # Test API connectivity
+        api_accessible = False
         model_info = {}
         
-        if bert_model:
-            model_loaded = hasattr(bert_model, 'is_loaded') and bert_model.is_loaded
-            
-            # Get additional model info if available
-            if hasattr(bert_model, 'get_model_info'):
-                try:
-                    model_info = bert_model.get_model_info()
-                except:
-                    model_info = {}
+        if api_key_configured:
+            try:
+                # Test with a simple API call
+                client = anthropic.Anthropic(api_key=api_key)
+                
+                # Test with a minimal message to verify API access
+                test_response = client.messages.create(
+                    model=current_app.config.get('CLAUDE_MODEL', 'claude-3-haiku-20240307'),
+                    max_tokens=10,
+                    messages=[{"role": "user", "content": "Hello"}]
+                )
+                api_accessible = True
+                
+                # Get model info from config
+                configured_model = current_app.config.get('CLAUDE_MODEL', 'claude-3-haiku-20240307')
+                available_models = current_app.config.get('AVAILABLE_CLAUDE_MODELS', {})
+                
+                model_info = {
+                    'configured_model': configured_model,
+                    'available_models': list(available_models.keys()),
+                    'model_details': available_models.get(configured_model, {}),
+                    'max_tokens': current_app.config.get('CLAUDE_MAX_TOKENS', 1000),
+                    'temperature': current_app.config.get('CLAUDE_TEMPERATURE', 0.7),
+                    'budget_limit': current_app.config.get('MAX_MONTHLY_SPEND', 5.00),
+                    'daily_limit': current_app.config.get('DAILY_SPENDING_LIMIT', 0.50)
+                }
+                
+            except anthropic.APIError as api_error:
+                logger.error(f"Claude API test failed: {api_error}")
+            except Exception as api_error:
+                logger.error(f"Claude API test failed: {api_error}")
         
         status_data = {
-            'bert_model_exists': model_exists,
-            'bert_model_loaded': model_loaded,
-            'model_type': 'BERT_ONLY',
-            'status': 'healthy' if model_loaded else 'unhealthy',
+            'api_key_configured': api_key_configured,
+            'api_accessible': api_accessible,
+            'model_type': 'CLAUDE_AI',
+            'status': 'healthy' if (api_key_configured and api_accessible) else 'unhealthy',
             'model_info': model_info,
-            'timestamp': str(current_app.config.get('app_start_time', 'unknown'))
+            'timestamp': str(current_app.config.get('app_start_time', 'unknown')),
+            'cost_tracking': {
+                'enabled': True,
+                'monthly_budget': current_app.config.get('MAX_MONTHLY_SPEND', 5.00),
+                'alert_threshold': current_app.config.get('USAGE_ALERT_THRESHOLD', 4.00)
+            }
         }
         
         logger.info(f"Model status check: {status_data}")
@@ -98,9 +126,9 @@ def model_status():
     except Exception as e:
         logger.error(f"Model status error: {e}")
         return jsonify({
-            'bert_model_exists': False,
-            'bert_model_loaded': False,
-            'model_type': 'BERT_ONLY',
+            'api_key_configured': False,
+            'api_accessible': False,
+            'model_type': 'CLAUDE_AI',
             'status': 'error',
             'error': str(e),
             'model_info': {}
@@ -114,26 +142,26 @@ def test_chatbot():
     try:
         user_id = session['user']
         
-        # Check if BERT model is loaded
-        bert_model = getattr(current_app, 'bert_model', None)
-        
-        if not bert_model:
+        # Check if Claude API is configured
+        api_key = current_app.config.get('CLAUDE_API_KEY')
+        if not api_key:
             return jsonify({
-                'error': 'BERT model not initialized',
-                'status': 'model_not_found'
+                'error': 'Claude API key not configured',
+                'status': 'api_key_missing'
             }), 500
         
-        if not hasattr(bert_model, 'is_loaded') or not bert_model.is_loaded:
+        if not api_key.startswith('sk-ant-'):
             return jsonify({
-                'error': 'BERT model not loaded properly',
-                'status': 'model_not_loaded'
+                'error': 'Invalid Claude API key format',
+                'status': 'api_key_invalid'
             }), 500
         
         # Test messages to try
         test_messages = [
-            "I'm feeling stressed about work",
-            "I can't sleep and feel anxious",
-            "I'm having a hard time lately"
+            "I'm feeling stressed about exams",
+            "I can't sleep and feel anxious about my grades",
+            "I'm having trouble adjusting to university life",
+            "I feel overwhelmed with my coursework"
         ]
         
         # Use the first test message
@@ -151,6 +179,9 @@ def test_chatbot():
             'confidence': response_data.get('confidence', 0),
             'intent': response_data.get('detected_intent', 'unknown'),
             'chat_id': response_data.get('chat_id'),
+            'response_time_ms': response_data.get('response_time_ms', 0),
+            'tokens_used': response_data.get('tokens_used', 0),
+            'estimated_cost': response_data.get('estimated_cost', 0.0),
             'available_test_messages': test_messages
         })
         
@@ -173,8 +204,9 @@ def health_check():
         # Basic health checks
         checks = {
             'database': False,
-            'bert_model': False,
-            'dependencies': False
+            'claude_api': False,
+            'dependencies': False,
+            'budget_status': False
         }
         
         # Check database connection
@@ -185,21 +217,37 @@ def health_check():
         except Exception as e:
             logger.error(f"Database health check failed: {e}")
         
-        # Check BERT model
+        # Check Claude API
         try:
-            bert_model = getattr(current_app, 'bert_model', None)
-            if bert_model and hasattr(bert_model, 'is_loaded'):
-                checks['bert_model'] = bert_model.is_loaded
+            api_key = current_app.config.get('CLAUDE_API_KEY')
+            if api_key and api_key.startswith('sk-ant-'):
+                client = anthropic.Anthropic(api_key=api_key)
+                # Quick API test with minimal tokens
+                test_response = client.messages.create(
+                    model=current_app.config.get('CLAUDE_MODEL', 'claude-3-haiku-20240307'),
+                    max_tokens=5,
+                    messages=[{"role": "user", "content": "Hi"}]
+                )
+                checks['claude_api'] = True
         except Exception as e:
-            logger.error(f"BERT model health check failed: {e}")
+            logger.error(f"Claude API health check failed: {e}")
         
         # Check key dependencies
         try:
-            import torch
-            import transformers
+            import anthropic
+            import uuid
             checks['dependencies'] = True
         except ImportError as e:
             logger.error(f"Dependencies health check failed: {e}")
+        
+        # Check budget status
+        try:
+            monthly_budget = current_app.config.get('MAX_MONTHLY_SPEND', 5.00)
+            daily_budget = current_app.config.get('DAILY_SPENDING_LIMIT', 0.50)
+            if monthly_budget > 0 and daily_budget > 0:
+                checks['budget_status'] = True
+        except Exception as e:
+            logger.error(f"Budget status check failed: {e}")
         
         overall_health = all(checks.values())
         
@@ -207,7 +255,12 @@ def health_check():
             'status': 'healthy' if overall_health else 'degraded',
             'checks': checks,
             'timestamp': str(current_app.config.get('app_start_time', 'unknown')),
-            'service': 'chatbot'
+            'service': 'chatbot_claude',
+            'budget_info': {
+                'monthly_limit': current_app.config.get('MAX_MONTHLY_SPEND', 5.00),
+                'daily_limit': current_app.config.get('DAILY_SPENDING_LIMIT', 0.50),
+                'alert_threshold': current_app.config.get('USAGE_ALERT_THRESHOLD', 4.00)
+            }
         }), 200 if overall_health else 503
         
     except Exception as e:
@@ -215,41 +268,49 @@ def health_check():
         return jsonify({
             'status': 'unhealthy',
             'error': str(e),
-            'service': 'chatbot'
+            'service': 'chatbot_claude'
         }), 500
 
 
 @chatbot_bp.route('/intents')
 def get_available_intents():
-    """Get list of available intents that the model can classify."""
+    """Get list of available intents that the chatbot can classify."""
     try:
-        bert_model = getattr(current_app, 'bert_model', None)
+        # Enhanced intents for university student mental health
+        available_intents = [
+            'anxiety', 'depression', 'stress', 'sleep', 
+            'relationships', 'academic', 'work', 'coping', 
+            'therapy', 'self_esteem', 'eating', 'substance',
+            'trauma', 'general_support', 'crisis'
+        ]
         
-        if not bert_model or not bert_model.is_loaded:
-            # Return default intents if model not loaded
-            default_intents = [
-                'anxiety', 'depression', 'stress', 'sleep', 
-                'general_support', 'crisis', 'coping', 'therapy'
-            ]
-            return jsonify({
-                'intents': default_intents,
-                'source': 'default',
-                'model_loaded': False
-            })
-        
-        # Get intents from trained model if available
-        intents = []
-        if hasattr(bert_model, 'intent_to_id'):
-            intents = list(bert_model.intent_to_id.keys())
-        elif hasattr(bert_model, 'get_model_info'):
-            model_info = bert_model.get_model_info()
-            intents = model_info.get('intents', [])
+        # Add intent descriptions for better understanding
+        intent_descriptions = {
+            'anxiety': 'Worry, nervousness, panic attacks',
+            'depression': 'Sadness, hopelessness, emptiness',
+            'stress': 'Feeling overwhelmed, pressure, burnout',
+            'sleep': 'Insomnia, fatigue, sleep problems',
+            'relationships': 'Dating, family, friendships, social issues',
+            'academic': 'Study stress, exams, grades, assignments',
+            'work': 'Job stress, career concerns, workplace issues',
+            'coping': 'Managing emotions, coping strategies',
+            'therapy': 'Professional help, counseling',
+            'self_esteem': 'Confidence, self-worth, body image',
+            'eating': 'Food, weight, eating disorders',
+            'substance': 'Alcohol, drugs, addiction concerns',
+            'trauma': 'PTSD, abuse, traumatic experiences',
+            'general_support': 'General emotional support',
+            'crisis': 'Suicidal thoughts, self-harm, emergency'
+        }
         
         return jsonify({
-            'intents': intents,
-            'source': 'trained_model',
-            'model_loaded': True,
-            'total_intents': len(intents)
+            'intents': available_intents,
+            'intent_descriptions': intent_descriptions,
+            'source': 'keyword_classification_enhanced',
+            'api_configured': bool(current_app.config.get('CLAUDE_API_KEY')),
+            'total_intents': len(available_intents),
+            'classification_method': 'keyword_based_with_claude',
+            'crisis_detection': current_app.config.get('CRISIS_DETECTION_ENABLED', True)
         })
         
     except Exception as e:
@@ -273,9 +334,16 @@ def get_conversation_history():
         # Get chat history
         chats = get_recent_chats(user_id, limit=limit, include_archived=include_archived)
         
-        # Format response
+        # Format response with enhanced data
         conversation_history = []
+        total_cost = 0.0
+        total_tokens = 0
+        
         for chat in chats:
+            # Calculate cost if available
+            estimated_cost = chat.get('estimated_cost', 0.0)
+            tokens_used = chat.get('tokens_used', 0)
+            
             chat_item = {
                 'id': str(chat.get('_id', '')),
                 'message': chat.get('message', ''),
@@ -284,15 +352,25 @@ def get_conversation_history():
                 'confidence': chat.get('confidence', 0),
                 'model_used': chat.get('model_used', 'unknown'),
                 'topic': chat.get('topic', 'general'),
-                'feedback': chat.get('feedback')
+                'feedback': chat.get('feedback'),
+                'tokens_used': tokens_used,
+                'estimated_cost': estimated_cost
             }
             conversation_history.append(chat_item)
+            total_cost += estimated_cost
+            total_tokens += tokens_used
         
         return jsonify({
             'status': 'success',
             'conversation_history': conversation_history,
             'total_messages': len(conversation_history),
-            'user_id': str(user_id)
+            'user_id': str(user_id),
+            'usage_summary': {
+                'total_tokens': total_tokens,
+                'total_estimated_cost': round(total_cost, 6),
+                'average_tokens_per_message': round(total_tokens / len(conversation_history), 1) if conversation_history else 0,
+                'average_cost_per_message': round(total_cost / len(conversation_history), 6) if conversation_history else 0
+            }
         })
         
     except Exception as e:
@@ -342,7 +420,7 @@ def get_chatbot_analytics():
         from wellbeing.models.chat import get_chat_analytics
         analytics = get_chat_analytics(user_id, days=days)
         
-        # Add additional metrics
+        # Add additional metrics specific to Claude
         response_data = {
             'status': 'success',
             'period_days': days,
@@ -352,7 +430,15 @@ def get_chatbot_analytics():
                 'most_common_topic': max(analytics.get('topic_distribution', {}).items(), 
                                        key=lambda x: x[1], default=('general_support', 0))[0],
                 'average_confidence': round(analytics.get('avg_confidence', 0), 2),
-                'total_interactions': analytics.get('total_messages', 0)
+                'total_interactions': analytics.get('total_messages', 0),
+                'crisis_interventions': analytics.get('crisis_count', 0),
+                'estimated_total_cost': round(analytics.get('total_cost', 0), 4),
+                'total_tokens_used': analytics.get('total_tokens', 0)
+            },
+            'budget_tracking': {
+                'monthly_budget': current_app.config.get('MAX_MONTHLY_SPEND', 5.00),
+                'usage_percentage': min(100, (analytics.get('total_cost', 0) / current_app.config.get('MAX_MONTHLY_SPEND', 5.00)) * 100),
+                'remaining_budget': max(0, current_app.config.get('MAX_MONTHLY_SPEND', 5.00) - analytics.get('total_cost', 0))
             }
         }
         
@@ -360,6 +446,57 @@ def get_chatbot_analytics():
         
     except Exception as e:
         logger.error(f"Error getting chatbot analytics: {e}")
+        return jsonify({
+            'error': str(e),
+            'status': 'failed'
+        }), 500
+
+
+@chatbot_bp.route('/budget-status')
+@login_required
+def get_budget_status():
+    """Get current budget usage and limits."""
+    try:
+        user_id = session['user']
+        
+        # Get budget info from config
+        monthly_budget = current_app.config.get('MAX_MONTHLY_SPEND', 5.00)
+        daily_budget = current_app.config.get('DAILY_SPENDING_LIMIT', 0.50)
+        alert_threshold = current_app.config.get('USAGE_ALERT_THRESHOLD', 4.00)
+        
+        # Get usage analytics for current month
+        from wellbeing.models.chat import get_chat_analytics
+        monthly_analytics = get_chat_analytics(user_id, days=30)
+        daily_analytics = get_chat_analytics(user_id, days=1)
+        
+        monthly_spent = monthly_analytics.get('total_cost', 0)
+        daily_spent = daily_analytics.get('total_cost', 0)
+        
+        budget_status = {
+            'monthly': {
+                'budget': monthly_budget,
+                'spent': round(monthly_spent, 4),
+                'remaining': round(max(0, monthly_budget - monthly_spent), 4),
+                'percentage_used': round((monthly_spent / monthly_budget) * 100, 1) if monthly_budget > 0 else 0,
+                'alert_triggered': monthly_spent >= alert_threshold
+            },
+            'daily': {
+                'budget': daily_budget,
+                'spent': round(daily_spent, 4),
+                'remaining': round(max(0, daily_budget - daily_spent), 4),
+                'percentage_used': round((daily_spent / daily_budget) * 100, 1) if daily_budget > 0 else 0
+            },
+            'status': 'ok' if monthly_spent < alert_threshold else 'warning' if monthly_spent < monthly_budget else 'limit_reached'
+        }
+        
+        return jsonify({
+            'status': 'success',
+            'budget_status': budget_status,
+            'user_id': str(user_id)
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting budget status: {e}")
         return jsonify({
             'error': str(e),
             'status': 'failed'
@@ -394,14 +531,27 @@ def debug_info():
         return jsonify({'error': 'Debug mode not enabled'}), 403
     
     try:
-        bert_model = getattr(current_app, 'bert_model', None)
+        api_key = current_app.config.get('CLAUDE_API_KEY')
         
         debug_data = {
             'flask_debug': current_app.debug,
-            'model_status': {
-                'exists': bert_model is not None,
-                'loaded': bert_model.is_loaded if bert_model else False,
-                'type': type(bert_model).__name__ if bert_model else None
+            'claude_status': {
+                'api_key_configured': bool(api_key and api_key.strip()),
+                'api_key_format_valid': bool(api_key and api_key.startswith('sk-ant-')),
+                'api_key_length': len(api_key) if api_key else 0,
+                'configured_model': current_app.config.get('CLAUDE_MODEL', 'claude-3-haiku-20240307'),
+                'max_tokens': current_app.config.get('CLAUDE_MAX_TOKENS', 1000),
+                'temperature': current_app.config.get('CLAUDE_TEMPERATURE', 0.7),
+                'available_models': list(current_app.config.get('AVAILABLE_CLAUDE_MODELS', {}).keys())
+            },
+            'budget_config': {
+                'monthly_budget': current_app.config.get('MAX_MONTHLY_SPEND', 5.00),
+                'daily_budget': current_app.config.get('DAILY_SPENDING_LIMIT', 0.50),
+                'alert_threshold': current_app.config.get('USAGE_ALERT_THRESHOLD', 4.00)
+            },
+            'crisis_detection': {
+                'enabled': current_app.config.get('CRISIS_DETECTION_ENABLED', True),
+                'keywords_count': len(current_app.config.get('CRISIS_KEYWORDS', []))
             },
             'session_info': {
                 'has_user': 'user' in session,
@@ -412,7 +562,7 @@ def debug_info():
                       if rule.rule.startswith('/chatbot')],
             'environment': {
                 'python_path': current_app.instance_path,
-                'config': dict(current_app.config)
+                'config_keys': [key for key in current_app.config.keys() if 'CLAUDE' in key]
             }
         }
         

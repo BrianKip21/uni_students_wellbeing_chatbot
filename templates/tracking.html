@@ -123,6 +123,26 @@
             margin-bottom: 1.5rem;
         }
         
+        .alert-warning {
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            border-left: 4px solid #f59e0b;
+            color: #fbbf24;
+            padding: 1rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+        }
+        
+        .alert-info {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-left: 4px solid #3b82f6;
+            color: #93c5fd;
+            padding: 1rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+        }
+        
         /* Tab navigation */
         .tab-navigation {
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
@@ -267,87 +287,262 @@
             text-decoration: none;
         }
         
-        /* Mood buttons */
-        .mood-button {
+        /* Enhanced Mood Tracking Styles */
+        .streak-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(245, 158, 11, 0.1);
+            padding: 0.5rem 1rem;
+            border-radius: 12px;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+        
+        .mood-summary {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            padding: 1.5rem;
+            background: rgba(16, 185, 129, 0.05);
+            border-radius: 12px;
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+        
+        .mood-icon-large i {
+            font-size: 4rem;
+        }
+        
+        .intensity-display {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+        
+        .intensity-dots {
+            display: flex;
+            gap: 2px;
+        }
+        
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .dot.filled {
+            background: #10b981;
+        }
+        
+        .mood-triggers-display {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+        
+        .trigger-tag {
+            background: rgba(139, 92, 246, 0.2);
+            color: #c4b5fd;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            border: 1px solid rgba(139, 92, 246, 0.3);
+        }
+        
+        .mood-buttons-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .mood-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 1.5rem 1rem;
+            color: #e0e7ff;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .mood-btn:hover {
+            transform: translateY(-2px);
+            border-color: rgba(139, 92, 246, 0.5);
+        }
+        
+        .mood-btn.selected {
+            border-color: #8b5cf6;
+            background: rgba(139, 92, 246, 0.2);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(139, 92, 246, 0.3);
+        }
+        
+        .mood-btn.happy.selected { border-color: #10b981; background: rgba(16, 185, 129, 0.2); }
+        .mood-btn.neutral.selected { border-color: #6b7280; background: rgba(107, 114, 128, 0.2); }
+        .mood-btn.sad.selected { border-color: #3b82f6; background: rgba(59, 130, 246, 0.2); }
+        .mood-btn.anxious.selected { border-color: #f59e0b; background: rgba(245, 158, 11, 0.2); }
+        .mood-btn.energetic.selected { border-color: #8b5cf6; background: rgba(139, 92, 246, 0.2); }
+        
+        .intensity-slider-container {
+            position: relative;
+            margin: 1rem 0;
+        }
+        
+        .mood-slider {
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            outline: none;
+            -webkit-appearance: none;
+        }
+        
+        .mood-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #8b5cf6;
+            cursor: pointer;
+            border: 2px solid white;
+        }
+        
+        .intensity-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 0.5rem;
+        }
+        
+        .triggers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+        
+        .trigger-pill {
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 1rem;
-            border-radius: 12px;
-            transition: all 0.3s ease;
+            border-radius: 20px;
+            padding: 0.5rem 1rem;
+            color: #c4b5fd;
             cursor: pointer;
-            text-align: center;
+            transition: all 0.3s ease;
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .trigger-pill:hover {
+            border-color: #8b5cf6;
+            background: rgba(139, 92, 246, 0.1);
+        }
+        
+        .trigger-pill.selected {
+            border-color: #8b5cf6;
+            background: rgba(139, 92, 246, 0.2);
             color: #e0e7ff;
         }
         
-        .mood-button:hover {
-            background: rgba(255, 255, 255, 0.1);
-            transform: translateY(-2px);
+        .insights-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
         }
         
-        .mood-button.happy:hover {
-            background: rgba(16, 185, 129, 0.2);
-            border-color: #10b981;
-        }
-        
-        .mood-button.neutral:hover {
-            background: rgba(107, 114, 128, 0.2);
-            border-color: #6b7280;
-        }
-        
-        .mood-button.sad:hover {
-            background: rgba(59, 130, 246, 0.2);
-            border-color: #3b82f6;
-        }
-        
-        .mood-button.stressed:hover {
-            background: rgba(239, 68, 68, 0.2);
-            border-color: #ef4444;
-        }
-        
-        .mood-button.energetic:hover {
-            background: rgba(245, 158, 11, 0.2);
-            border-color: #f59e0b;
-        }
-        
-        .mood-button.anxious:hover {
-            background: rgba(217, 119, 6, 0.2);
-            border-color: #d97706;
-        }
-        
-        .mood-button.relaxed:hover {
-            background: rgba(99, 102, 241, 0.2);
-            border-color: #6366f1;
-        }
-        
-        .mood-button.tired:hover {
-            background: rgba(139, 92, 246, 0.2);
-            border-color: #8b5cf6;
-        }
-        
-        /* Mood history cards */
-        .mood-card {
+        .insight-card {
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 12px;
             padding: 1rem;
-            text-align: center;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .insight-icon {
+            font-size: 1.5rem;
+        }
+        
+        .mood-calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+            margin-bottom: 1rem;
+        }
+        
+        .mood-day {
+            aspect-ratio: 1;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            cursor: pointer;
             transition: all 0.3s ease;
+            min-height: 40px;
         }
         
-        .mood-card:hover {
-            background: rgba(255, 255, 255, 0.08);
-            transform: translateY(-2px);
+        .mood-day:hover {
+            transform: scale(1.05);
         }
         
-        .mood-happy { border-left: 4px solid #10b981; }
-        .mood-neutral { border-left: 4px solid #6b7280; }
-        .mood-sad { border-left: 4px solid #3b82f6; }
-        .mood-stressed { border-left: 4px solid #ef4444; }
-        .mood-energetic { border-left: 4px solid #f59e0b; }
-        .mood-anxious { border-left: 4px solid #d97706; }
-        .mood-relaxed { border-left: 4px solid #6366f1; }
-        .mood-tired { border-left: 4px solid #8b5cf6; }
+        .day-number {
+            font-size: 0.75rem;
+            color: #a78bfa;
+            margin-bottom: 2px;
+        }
         
+        .mood-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+        
+        .mood-indicator.mood-happy { background: #10b981; }
+        .mood-indicator.mood-neutral { background: #6b7280; }
+        .mood-indicator.mood-sad { background: #3b82f6; }
+        .mood-indicator.mood-anxious { background: #f59e0b; }
+        .mood-indicator.mood-energetic { background: #8b5cf6; }
+        
+        .mood-legend {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            color: #a78bfa;
+        }
+        
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+        
+        .legend-color.mood-happy { background: #10b981; }
+        .legend-color.mood-neutral { background: #6b7280; }
+        .legend-color.mood-sad { background: #3b82f6; }
+        .legend-color.mood-anxious { background: #f59e0b; }
+        .legend-color.mood-energetic { background: #8b5cf6; }
+
         /* Form elements */
         .form-input {
             background: rgba(255, 255, 255, 0.05);
@@ -369,7 +564,7 @@
         .form-input::placeholder {
             color: #a78bfa;
         }
-        
+
         .form-select {
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.2);
@@ -386,7 +581,7 @@
             box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
             background: rgba(255, 255, 255, 0.08);
         }
-        
+
         .form-textarea {
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.2);
@@ -409,195 +604,14 @@
         .form-textarea::placeholder {
             color: #a78bfa;
         }
-        
+
         .form-label {
             color: #c4b5fd;
             font-weight: 500;
             margin-bottom: 0.5rem;
             display: block;
         }
-        
-        /* Radio buttons */
-        .radio-group {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-        }
-        
-        .radio-option {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
-            padding: 0.75rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-        }
-        
-        .radio-option:hover {
-            background: rgba(255, 255, 255, 0.1);
-            border-color: #8b5cf6;
-        }
-        
-        .radio-option input[type="radio"] {
-            margin-right: 0.5rem;
-            accent-color: #8b5cf6;
-        }
-        
-        /* Progress bars */
-        .progress-bar {
-            width: 100%;
-            height: 12px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 6px;
-            overflow: hidden;
-            margin-bottom: 0.5rem;
-        }
-        
-        .progress-fill {
-            height: 100%;
-            border-radius: 6px;
-            transition: width 0.3s ease;
-        }
-        
-        .progress-meditation {
-            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-        }
-        
-        .progress-exercise {
-            background: linear-gradient(135deg, #10b981, #059669);
-        }
-        
-        .progress-sleep {
-            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
-        }
-        
-        .progress-water {
-            background: linear-gradient(135deg, #06b6d4, #0891b2);
-        }
-        
-        .progress-green {
-            background: linear-gradient(135deg, #10b981, #059669);
-        }
-        
-        .progress-blue {
-            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-        }
-        
-        /* Goal cards */
-        .goal-card {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
-            transition: all 0.3s ease;
-        }
-        
-        .goal-card:hover {
-            background: rgba(255, 255, 255, 0.08);
-            transform: translateY(-2px);
-        }
-        
-        /* Journal entries */
-        .journal-entry {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            padding: 1rem;
-            margin-bottom: 1rem;
-            transition: all 0.3s ease;
-        }
-        
-        .journal-entry:hover {
-            background: rgba(255, 255, 255, 0.08);
-            transform: translateY(-2px);
-        }
-        
-        .journal-title {
-            color: #e0e7ff;
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-        }
-        
-        .journal-meta {
-            color: #a78bfa;
-            font-size: 0.875rem;
-            margin-bottom: 0.5rem;
-        }
-        
-        .journal-preview {
-            color: #c4b5fd;
-            font-size: 0.875rem;
-            line-height: 1.4;
-        }
-        
-        /* Achievement cards */
-        .achievement-card {
-            background: rgba(16, 185, 129, 0.1);
-            border: 1px solid rgba(16, 185, 129, 0.3);
-            border-radius: 12px;
-            padding: 1rem;
-            margin-bottom: 1rem;
-            display: flex;
-            align-items: center;
-        }
-        
-        .achievement-icon {
-            color: #10b981;
-            margin-right: 1rem;
-            font-size: 1.25rem;
-        }
-        
-        .achievement-text {
-            color: #6ee7b7;
-            font-weight: 500;
-        }
-        
-        .achievement-meta {
-            color: #34d399;
-            font-size: 0.75rem;
-            margin-top: 0.25rem;
-        }
-        
-        /* Loading spinner */
-        .loading-spinner {
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-top: 2px solid #8b5cf6;
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            animation: spin 1s linear infinite;
-            display: inline-block;
-        }
 
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        /* Chart container */
-        .chart-container {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 12px;
-            padding: 1rem;
-        }
-        
-        /* Celebration animation */
-        @keyframes celebrate {
-            0% { transform: scale(0); opacity: 0; }
-            50% { opacity: 1; }
-            100% { transform: scale(1.5); opacity: 0; }
-        }
-        
-        .celebration-circle {
-            position: absolute;
-            border-radius: 50%;
-            animation: celebrate 1s ease-out forwards;
-        }
-        
-        /* View toggle buttons */
         .view-toggle {
             background: rgba(255, 255, 255, 0.1);
             border: 1px solid rgba(255, 255, 255, 0.2);
@@ -621,8 +635,356 @@
             color: #e0e7ff;
         }
         
-        /* Responsive design */
-        @media (max-width: 1024px) {
+        /* Animation for progressive reveal */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.4s ease;
+            display: none;
+        }
+        
+        .fade-in.show {
+            opacity: 1;
+            transform: translateY(0);
+            display: block;
+        }
+
+        /* Journal Styles */
+        .journal-summary {
+            background: rgba(59, 130, 246, 0.05);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        .prompts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 0.5rem;
+        }
+
+        .prompt-pill {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 0.5rem 1rem;
+            color: #c4b5fd;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .prompt-pill:hover, .prompt-pill.selected {
+            border-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.2);
+            color: #93c5fd;
+        }
+
+        .gratitude-display {
+            background: rgba(236, 72, 153, 0.05);
+            border: 1px solid rgba(236, 72, 153, 0.2);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+
+        .gratitude-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .journal-entry-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .journal-entry-card:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateY(-2px);
+        }
+
+        /* Goals Styles */
+        .achievement-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(245, 158, 11, 0.1);
+            padding: 0.5rem 1rem;
+            border-radius: 12px;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .goals-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .goal-card-enhanced {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .goal-card-enhanced:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateY(-2px);
+        }
+
+        .goal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .goal-category {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .category-emoji {
+            font-size: 1.25rem;
+        }
+
+        .goal-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .goal-title {
+            font-weight: 600;
+            color: #e0e7ff;
+            margin-bottom: 1rem;
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            overflow: hidden;
+            margin-bottom: 0.5rem;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            border-radius: 6px;
+            transition: width 0.3s ease;
+        }
+
+        .progress-complete {
+            background: linear-gradient(135deg, #10b981, #059669);
+        }
+
+        .progress-active {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+        }
+
+        .goal-completed {
+            display: flex;
+            align-items: center;
+            margin-top: 1rem;
+            padding: 0.5rem;
+            background: rgba(16, 185, 129, 0.1);
+            border-radius: 8px;
+        }
+
+        .categories-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .category-progress-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .category-icon {
+            font-size: 2rem;
+        }
+
+        .mini-progress-bar {
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 0.5rem;
+        }
+
+        .mini-progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            transition: width 0.3s ease;
+        }
+
+        /* Summary/Insights Styles */
+        .wellness-score-container {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .score-circle {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: conic-gradient(from 0deg, #8b5cf6 0deg, #3b82f6 120deg, #10b981 240deg, #8b5cf6 360deg);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .score-circle::before {
+            content: '';
+            position: absolute;
+            inset: 8px;
+            border-radius: 50%;
+            background: rgba(15, 15, 35, 0.9);
+        }
+
+        .score-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #e0e7ff;
+            z-index: 1;
+        }
+
+        .score-label {
+            font-size: 0.75rem;
+            color: #a78bfa;
+            z-index: 1;
+        }
+
+        .score-breakdown {
+            flex: 1;
+        }
+
+        .score-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+        }
+
+        .score-category {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .week-summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+        }
+
+        .summary-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .summary-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .recommendations-list {
+            margin-bottom: 1rem;
+        }
+
+        .recommendation-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .recommendation-action {
+            background: rgba(139, 92, 246, 0.2);
+            border: 1px solid rgba(139, 92, 246, 0.4);
+            border-radius: 6px;
+            padding: 0.25rem 0.75rem;
+            color: #c4b5fd;
+            font-size: 0.75rem;
+            margin-top: 0.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .recommendation-action:hover {
+            background: rgba(139, 92, 246, 0.3);
+            border-color: #8b5cf6;
+        }
+
+        .patterns-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+
+        .pattern-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 1rem;
+        }
+
+        .pattern-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        
+        @media (max-width: 768px) {
+            .mood-buttons-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            
+            .triggers-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .insights-grid {
+                grid-template-columns: 1fr;
+            }
+
             .sidebar {
                 transform: translateX(-100%);
             }
@@ -630,73 +992,20 @@
             .main-content {
                 margin-left: 0;
             }
+
+            .wellness-score-container {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .goals-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .prompts-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
         }
-        
-        /* Dark mode compatibility */
-        {% if settings and settings.theme_mode == 'dark' %}
-        body {
-            background: linear-gradient(135deg, #000000 0%, #1a1a3e 50%, #2d1b69 100%);
-        }
-        
-        .glass-card {
-            background: rgba(0, 0, 0, 0.3);
-        }
-        
-        .sidebar {
-            background: rgba(0, 0, 0, 0.9);
-        }
-        {% endif %}
-        
-        /* High contrast compatibility */
-        {% if settings and settings.contrast == 'high' %}
-        body {
-            background: #000000 !important;
-            color: #ffffff !important;
-        }
-        
-        .glass-card {
-            background: rgba(255, 255, 255, 0.1) !important;
-            border: 2px solid #ffffff !important;
-        }
-        
-        .glass-card h3, .page-header h2 {
-            color: #ffffff !important;
-            -webkit-text-fill-color: #ffffff !important;
-        }
-        
-        .form-input, .form-select, .form-textarea {
-            background: rgba(255, 255, 255, 0.1) !important;
-            border: 2px solid #ffffff !important;
-            color: #ffffff !important;
-        }
-        {% endif %}
-        
-        /* Large text compatibility */
-        {% if settings and settings.text_size == 'lg' %}
-        body {
-            font-size: 1.125rem !important;
-        }
-        
-        .glass-card h3 {
-            font-size: 1.375rem !important;
-        }
-        
-        .page-header h2 {
-            font-size: 2.25rem !important;
-        }
-        {% elif settings and settings.text_size == 'xl' %}
-        body {
-            font-size: 1.25rem !important;
-        }
-        
-        .glass-card h3 {
-            font-size: 1.5rem !important;
-        }
-        
-        .page-header h2 {
-            font-size: 2.5rem !important;
-        }
-        {% endif %}
     </style>
 </head>
 <body>
@@ -720,6 +1029,9 @@
                 </a></li>
                 <li><a href="{{ url_for('dashboard.therapist_info') }}" class="flex items-center">
                     <i class="fas fa-user-md w-5 mr-3"></i> Your Therapist
+                </a></li>
+                <li><a href="{{ url_for('dashboard.student_chat') }}" class="flex items-center">
+                    <i class="fas fa-comments w-5 mr-3"></i> Chat with Therapist
                 </a></li>
                 <li><a href="{{ url_for('dashboard.profile') }}" class="flex items-center">
                     <i class="fas fa-user w-5 mr-3"></i> Profile
@@ -757,7 +1069,7 @@
             <!-- Page Header -->
             <div class="page-header mb-8">
                 <h2>Wellness Tracker</h2>
-                <p>Track your mood, habits, and set wellness goals</p>
+                <p>Track your mood, build habits, and achieve your wellness goals</p>
             </div>
 
             <!-- Navigation Tabs -->
@@ -776,530 +1088,742 @@
                 </button>
             </div>
             
-            <!-- Mood Tracking Section -->
+            <!-- Enhanced Mood Tracking Section -->
             <div id="mood-section" class="tab-content">
-                <!-- Today's Mood -->
-                <div class="glass-card mb-8">
-                    <h3 class="text-xl font-semibold mb-4">How are you feeling today?</h3>
-                    <form action="{{ url_for('tracking.track_mood_route') }}" method="post" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
-                        <button type="submit" name="mood" value="happy" class="mood-button happy">
-                            <i class="far fa-smile text-3xl text-green-400 block mx-auto mb-2"></i>
-                            <span class="block text-center font-medium">Happy</span>
-                        </button>
-                        <button type="submit" name="mood" value="neutral" class="mood-button neutral">
-                            <i class="far fa-meh text-3xl text-gray-400 block mx-auto mb-2"></i>
-                            <span class="block text-center font-medium">Neutral</span>
-                        </button>
-                        <button type="submit" name="mood" value="sad" class="mood-button sad">
-                            <i class="far fa-frown text-3xl text-blue-400 block mx-auto mb-2"></i>
-                            <span class="block text-center font-medium">Sad</span>
-                        </button>
-                        <button type="submit" name="mood" value="stressed" class="mood-button stressed">
-                            <i class="far fa-tired text-3xl text-red-400 block mx-auto mb-2"></i>
-                            <span class="block text-center font-medium">Stressed</span>
-                        </button>
-                        <button type="submit" name="mood" value="energetic" class="mood-button energetic">
-                            <i class="far fa-grin-stars text-3xl text-yellow-400 block mx-auto mb-2"></i>
-                            <span class="block text-center font-medium">Energetic</span>
-                        </button>
-                        <button type="submit" name="mood" value="anxious" class="mood-button anxious">
-                            <i class="far fa-grimace text-3xl text-yellow-500 block mx-auto mb-2"></i>
-                            <span class="block text-center font-medium">Anxious</span>
-                        </button>
-                        <button type="submit" name="mood" value="relaxed" class="mood-button relaxed">
-                            <i class="far fa-grin-beam text-3xl text-indigo-400 block mx-auto mb-2"></i>
-                            <span class="block text-center font-medium">Relaxed</span>
-                        </button>
-                        <button type="submit" name="mood" value="tired" class="mood-button tired">
-                            <i class="far fa-dizzy text-3xl text-purple-400 block mx-auto mb-2"></i>
-                            <span class="block text-center font-medium">Tired</span>
-                        </button>
-                        
-                        <!-- Add context -->
-                        <div class="col-span-2 md:col-span-4 lg:col-span-8 mt-4">
-                            <label for="mood-context" class="form-label">What's on your mind? (optional)</label>
-                            <textarea id="mood-context" name="context" rows="2" maxlength="500" class="form-textarea" placeholder="Share your thoughts..."></textarea>
+                <!-- Quick Mood Check-in -->
+                <div class="glass-card mb-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-semibold">How are you feeling?</h3>
+                        {% if mood_streak and mood_streak > 1 %}
+                            <div class="streak-badge">
+                                <i class="fas fa-fire text-orange-400"></i>
+                                <span class="text-sm text-orange-300">{{ mood_streak }} day streak!</span>
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    {% if user_already_tracked_mood_today %}
+                        <!-- Today's Mood Display -->
+                        <div class="mood-summary">
+                            <div class="mood-icon-large">
+                                {% if today_mood.mood == 'happy' %}
+                                    <i class="far fa-smile text-green-400"></i>
+                                {% elif today_mood.mood == 'neutral' %}
+                                    <i class="far fa-meh text-gray-400"></i>
+                                {% elif today_mood.mood == 'sad' %}
+                                    <i class="far fa-frown text-blue-400"></i>
+                                {% elif today_mood.mood == 'anxious' %}
+                                    <i class="far fa-grimace text-yellow-500"></i>
+                                {% elif today_mood.mood == 'energetic' %}
+                                    <i class="far fa-grin-stars text-purple-400"></i>
+                                {% endif %}
+                            </div>
+                            <div class="mood-details">
+                                <h4 class="text-lg font-semibold capitalize text-green-300">{{ today_mood.mood }}</h4>
+                                {% if today_mood.intensity %}
+                                    <div class="intensity-display">
+                                        <span class="text-sm text-gray-300">Intensity: </span>
+                                        <div class="intensity-dots">
+                                            {% for i in range(1, 11) %}
+                                                <div class="dot {{ 'filled' if i <= today_mood.intensity else '' }}"></div>
+                                            {% endfor %}
+                                        </div>
+                                        <span class="text-sm text-gray-300">{{ today_mood.intensity }}/10</span>
+                                    </div>
+                                {% endif %}
+                                {% if today_mood.triggers %}
+                                    <div class="mood-triggers-display">
+                                        {% for trigger in today_mood.triggers %}
+                                            <span class="trigger-tag">{{ trigger|title }}</span>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                {% if today_mood.context %}
+                                    <div class="mt-2 text-sm text-purple-300 italic">
+                                        "{{ today_mood.context }}"
+                                    </div>
+                                {% endif %}
+                            </div>
                         </div>
-                    </form>
+                        <div class="mt-4 text-sm text-purple-300 text-center">
+                            <i class="fas fa-clock mr-1"></i>
+                            See you tomorrow for another check-in!
+                        </div>
+                    {% else %}
+                        <!-- Enhanced Mood Tracking Form -->
+                        <form action="{{ url_for('tracking.track_mood_route') }}" method="post" class="mood-tracking-form">
+                            <!-- Simplified Mood Selection -->
+                            <div class="mood-selection mb-6">
+                                <div class="mood-buttons-grid">
+                                    <button type="button" class="mood-btn happy" data-mood="happy">
+                                        <i class="far fa-smile text-3xl text-green-400"></i>
+                                        <span>Happy</span>
+                                    </button>
+                                    <button type="button" class="mood-btn neutral" data-mood="neutral">
+                                        <i class="far fa-meh text-3xl text-gray-400"></i>
+                                        <span>Okay</span>
+                                    </button>
+                                    <button type="button" class="mood-btn sad" data-mood="sad">
+                                        <i class="far fa-frown text-3xl text-blue-400"></i>
+                                        <span>Down</span>
+                                    </button>
+                                    <button type="button" class="mood-btn anxious" data-mood="anxious">
+                                        <i class="far fa-grimace text-3xl text-yellow-500"></i>
+                                        <span>Anxious</span>
+                                    </button>
+                                    <button type="button" class="mood-btn energetic" data-mood="energetic">
+                                        <i class="far fa-grin-stars text-3xl text-purple-400"></i>
+                                        <span>Energetic</span>
+                                    </button>
+                                </div>
+                                <input type="hidden" name="mood" id="selected-mood" required>
+                            </div>
+                            
+                            <!-- Mood Intensity Slider -->
+                            <div class="mood-intensity mb-6 fade-in" id="intensity-section">
+                                <label class="form-label">How intense is this feeling? (1-10)</label>
+                                <div class="intensity-slider-container">
+                                    <input type="range" name="intensity" id="intensity-slider" min="1" max="10" value="5" class="mood-slider">
+                                    <div class="intensity-labels">
+                                        <span class="text-xs text-gray-400">Mild</span>
+                                        <span class="text-xs text-gray-400" id="intensity-value">5</span>
+                                        <span class="text-xs text-gray-400">Intense</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Quick Triggers -->
+                            <div class="mood-triggers mb-6 fade-in" id="triggers-section">
+                                <label class="form-label">What influenced this mood? (optional, select up to 3)</label>
+                                <div class="triggers-grid">
+                                    <button type="button" class="trigger-pill" data-trigger="work">
+                                        <i class="fas fa-briefcase mr-1"></i>Work
+                                    </button>
+                                    <button type="button" class="trigger-pill" data-trigger="sleep">
+                                        <i class="fas fa-bed mr-1"></i>Sleep
+                                    </button>
+                                    <button type="button" class="trigger-pill" data-trigger="exercise">
+                                        <i class="fas fa-running mr-1"></i>Exercise
+                                    </button>
+                                    <button type="button" class="trigger-pill" data-trigger="social">
+                                        <i class="fas fa-users mr-1"></i>Social
+                                    </button>
+                                    <button type="button" class="trigger-pill" data-trigger="weather">
+                                        <i class="fas fa-cloud-sun mr-1"></i>Weather
+                                    </button>
+                                    <button type="button" class="trigger-pill" data-trigger="health">
+                                        <i class="fas fa-heart mr-1"></i>Health
+                                    </button>
+                                    <button type="button" class="trigger-pill" data-trigger="family">
+                                        <i class="fas fa-home mr-1"></i>Family
+                                    </button>
+                                    <button type="button" class="trigger-pill" data-trigger="stress">
+                                        <i class="fas fa-exclamation-triangle mr-1"></i>Stress
+                                    </button>
+                                </div>
+                                <input type="hidden" name="triggers" id="selected-triggers">
+                            </div>
+                            
+                            <!-- Quick Note -->
+                            <div class="quick-note mb-6 fade-in" id="note-section">
+                                <label class="form-label">Quick note (optional)</label>
+                                <input type="text" name="context" id="mood-note" placeholder="What's on your mind?" maxlength="100" class="form-input">
+                            </div>
+                            
+                            <!-- Submit Button -->
+                            <button type="submit" class="btn-primary w-full fade-in" id="submit-mood">
+                                <i class="fas fa-check mr-2"></i>
+                                Track My Mood
+                            </button>
+                        </form>
+                    {% endif %}
                 </div>
 
-                <!-- Mood History -->
-                <div class="glass-card mb-8">
+                <!-- Mood Insights Card -->
+                <div class="glass-card mb-6">
+                    <h3 class="text-xl font-semibold mb-4">Your Mood Insights</h3>
+                    <div class="insights-grid">
+                        {% for insight in mood_insights %}
+                            <div class="insight-card">
+                                <div class="insight-icon">
+                                    <i class="{{ insight.icon }} {{ insight.color }}"></i>
+                                </div>
+                                <div class="insight-content">
+                                    <h4 class="font-medium text-purple-200">{{ insight.title }}</h4>
+                                    <p class="text-sm text-purple-300">{{ insight.description }}</p>
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="insight-card">
+                                <div class="insight-icon">
+                                    <i class="fas fa-chart-line text-blue-400"></i>
+                                </div>
+                                <div class="insight-content">
+                                    <h4 class="font-medium text-purple-200">Getting Started</h4>
+                                    <p class="text-sm text-purple-300">Track for a few days to see personalized insights!</p>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Enhanced Mood History -->
+                <div class="glass-card">
                     <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-xl font-semibold">Your Mood History</h3>
+                        <h3 class="text-xl font-semibold">Recent Moods</h3>
                         <div class="flex space-x-2">
-                            <button class="view-toggle active" id="week-view">Week</button>
-                            <button class="view-toggle" id="month-view">Month</button>
+                            <button class="view-toggle active" id="week-view">7 Days</button>
+                            <button class="view-toggle" id="month-view">30 Days</button>
                         </div>
                     </div>
                     
-                    {% if mood_history and mood_history|length > 0 %}
-                        <!-- Week View -->
-                        <div id="week-history" class="grid grid-cols-1 md:grid-cols-7 gap-4">
-                            {% for mood in mood_history[:7] %}
-                                <div class="mood-card mood-{{ mood.mood }}">
-                                    <div class="text-lg font-medium text-purple-200">{{ mood.date }}</div>
-                                    <div class="mt-2">
-                                        {% if mood.mood == 'happy' %}
-                                            <i class="far fa-smile text-2xl text-green-400"></i>
-                                        {% elif mood.mood == 'neutral' %}
-                                            <i class="far fa-meh text-2xl text-gray-400"></i>
-                                        {% elif mood.mood == 'sad' %}
-                                            <i class="far fa-frown text-2xl text-blue-400"></i>
-                                        {% elif mood.mood == 'stressed' %}
-                                            <i class="far fa-tired text-2xl text-red-400"></i>
-                                        {% elif mood.mood == 'energetic' %}
-                                            <i class="far fa-grin-stars text-2xl text-yellow-400"></i>
-                                        {% elif mood.mood == 'anxious' %}
-                                            <i class="far fa-grimace text-2xl text-yellow-500"></i>
-                                        {% elif mood.mood == 'relaxed' %}
-                                            <i class="far fa-grin-beam text-2xl text-indigo-400"></i>
-                                        {% elif mood.mood == 'tired' %}
-                                            <i class="far fa-dizzy text-2xl text-purple-400"></i>
-                                        {% endif %}
-                                    </div>
-                                    <div class="mt-1 capitalize text-purple-200">{{ mood.mood }}</div>
-                                    {% if mood.get('context') %}
-                                        <div class="mt-1 text-xs text-purple-300 truncate" title="{{ mood.context }}">
-                                            "{{ mood.context }}"
-                                        </div>
-                                    {% endif %}
+                    <!-- Mood Calendar Grid -->
+                    <div class="mood-calendar-grid" id="mood-calendar">
+                        {% if mood_history and mood_history|length > 0 %}
+                            {% for mood in mood_history[:30] %}
+                                <div class="mood-day" title="{{ mood.formatted_date }}: {{ mood.mood|title }}{% if mood.intensity %} ({{ mood.intensity }}/10){% endif %}{% if mood.triggers %} - {{ mood.triggers|join(', ')|title }}{% endif %}">
+                                    <div class="day-number">{{ mood.day_number }}</div>
+                                    <div class="mood-indicator mood-{{ mood.mood }}"></div>
                                 </div>
-                                {% endfor %}
-                        </div>
-                        
-                        <!-- Month View -->
-                        <div id="month-history" class="hidden">
-                            <div class="chart-container">
-                                <canvas id="mood-chart" height="300"></canvas>
+                            {% endfor %}
+                        {% else %}
+                            <div class="col-span-7 text-center py-8">
+                                <p class="text-purple-300">Start tracking to see your mood patterns!</p>
                             </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Mood Legend -->
+                    <div class="mood-legend mt-4">
+                        <div class="legend-item">
+                            <div class="legend-color mood-happy"></div>
+                            <span>Happy</span>
                         </div>
-                    {% else %}
-                        <p class="text-purple-300 text-center py-4">No mood data recorded yet. Start tracking your mood today!</p>
-                    {% endif %}
+                        <div class="legend-item">
+                            <div class="legend-color mood-neutral"></div>
+                            <span>Okay</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color mood-sad"></div>
+                            <span>Down</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color mood-anxious"></div>
+                            <span>Anxious</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color mood-energetic"></div>
+                            <span>Energetic</span>
+                        </div>
+                    </div>
                 </div>
             </div>
             
-            <!-- Journal Section -->
+            <!-- Enhanced Journal Section -->
             <div id="journal-section" class="tab-content hidden">
-                <div class="glass-card mb-8">
-                    <h3 class="text-xl font-semibold mb-4">Daily Reflection</h3>
-                    <form action="{{ url_for('tracking.save_journal') }}" method="post">
-                        <div class="mb-4">
-                            <label for="journal-date" class="form-label">Date</label>
-                            <input type="date" id="journal-date" name="date" value="{{ today_date }}" class="form-input" style="width: auto;">
-                        </div>
-                        
-                        <div class="mb-4">
-                            <label for="journal-title" class="form-label">Title</label>
-                            <input type="text" id="journal-title" name="title" placeholder="What's on your mind today?" maxlength="100" required class="form-input">
-                        </div>
-                        
-                        <div class="mb-4">
-                            <label class="form-label">How are you feeling?</label>
-                            <div class="radio-group">
-                                {% for mood in ['happy', 'neutral', 'sad', 'stressed', 'energetic', 'anxious', 'relaxed', 'tired'] %}
-                                    <label class="radio-option">
-                                        <input type="radio" name="mood" value="{{ mood }}" {% if loop.first %}required{% endif %}>
-                                        <span class="capitalize">{{ mood }}</span>
-                                    </label>
-                                {% endfor %}
+                <!-- Quick Journal Entry -->
+                <div class="glass-card mb-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-semibold">Daily Reflection</h3>
+                        {% if journal_streak and journal_streak > 1 %}
+                            <div class="streak-badge">
+                                <i class="fas fa-feather text-blue-400"></i>
+                                <span class="text-sm text-blue-300">{{ journal_streak }} day writing streak!</span>
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    {% if user_already_journaled_today %}
+                        <!-- Today's Journal Display -->
+                        <div class="journal-summary">
+                            <div class="flex items-start gap-4">
+                                <div class="journal-icon">
+                                    <i class="fas fa-book text-3xl text-blue-400"></i>
+                                </div>
+                                <div class="journal-details flex-1">
+                                    <h4 class="text-lg font-semibold text-blue-300 mb-2">{{ today_journal.title }}</h4>
+                                    <p class="text-purple-300 mb-3">{{ today_journal.content[:150] }}{% if today_journal.content|length > 150 %}...{% endif %}</p>
+                                    
+                                    {% if today_journal.gratitude %}
+                                        <div class="gratitude-display">
+                                            <h5 class="text-sm font-medium text-purple-200 mb-2">Today's Gratitude:</h5>
+                                            <div class="gratitude-items">
+                                                {% for item in today_journal.gratitude %}
+                                                    <div class="gratitude-item">
+                                                        <i class="fas fa-heart text-pink-400 mr-2"></i>
+                                                        <span class="text-purple-300">{{ item }}</span>
+                                                    </div>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                    
+                                    <div class="mt-3 text-sm text-purple-400">
+                                        <i class="fas fa-clock mr-1"></i>
+                                        Written {{ today_journal.created_at.strftime('%I:%M %p') }}
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                        
-                        <div class="mb-4">
-                            <label for="journal-content" class="form-label">Journal Entry</label>
-                            <textarea id="journal-content" name="content" rows="8" placeholder="Write your thoughts here..." maxlength="5000" class="form-textarea"></textarea>
-                        </div>
-                        
-                        <div class="mb-4">
-                            <label class="form-label">What are you grateful for today?</label>
-                            <div class="space-y-2">
-                                <input type="text" name="gratitude[]" placeholder="I'm grateful for..." maxlength="200" class="form-input">
-                                <input type="text" name="gratitude[]" placeholder="I'm grateful for..." maxlength="200" class="form-input">
-                                <input type="text" name="gratitude[]" placeholder="I'm grateful for..." maxlength="200" class="form-input">
+                    {% else %}
+                        <!-- Enhanced Journal Form -->
+                        <form action="{{ url_for('tracking.save_journal') }}" method="post" class="journal-form">
+                            <!-- Quick Prompts -->
+                            <div class="journal-prompts mb-4">
+                                <label class="form-label">What would you like to write about?</label>
+                                <div class="prompts-grid">
+                                    <button type="button" class="prompt-pill" data-prompt="How was your day?">
+                                        <i class="fas fa-sun mr-1"></i>My Day
+                                    </button>
+                                    <button type="button" class="prompt-pill" data-prompt="What am I grateful for?">
+                                        <i class="fas fa-heart mr-1"></i>Gratitude
+                                    </button>
+                                    <button type="button" class="prompt-pill" data-prompt="What challenges did I face?">
+                                        <i class="fas fa-mountain mr-1"></i>Challenges
+                                    </button>
+                                    <button type="button" class="prompt-pill" data-prompt="What did I learn today?">
+                                        <i class="fas fa-lightbulb mr-1"></i>Lessons
+                                    </button>
+                                    <button type="button" class="prompt-pill" data-prompt="What are my goals for tomorrow?">
+                                        <i class="fas fa-target mr-1"></i>Tomorrow
+                                    </button>
+                                    <button type="button" class="prompt-pill" data-prompt="How am I feeling right now?">
+                                        <i class="fas fa-smile mr-1"></i>Feelings
+                                    </button>
+                                </div>
                             </div>
-                        </div>
-                        
-                        <button type="submit" class="btn-primary">
-                            <i class="fas fa-save mr-2"></i>
-                            Save Journal Entry
-                        </button>
-                    </form>
+                            
+                            <!-- Title Input -->
+                            <div class="mb-4">
+                                <label for="journal-title" class="form-label">Title (optional)</label>
+                                <input type="text" id="journal-title" name="title" placeholder="Give your entry a title..." maxlength="100" class="form-input">
+                            </div>
+                            
+                            <!-- Main Content -->
+                            <div class="mb-4">
+                                <label for="journal-content" class="form-label">Your thoughts</label>
+                                <textarea id="journal-content" name="content" rows="6" placeholder="Start writing..." maxlength="2000" required class="form-textarea"></textarea>
+                                <div class="text-xs text-purple-400 mt-1">
+                                    <span id="char-count">0</span>/2000 characters
+                                </div>
+                            </div>
+                            
+                            <!-- Quick Gratitude -->
+                            <div class="mb-4">
+                                <label class="form-label">Three things I'm grateful for today (optional)</label>
+                                <div class="space-y-2">
+                                    <input type="text" name="gratitude[]" placeholder="1. I'm grateful for..." maxlength="100" class="form-input">
+                                    <input type="text" name="gratitude[]" placeholder="2. I'm grateful for..." maxlength="100" class="form-input">
+                                    <input type="text" name="gratitude[]" placeholder="3. I'm grateful for..." maxlength="100" class="form-input">
+                                </div>
+                            </div>
+                            
+                            <!-- Submit -->
+                            <button type="submit" class="btn-primary">
+                                <i class="fas fa-save mr-2"></i>
+                                Save Journal Entry
+                            </button>
+                        </form>
+                    {% endif %}
                 </div>
-                
+
+                <!-- Journal Insights -->
+                <div class="glass-card mb-6">
+                    <h3 class="text-xl font-semibold mb-4">Your Writing Insights</h3>
+                    <div class="insights-grid">
+                        {% for insight in journal_insights %}
+                            <div class="insight-card">
+                                <div class="insight-icon">
+                                    <i class="{{ insight.icon }} {{ insight.color }}"></i>
+                                </div>
+                                <div class="insight-content">
+                                    <h4 class="font-medium text-purple-200">{{ insight.title }}</h4>
+                                    <p class="text-sm text-purple-300">{{ insight.description }}</p>
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="insight-card">
+                                <div class="insight-icon">
+                                    <i class="fas fa-pen-fancy text-blue-400"></i>
+                                </div>
+                                <div class="insight-content">
+                                    <h4 class="font-medium text-purple-200">Start Writing</h4>
+                                    <p class="text-sm text-purple-300">Begin journaling to unlock writing insights!</p>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Recent Entries -->
                 <div class="glass-card">
-                    <h3 class="text-xl font-semibold mb-4">Previous Entries</h3>
+                    <h3 class="text-xl font-semibold mb-4">Recent Entries</h3>
                     
                     {% if journal_entries and journal_entries|length > 0 %}
                         <div class="space-y-4">
-                            {% for entry in journal_entries %}
-                                <div class="journal-entry">
-                                    <div class="flex justify-between items-start">
-                                        <div class="journal-title">{{ entry.title }}</div>
-                                        <div class="text-sm text-purple-300">{{ entry.date }}</div>
+                            {% for entry in journal_entries[:5] %}
+                                <div class="journal-entry-card">
+                                    <div class="flex justify-between items-start mb-2">
+                                        <h4 class="font-medium text-purple-200">
+                                            {{ entry.title or 'Untitled Entry' }}
+                                        </h4>
+                                        <span class="text-xs text-purple-400">{{ entry.formatted_date }}</span>
                                     </div>
-                                    <div class="journal-meta">
-                                        <span class="inline-block px-2 py-1 bg-purple-600 bg-opacity-30 rounded-full text-xs capitalize mr-2">{{ entry.mood }}</span>
-                                        <span class="journal-preview">{{ entry.content|truncate(100) }}</span>
-                                    </div>
-                                    <div class="mt-2">
-                                        <a href="{{ url_for('tracking.view_journal', entry_id=entry._id) }}" class="text-purple-400 hover:text-purple-300 text-sm">Read more</a>
-                                    </div>
+                                    <p class="text-sm text-purple-300 mb-2">{{ entry.content[:120] }}{% if entry.content|length > 120 %}...{% endif %}</p>
+                                    {% if entry.gratitude %}
+                                        <div class="gratitude-mini">
+                                            <i class="fas fa-heart text-pink-400 mr-1"></i>
+                                            <span class="text-xs text-purple-400">{{ entry.gratitude|length }} gratitude note{{ 's' if entry.gratitude|length != 1 else '' }}</span>
+                                        </div>
+                                    {% endif %}
                                 </div>
                             {% endfor %}
                         </div>
                     {% else %}
-                        <p class="text-purple-300 text-center py-4">No journal entries yet. Start journaling today!</p>
+                        <div class="text-center py-8">
+                            <i class="fas fa-book-open text-4xl text-purple-400 mb-4"></i>
+                            <p class="text-purple-300">No journal entries yet. Start writing to track your thoughts and growth!</p>
+                        </div>
                     {% endif %}
                 </div>
             </div>
-            
-            <!-- Goals Section -->
+
+            <!-- Enhanced Goals Section -->
             <div id="goals-section" class="tab-content hidden">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                    <!-- Add New Goal -->
-                    <div class="glass-card">
-                        <h3 class="text-xl font-semibold mb-4">Set a New Goal</h3>
-                        <form action="{{ url_for('tracking.add_goal') }}" method="post" id="goal-form">
-                            <div class="mb-4">
-                                <label for="goal-type" class="form-label">Goal Type</label>
-                                <select id="goal-type" name="type" class="form-select" required>
-                                    <option value="meditation">Meditation</option>
-                                    <option value="exercise">Exercise</option>
-                                    <option value="sleep">Sleep</option>
-                                    <option value="water">Water Intake</option>
-                                    <option value="reading">Reading</option>
-                                    <option value="study">Study</option>
-                                    <option value="custom">Custom Goal</option>
-                                </select>
+                <!-- Quick Goal Setting -->
+                <div class="glass-card mb-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-semibold">Your Wellness Goals</h3>
+                        {% if total_goals_completed > 0 %}
+                            <div class="achievement-badge">
+                                <i class="fas fa-trophy text-yellow-400"></i>
+                                <span class="text-sm text-yellow-300">{{ total_goals_completed }} goals completed!</span>
                             </div>
-                            
-                            <div id="custom-goal-field" class="mb-4 hidden">
-                                <label for="custom-type" class="form-label">Custom Goal Name</label>
-                                <input type="text" id="custom-type" name="custom_type" placeholder="e.g., Journaling" maxlength="50" class="form-input">
-                            </div>
-                            
-                            <div class="mb-4">
-                                <label for="goal-description" class="form-label">Description</label>
-                                <input type="text" id="goal-description" name="description" placeholder="What do you want to achieve?" maxlength="500" required class="form-input">
-                            </div>
-                            
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                                <div>
-                                    <label for="goal-target" class="form-label">Target Value</label>
-                                    <input type="number" id="goal-target" name="target" min="1" max="10000" value="1" placeholder="e.g., 30" required class="form-input">
-                                </div>
-                                
-                                <div>
-                                    <label for="goal-unit" class="form-label">Unit</label>
-                                    <select id="goal-unit" name="unit" class="form-select" required>
-                                        <option value="minutes">Minutes</option>
-                                        <option value="hours">Hours</option>
-                                        <option value="days">Days</option>
-                                        <option value="times">Times</option>
-                                        <option value="glasses">Glasses</option>
-                                        <option value="steps">Steps</option>
-                                        <option value="pages">Pages</option>
-                                        <option value="custom">Custom</option>
-                                    </select>
-                                </div>
-                            </div>
-                            
-                            <div id="custom-unit-field" class="mb-4 hidden">
-                                <label for="custom-unit" class="form-label">Custom Unit</label>
-                                <input type="text" id="custom-unit" name="custom_unit" placeholder="e.g., Chapters" maxlength="20" class="form-input">
-                            </div>
-                            
-                            <div class="mb-4">
-                                <label for="goal-frequency" class="form-label">Frequency</label>
-                                <select id="goal-frequency" name="frequency" class="form-select" required>
-                                    <option value="daily">Daily</option>
-                                    <option value="weekly">Weekly</option>
-                                    <option value="monthly">Monthly</option>
-                                </select>
-                            </div>
-                            
-                            <button type="submit" class="btn-success">
-                                <i class="fas fa-plus mr-2"></i>
-                                Add Goal
-                            </button>
-                        </form>
-                    </div>
-                    
-                    <!-- Goal Summary -->
-                    <div class="glass-card">
-                        <h3 class="text-xl font-semibold mb-4">Goal Summary</h3>
-                        
-                        {% if goals and goals|length > 0 %}
-                            <div class="space-y-6">
-                                {% for goal in goals %}
-                                    <div class="goal-card" id="goal-{{ goal._id }}">
-                                        <div class="flex justify-between items-center mb-2">
-                                            <div>
-                                                <span class="font-medium capitalize text-purple-200">{{ goal.type }}</span>
-                                                <span class="text-sm text-purple-300 ml-2">{{ goal.frequency }}</span>
-                                            </div>
-                                            <div class="text-sm text-purple-200">
-                                                <span id="goal-progress-{{ goal._id }}">{{ goal.progress }}</span> / 
-                                                <span>{{ goal.target }} {{ goal.unit }}</span>
-                                            </div>
-                                        </div>
-                                        
-                                        <div class="progress-bar mb-2">
-                                            {% set goal_progress = goal.progress|int %}
-                                            {% set goal_target = goal.target|int %}
-                                            {% if goal_target > 0 %}
-                                                {% set progress_pct = (goal_progress / goal_target * 100)|int %}
-                                            {% else %}
-                                                {% set progress_pct = 0 %}
-                                            {% endif %}
-                                            {% if progress_pct > 100 %}{% set progress_pct = 100 %}{% endif %}
-                                            
-                                            <div class="progress-fill {{ 'progress-green' if progress_pct >= 100 else 'progress-blue' }}" 
-                                                 style="width: {{ progress_pct }}%"></div>
-                                        </div>
-                                        
-                                        <div class="flex items-center justify-between">
-                                            <p class="text-sm text-purple-300">{{ goal.description }}</p>
-                                            
-                                            <div class="flex space-x-2">
-                                                <button type="button" class="btn-increment"
-                                                        onclick="updateGoalProgress('{{ goal._id }}', 1)" aria-label="Increment progress">
-                                                    <i class="fas fa-plus"></i>
-                                                </button>
-                                                <button type="button" class="btn-danger"
-                                                        onclick="deleteGoal('{{ goal._id }}')" aria-label="Delete goal">
-                                                    <i class="fas fa-trash"></i>
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                {% endfor %}
-                            </div>
-                        {% else %}
-                            <p class="text-purple-300 text-center py-4">No goals set yet. Create your first goal!</p>
                         {% endif %}
                     </div>
-                </div>
-                
-                <!-- Weekly Progress Section -->
-                <div class="glass-card mb-8">
-                    <h3 class="text-xl font-semibold mb-4">Weekly Progress</h3>
-                    <p class="text-sm text-purple-300 mb-4">Your progress is automatically calculated based on your goals.</p>
                     
-                    <div class="space-y-8">
-                        <!-- Meditation Progress -->
-                        <div>
-                            <div class="flex items-center justify-between mb-2">
-                                <span class="text-purple-200 font-medium">Meditation Goals</span>
-                                <span class="text-purple-200 font-medium">{{ user.progress.meditation }}%</span>
+                    <!-- Goal Creation Form -->
+                    <form action="{{ url_for('tracking.add_goal') }}" method="post" class="goal-form mb-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="form-label">What's your goal?</label>
+                                <input type="text" name="description" placeholder="e.g., Meditate for 10 minutes daily" maxlength="200" required class="form-input">
                             </div>
-                            
-                            <div class="progress-bar">
-                                <div class="progress-fill progress-meditation" style="width: {{ user.progress.meditation }}%"></div>
+                            <div>
+                                <label class="form-label">Category</label>
+                                <select name="category" class="form-select" required>
+                                    <option value="mindfulness">🧘 Mindfulness</option>
+                                    <option value="fitness">💪 Fitness</option>
+                                    <option value="sleep">😴 Sleep</option>
+                                    <option value="nutrition">🥗 Nutrition</option>
+                                    <option value="social">👥 Social</option>
+                                    <option value="learning">📚 Learning</option>
+                                    <option value="creative">🎨 Creative</option>
+                                    <option value="other">✨ Other</option>
+                                </select>
                             </div>
-                            <p class="text-xs text-purple-400 text-right">Progress updates automatically when you track goal progress</p>
                         </div>
                         
-                        <!-- Exercise Progress -->
-                        <div>
-                            <div class="flex items-center justify-between mb-2">
-                                <span class="text-purple-200 font-medium">Exercise Goals</span>
-                                <span class="text-purple-200 font-medium">{{ user.progress.exercise }}%</span>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                            <div>
+                                <label class="form-label">Target</label>
+                                <input type="number" name="target" min="1" max="365" value="7" required class="form-input">
                             </div>
-                            
-                            <div class="progress-bar">
-                                <div class="progress-fill progress-exercise" style="width: {{ user.progress.exercise }}%"></div>
+                            <div>
+                                <label class="form-label">Unit</label>
+                                <select name="unit" class="form-select" required>
+                                    <option value="days">Days</option>
+                                    <option value="times">Times</option>
+                                    <option value="minutes">Minutes</option>
+                                    <option value="hours">Hours</option>
+                                    <option value="sessions">Sessions</option>
+                                </select>
                             </div>
-                            <p class="text-xs text-purple-400 text-right">Progress updates automatically when you track goal progress</p>
+                            <div>
+                                <label class="form-label">Timeframe</label>
+                                <select name="timeframe" class="form-select" required>
+                                    <option value="week">This Week</option>
+                                    <option value="month">This Month</option>
+                                    <option value="quarter">This Quarter</option>
+                                </select>
+                            </div>
                         </div>
                         
-                        <!-- Sleep Progress -->
-                        <div>
-                            <div class="flex items-center justify-between mb-2">
-                                <span class="text-purple-200 font-medium">Sleep Quality</span>
-                                <span class="text-purple-200 font-medium">{{ user.progress.sleep }}%</span>
-                            </div>
-                            
-                            <div class="progress-bar">
-                                <div class="progress-fill progress-sleep" style="width: {{ user.progress.sleep }}%"></div>
-                            </div>
-                            <p class="text-xs text-purple-400 text-right">Progress updates automatically when you track goal progress</p>
+                        <button type="submit" class="btn-primary mt-4">
+                            <i class="fas fa-plus mr-2"></i>
+                            Create Goal
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Active Goals -->
+                <div class="glass-card mb-6">
+                    <h3 class="text-xl font-semibold mb-4">Active Goals</h3>
+                    
+                    {% if active_goals and active_goals|length > 0 %}
+                        <div class="goals-grid">
+                            {% for goal in active_goals %}
+                                <div class="goal-card-enhanced" id="goal-{{ goal._id }}">
+                                    <div class="goal-header">
+                                        <div class="goal-category">
+                                            <span class="category-emoji">{{ goal.category_emoji }}</span>
+                                            <span class="category-name">{{ goal.category|title }}</span>
+                                        </div>
+                                        <div class="goal-actions">
+                                            <button class="btn-increment" onclick="updateGoalProgress('{{ goal._id }}', 1)">
+                                                <i class="fas fa-plus"></i>
+                                            </button>
+                                            <button class="btn-danger" onclick="deleteGoal('{{ goal._id }}')">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <h4 class="goal-title">{{ goal.description }}</h4>
+                                    
+                                    <div class="goal-progress">
+                                        <div class="progress-header">
+                                            <span class="progress-text">
+                                                <span id="progress-{{ goal._id }}">{{ goal.progress }}</span> / {{ goal.target }} {{ goal.unit }}
+                                            </span>
+                                            <span class="progress-percentage">
+                                                {{ ((goal.progress / goal.target * 100) | round | int) if goal.target > 0 else 0 }}%
+                                            </span>
+                                        </div>
+                                        <div class="progress-bar">
+                                            {% set progress_pct = ((goal.progress / goal.target * 100) | round | int) if goal.target > 0 else 0 %}
+                                            {% if progress_pct > 100 %}{% set progress_pct = 100 %}{% endif %}
+                                            <div class="progress-fill {{ 'progress-complete' if progress_pct >= 100 else 'progress-active' }}" 
+                                                 style="width: {{ progress_pct }}%"></div>
+                                        </div>
+                                    </div>
+                                    
+                                    {% if goal.progress >= goal.target %}
+                                        <div class="goal-completed">
+                                            <i class="fas fa-check-circle text-green-400 mr-2"></i>
+                                            <span class="text-green-300">Completed! 🎉</span>
+                                        </div>
+                                    {% endif %}
+                                    
+                                    <div class="goal-timeframe">
+                                        <i class="fas fa-calendar mr-1"></i>
+                                        <span class="text-xs text-purple-400">{{ goal.timeframe|title }} goal</span>
+                                    </div>
+                                </div>
+                            {% endfor %}
                         </div>
-                        
-                        <!-- Water Intake Progress -->
-                        <div>
-                            <div class="flex items-center justify-between mb-2">
-                                <span class="text-purple-200 font-medium">Water Intake</span>
-                                <span class="text-purple-200 font-medium">{{ user.progress.water }}%</span>
-                            </div>
-                            
-                            <div class="progress-bar">
-                                <div class="progress-fill progress-water" style="width: {{ user.progress.water }}%"></div>
-                            </div>
-                            <p class="text-xs text-purple-400 text-right">Progress updates automatically when you track goal progress</p>
+                    {% else %}
+                        <div class="text-center py-8">
+                            <i class="fas fa-bullseye text-4xl text-purple-400 mb-4"></i>
+                            <p class="text-purple-300">No active goals. Set your first wellness goal above!</p>
                         </div>
+                    {% endif %}
+                </div>
+
+                <!-- Goal Categories Overview -->
+                <div class="glass-card">
+                    <h3 class="text-xl font-semibold mb-4">Category Progress</h3>
+                    
+                    <div class="categories-grid">
+                        {% for category in goal_categories %}
+                            <div class="category-progress-card">
+                                <div class="category-icon">{{ category.emoji }}</div>
+                                <div class="category-info">
+                                    <h4 class="font-medium text-purple-200">{{ category.name }}</h4>
+                                    <p class="text-sm text-purple-300">{{ category.active_count }} active</p>
+                                    <div class="mini-progress-bar">
+                                        <div class="mini-progress-fill" style="width: {{ category.completion_rate }}%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="col-span-full text-center py-4">
+                                <p class="text-purple-300">Start setting goals to see category progress!</p>
+                            </div>
+                        {% endfor %}
                     </div>
                 </div>
             </div>
-            
-            <!-- Progress Summary Section -->
+
+            <!-- Enhanced Summary/Insights Section -->
             <div id="insights-section" class="tab-content hidden">
-                <!-- Overall Progress Summary -->
+                <!-- Overall Wellness Score -->
                 <div class="glass-card mb-6">
-                    <h3 class="text-xl font-semibold mb-4">Weekly Progress Summary</h3>
+                    <h3 class="text-xl font-semibold mb-4">Your Wellness Score</h3>
                     
-                    <div class="space-y-6">
-                        <!-- Meditation Progress -->
-                        <div>
-                            <div class="flex items-center justify-between mb-2">
-                                <span class="text-purple-200 font-medium">Meditation</span>
-                                <span class="text-purple-200 font-medium">{{ user.progress.meditation }}%</span>
-                            </div>
-                            
-                            <div class="progress-bar">
-                                <div class="progress-fill progress-meditation" style="width: {{ user.progress.meditation }}%"></div>
-                            </div>
+                    <div class="wellness-score-container">
+                        <div class="score-circle">
+                            <div class="score-number">{{ wellness_score }}</div>
+                            <div class="score-label">Wellness Score</div>
                         </div>
                         
-                        <!-- Exercise Progress -->
-                        <div>
-                            <div class="flex items-center justify-between mb-2">
-                                <span class="text-purple-200 font-medium">Exercise</span>
-                                <span class="text-purple-200 font-medium">{{ user.progress.exercise }}%</span>
+                        <div class="score-breakdown">
+                            <div class="score-item">
+                                <div class="score-category">
+                                    <i class="fas fa-smile text-green-400"></i>
+                                    <span>Mood Tracking</span>
+                                </div>
+                                <div class="score-value">{{ mood_score }}/100</div>
                             </div>
                             
-                            <div class="progress-bar">
-                                <div class="progress-fill progress-exercise" style="width: {{ user.progress.exercise }}%"></div>
-                            </div>
-                        </div>
-                        
-                        <!-- Sleep Progress -->
-                        <div>
-                            <div class="flex items-center justify-between mb-2">
-                                <span class="text-purple-200 font-medium">Sleep Quality</span>
-                                <span class="text-purple-200 font-medium">{{ user.progress.sleep }}%</span>
+                            <div class="score-item">
+                                <div class="score-category">
+                                    <i class="fas fa-book text-blue-400"></i>
+                                    <span>Journaling</span>
+                                </div>
+                                <div class="score-value">{{ journal_score }}/100</div>
                             </div>
                             
-                            <div class="progress-bar">
-                                <div class="progress-fill progress-sleep" style="width: {{ user.progress.sleep }}%"></div>
-                            </div>
-                        </div>
-                        
-                        <!-- Water Intake Progress -->
-                        <div>
-                            <div class="flex items-center justify-between mb-2">
-                                <span class="text-purple-200 font-medium">Water Intake</span>
-                                <span class="text-purple-200 font-medium">{{ user.progress.water }}%</span>
-                            </div>
-                            
-                            <div class="progress-bar">
-                                <div class="progress-fill progress-water" style="width: {{ user.progress.water }}%"></div>
+                            <div class="score-item">
+                                <div class="score-category">
+                                    <i class="fas fa-bullseye text-purple-400"></i>
+                                    <span>Goal Progress</span>
+                                </div>
+                                <div class="score-value">{{ goals_score }}/100</div>
                             </div>
                         </div>
                     </div>
                 </div>
-                
-                <!-- Mood History Simple Overview -->
+
+                <!-- Weekly Summary -->
                 <div class="glass-card mb-6">
-                    <h3 class="text-xl font-semibold mb-4">Recent Mood History</h3>
+                    <h3 class="text-xl font-semibold mb-4">This Week's Highlights</h3>
                     
-                    {% if mood_history and mood_history|length > 0 %}
-                        <div class="grid grid-cols-1 md:grid-cols-7 gap-3">
-                            {% for mood in mood_history[:7] %}
-                                <div class="mood-card mood-{{ mood.mood }}">
-                                    <div class="text-sm font-medium text-purple-200">{{ mood.date }}</div>
-                                    <div class="mt-2">
-                                        {% if mood.mood == 'happy' %}
-                                            <i class="far fa-smile text-2xl text-green-400"></i>
-                                        {% elif mood.mood == 'neutral' %}
-                                            <i class="far fa-meh text-2xl text-gray-400"></i>
-                                        {% elif mood.mood == 'sad' %}
-                                            <i class="far fa-frown text-2xl text-blue-400"></i>
-                                        {% elif mood.mood == 'stressed' %}
-                                            <i class="far fa-tired text-2xl text-red-400"></i>
-                                        {% elif mood.mood == 'energetic' %}
-                                            <i class="far fa-grin-stars text-2xl text-yellow-400"></i>
-                                        {% elif mood.mood == 'anxious' %}
-                                            <i class="far fa-grimace text-2xl text-yellow-500"></i>
-                                        {% elif mood.mood == 'relaxed' %}
-                                            <i class="far fa-grin-beam text-2xl text-indigo-400"></i>
-                                        {% elif mood.mood == 'tired' %}
-                                            <i class="far fa-dizzy text-2xl text-purple-400"></i>
-                                        {% endif %}
-                                    </div>
-                                    <div class="mt-1 capitalize text-sm text-purple-200">{{ mood.mood }}</div>
-                                </div>
-                            {% endfor %}
-                        </div>
-                    {% else %}
-                        <p class="text-purple-300 text-center py-4">No mood data recorded yet. Start tracking your mood today!</p>
-                    {% endif %}
-                </div>
-                
-                <!-- Goal Achievement Summary -->
-                <div class="glass-card">
-                    <h3 class="text-xl font-semibold mb-4">Goal Achievement</h3>
-                    
-                    {% if goals and goals|length > 0 %}
-                        {% set completed_goals = 0 %}
-                        {% for goal in goals %}
-                            {% if goal.progress|int >= goal.target|int %}
-                                {% set completed_goals = completed_goals + 1 %}
-                            {% endif %}
-                        {% endfor %}
-                        {% set total_goals = goals|length %}
-                        
-                        <div class="flex items-center mb-4">
-                            <div class="progress-bar mr-2">
-                                {% if total_goals > 0 %}
-                                    {% set completion_rate = (completed_goals / total_goals * 100)|round|int %}
-                                {% else %}
-                                    {% set completion_rate = 0 %}
-                                {% endif %}
-                                <div class="progress-fill progress-green" style="width: {{ completion_rate }}%"></div>
+                    <div class="week-summary-grid">
+                        <div class="summary-card">
+                            <div class="summary-icon">
+                                <i class="fas fa-calendar-check text-green-400"></i>
                             </div>
-                            <span class="text-sm font-medium text-purple-200">{{ completion_rate }}%</span>
+                            <div class="summary-content">
+                                <h4 class="font-semibold">{{ days_tracked }}/7</h4>
+                                <p class="text-sm text-purple-300">Days tracked this week</p>
+                            </div>
                         </div>
                         
-                        <p class="text-sm text-purple-300 mb-4">
-                            You've completed {{ completed_goals }} out of {{ total_goals }} goals.
-                        </p>
+                        <div class="summary-card">
+                            <div class="summary-icon">
+                                <i class="fas fa-heart text-pink-400"></i>
+                            </div>
+                            <div class="summary-content">
+                                <h4 class="font-semibold">{{ dominant_mood|title }}</h4>
+                                <p class="text-sm text-purple-300">Most common mood</p>
+                            </div>
+                        </div>
                         
-                        <h4 class="font-medium text-purple-200 mb-2">Latest Achievements</h4>
-                        <div class="space-y-3">
-                            {% set achieved_goals = [] %}
-                            {% for goal in goals %}
-                                {% if goal.progress|int >= goal.target|int %}
-                                    {% set _ = achieved_goals.append(goal) %}
-                                {% endif %}
-                            {% endfor %}
-                            
-                            {% for goal in achieved_goals[:3] %}
-                                <div class="achievement-card">
-                                    <i class="fas fa-check-circle achievement-icon"></i>
-                                    <div>
-                                        <p class="achievement-text">{{ goal.description }}</p>
-                                        <p class="achievement-meta">{{ goal.target }} {{ goal.unit }} of {{ goal.type|capitalize }}</p>
-                                    </div>
+                        <div class="summary-card">
+                            <div class="summary-icon">
+                                <i class="fas fa-trophy text-yellow-400"></i>
+                            </div>
+                            <div class="summary-content">
+                                <h4 class="font-semibold">{{ goals_completed_week }}</h4>
+                                <p class="text-sm text-purple-300">Goals completed</p>
+                            </div>
+                        </div>
+                        
+                        <div class="summary-card">
+                            <div class="summary-icon">
+                                <i class="fas fa-pen text-blue-400"></i>
+                            </div>
+                            <div class="summary-content">
+                                <h4 class="font-semibold">{{ journal_entries_week }}</h4>
+                                <p class="text-sm text-purple-300">Journal entries</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Personalized Recommendations -->
+                <div class="glass-card mb-6">
+                    <h3 class="text-xl font-semibold mb-4">Recommendations for You</h3>
+                    
+                    <div class="recommendations-list">
+                        {% for recommendation in personalized_recommendations %}
+                            <div class="recommendation-card">
+                                <div class="recommendation-icon">
+                                    <i class="{{ recommendation.icon }} {{ recommendation.color }}"></i>
                                 </div>
-                            {% else %}
-                                <p class="text-purple-300 text-center py-4">Complete goals to see your achievements here!</p>
-                            {% endfor %}
-                        </div>
-                    {% else %}
-                        <p class="text-purple-300 text-center py-4">No goals set yet. Create your first goal!</p>
-                    {% endif %}
+                                <div class="recommendation-content">
+                                    <h4 class="font-medium text-purple-200">{{ recommendation.title }}</h4>
+                                    <p class="text-sm text-purple-300">{{ recommendation.description }}</p>
+                                    {% if recommendation.action %}
+                                        <button class="recommendation-action" onclick="{{ recommendation.action }}">
+                                            {{ recommendation.action_text }}
+                                        </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="text-center py-6">
+                                <i class="fas fa-lightbulb text-3xl text-yellow-400 mb-3"></i>
+                                <p class="text-purple-300">Keep tracking to unlock personalized recommendations!</p>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Export Options -->
+                <div class="glass-card">
+                    <h3 class="text-xl font-semibold mb-4">Export Your Data</h3>
+                    <p class="text-purple-300 mb-4">Download your wellness data to share with healthcare providers or for your own records.</p>
+                    
+                    <div class="flex gap-4">
+                        <a href="{{ url_for('tracking.export_mood_data') }}" class="btn-secondary">
+                            <i class="fas fa-download mr-2"></i>
+                            Download Mood Data (CSV)
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
     </main>
 
-    <!-- JavaScript -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.min.js"></script>
+    <!-- Enhanced JavaScript -->
     <script>
-        // Tab Navigation
+        // Navigation functions
+        function goToMoodTracking() {
+            const moodTab = document.querySelector('[data-tab="mood"]');
+            if (moodTab) {
+                moodTab.click();
+                setTimeout(() => {
+                    const moodSection = document.getElementById('mood-section');
+                    if (moodSection) {
+                        moodSection.scrollIntoView({ behavior: 'smooth' });
+                    }
+                }, 100);
+            }
+        }
+
+        function goToJournal() {
+            const journalTab = document.querySelector('[data-tab="journal"]');
+            if (journalTab) {
+                journalTab.click();
+                setTimeout(() => {
+                    const journalContent = document.getElementById('journal-content');
+                    if (journalContent) {
+                        journalContent.focus();
+                    }
+                }, 100);
+            }
+        }
+
+        function goToGoals() {
+            const goalsTab = document.querySelector('[data-tab="goals"]');
+            if (goalsTab) {
+                goalsTab.click();
+                setTimeout(() => {
+                    const goalsSection = document.getElementById('goals-section');
+                    if (goalsSection) {
+                        goalsSection.scrollIntoView({ behavior: 'smooth' });
+                    }
+                }, 100);
+            }
+        }
+
+        function goToResources() {
+            window.location.href = '/student_resources';
+        }
+
+        // Enhanced Tab Navigation
         document.addEventListener('DOMContentLoaded', function() {
             // Check hash for active tab on page load
             const hashTab = window.location.hash.substring(1);
@@ -1312,7 +1836,6 @@
             
             // Tab switching
             const tabs = document.querySelectorAll('.tab');
-            
             tabs.forEach(tab => {
                 tab.addEventListener('click', () => {
                     activateTab(tab);
@@ -1321,445 +1844,266 @@
             
             function activateTab(tab) {
                 try {
-                    // Remove active class from all tabs
                     const allTabs = document.querySelectorAll('.tab');
                     allTabs.forEach(t => t.classList.remove('tab-active'));
-                    
-                    // Add active class to clicked tab
                     tab.classList.add('tab-active');
                     
-                    // Hide all tab contents
                     const tabContents = document.querySelectorAll('.tab-content');
                     tabContents.forEach(content => content.classList.add('hidden'));
                     
-                    // Show the corresponding tab content
                     const tabName = tab.getAttribute('data-tab');
                     const tabContent = document.getElementById(tabName + '-section');
                     
                     if (tabContent) {
                         tabContent.classList.remove('hidden');
-                    } else {
-                        console.error(`Tab content not found: ${tabName}-section`);
                     }
                     
-                    // Update URL hash
                     window.history.replaceState(null, null, `#${tabName}`);
                 } catch (err) {
                     console.error('Error activating tab:', err);
                 }
             }
+
+            // Enhanced Mood Tracking
+            const moodButtons = document.querySelectorAll('.mood-btn');
+            const intensitySlider = document.getElementById('intensity-slider');
+            const intensityValue = document.getElementById('intensity-value');
+            const triggerPills = document.querySelectorAll('.trigger-pill');
+            const selectedMoodInput = document.getElementById('selected-mood');
+            const selectedTriggersInput = document.getElementById('selected-triggers');
+            const intensitySection = document.getElementById('intensity-section');
+            const triggersSection = document.getElementById('triggers-section');
+            const noteSection = document.getElementById('note-section');
+            const submitButton = document.getElementById('submit-mood');
             
-            // Toggle between week and month view in mood section
+            let selectedTriggers = [];
+            
+            // Mood selection with progressive reveal
+            moodButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    moodButtons.forEach(btn => btn.classList.remove('selected'));
+                    this.classList.add('selected');
+                    selectedMoodInput.value = this.dataset.mood;
+                    
+                    setTimeout(() => showSection(intensitySection), 300);
+                    setTimeout(() => showSection(triggersSection), 600);
+                    setTimeout(() => showSection(noteSection), 900);
+                    setTimeout(() => showSection(submitButton), 1200);
+                });
+            });
+            
+            // Intensity slider
+            if (intensitySlider && intensityValue) {
+                intensitySlider.addEventListener('input', function() {
+                    intensityValue.textContent = this.value;
+                });
+            }
+            
+            // Trigger selection (max 3)
+            triggerPills.forEach(pill => {
+                pill.addEventListener('click', function() {
+                    const trigger = this.dataset.trigger;
+                    
+                    if (this.classList.contains('selected')) {
+                        this.classList.remove('selected');
+                        selectedTriggers = selectedTriggers.filter(t => t !== trigger);
+                    } else {
+                        if (selectedTriggers.length < 3) {
+                            this.classList.add('selected');
+                            selectedTriggers.push(trigger);
+                        } else {
+                            this.style.animation = 'shake 0.5s ease-in-out';
+                            setTimeout(() => {
+                                this.style.animation = '';
+                            }, 500);
+                        }
+                    }
+                    
+                    selectedTriggersInput.value = selectedTriggers.join(',');
+                });
+            });
+            
+            function showSection(element) {
+                if (element) {
+                    element.classList.add('show');
+                }
+            }
+
+            // Journal character counter
+            const journalContent = document.getElementById('journal-content');
+            const charCount = document.getElementById('char-count');
+            
+            if (journalContent && charCount) {
+                journalContent.addEventListener('input', function() {
+                    charCount.textContent = this.value.length;
+                });
+            }
+            
+            // Journal prompt pills
+            const promptPills = document.querySelectorAll('.prompt-pill');
+            promptPills.forEach(pill => {
+                pill.addEventListener('click', function() {
+                    const prompt = this.dataset.prompt;
+                    if (journalContent) {
+                        journalContent.value = prompt + '\n\n';
+                        journalContent.focus();
+                        if (charCount) {
+                            charCount.textContent = journalContent.value.length;
+                        }
+                    }
+                });
+            });
+
+            // View toggle for mood history
             const weekView = document.getElementById('week-view');
             const monthView = document.getElementById('month-view');
-            const weekHistory = document.getElementById('week-history');
-            const monthHistory = document.getElementById('month-history');
             
-            if (weekView && monthView && weekHistory && monthHistory) {
+            if (weekView && monthView) {
                 weekView.addEventListener('click', () => {
                     weekView.classList.add('active');
                     monthView.classList.remove('active');
-                    
-                    weekHistory.classList.remove('hidden');
-                    monthHistory.classList.add('hidden');
                 });
                 
                 monthView.addEventListener('click', () => {
                     monthView.classList.add('active');
                     weekView.classList.remove('active');
-                    
-                    monthHistory.classList.remove('hidden');
-                    weekHistory.classList.add('hidden');
-                    
-                    // Initialize the chart if it's not already
-                    initializeMoodChart();
-                });
-            }
-            
-            // Custom goal type toggle
-            const goalTypeSelect = document.getElementById('goal-type');
-            const customGoalField = document.getElementById('custom-goal-field');
-            
-            if (goalTypeSelect && customGoalField) {
-                goalTypeSelect.addEventListener('change', () => {
-                    if (goalTypeSelect.value === 'custom') {
-                        customGoalField.classList.remove('hidden');
-                        document.getElementById('custom-type').setAttribute('required', 'required');
-                    } else {
-                        customGoalField.classList.add('hidden');
-                        document.getElementById('custom-type').removeAttribute('required');
-                    }
-                });
-            }
-            
-            // Custom unit toggle
-            const goalUnitSelect = document.getElementById('goal-unit');
-            const customUnitField = document.getElementById('custom-unit-field');
-            
-            if (goalUnitSelect && customUnitField) {
-                goalUnitSelect.addEventListener('change', () => {
-                    if (goalUnitSelect.value === 'custom') {
-                        customUnitField.classList.remove('hidden');
-                        document.getElementById('custom-unit').setAttribute('required', 'required');
-                    } else {
-                        customUnitField.classList.add('hidden');
-                        document.getElementById('custom-unit').removeAttribute('required');
-                    }
-                });
-            }
-            
-            // Goal form validation
-            const goalForm = document.getElementById('goal-form');
-            if (goalForm) {
-                goalForm.addEventListener('submit', function(event) {
-                    const goalType = document.getElementById('goal-type').value;
-                    const customType = document.getElementById('custom-type');
-                    
-                    if (goalType === 'custom' && customType && !customType.value.trim()) {
-                        event.preventDefault();
-                        alert('Please enter a custom goal type');
-                        customType.focus();
-                        return false;
-                    }
-                    
-                    const unitType = document.getElementById('goal-unit').value;
-                    const customUnit = document.getElementById('custom-unit');
-                    
-                    if (unitType === 'custom' && customUnit && !customUnit.value.trim()) {
-                        event.preventDefault();
-                        alert('Please enter a custom unit');
-                        customUnit.focus();
-                        return false;
-                    }
-                    
-                    return true;
                 });
             }
         });
         
-        // Goal progress update via AJAX
+        // Goal progress update via AJAX - FIXED API ENDPOINTS
         function updateGoalProgress(goalId, increment) {
-            if (!goalId) {
-                console.error('No goal ID provided');
-                return;
-            }
+            if (!goalId) return;
             
-            // Show loading indicator
             const goalElement = document.getElementById(`goal-${goalId}`);
             if (goalElement) {
-                // Add a loading spinner
-                const progressElement = document.getElementById(`goal-progress-${goalId}`);
-                if (progressElement) {
-                    const originalContent = progressElement.innerHTML;
-                    progressElement.innerHTML = '<div class="loading-spinner inline-block"></div>';
-                }
-                
-                goalElement.classList.add('opacity-50');
+                goalElement.style.opacity = '0.7';
             }
             
-            // Make an AJAX call to update the goal
-            fetch('{{ url_for("tracking.update_goal_progress_route") }}', {
+            fetch('{{ url_for("tracking.api_update_goal_progress") }}', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
                     goal_id: goalId,
                     increment: increment
                 })
             })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`Server responded with status: ${response.status}`);
-                }
-                return response.json();
-            })
+            .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Reload the page to update all progress indicators
-                    // This ensures the weekly progress section is also updated
-                    window.location.reload();
-                } else {
-                    // Remove loading indicator
-                    if (goalElement) {
-                        goalElement.classList.remove('opacity-50');
+                    const progressElement = document.getElementById(`progress-${goalId}`);
+                    if (progressElement) {
+                        progressElement.textContent = data.new_progress;
                     }
-                    alert(data.error || 'Failed to update goal progress');
+                    
+                    if (data.goal_completed) {
+                        showGoalCelebration(goalId);
+                    }
+                    
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                } else {
+                    alert(data.error || 'Failed to update goal');
+                }
+                
+                if (goalElement) {
+                    goalElement.style.opacity = '1';
                 }
             })
             .catch(error => {
-                // Remove loading indicator
+                console.error('Error:', error);
                 if (goalElement) {
-                    goalElement.classList.remove('opacity-50');
-                    
-                    // Restore original content
-                    const progressElement = document.getElementById(`goal-progress-${goalId}`);
-                    if (progressElement && progressElement.querySelector('.loading-spinner')) {
-                        progressElement.textContent = "";
-                    }
+                    goalElement.style.opacity = '1';
                 }
-                
-                console.error('Error updating goal:', error);
-                alert(`Failed to update goal: ${error.message}. Please try again.`);
+                alert('Failed to update goal. Please try again.');
             });
         }
         
-        // Delete goal via AJAX
+        // Delete goal function - FIXED API ENDPOINT
         function deleteGoal(goalId) {
-            if (!goalId) {
-                console.error('No goal ID provided');
-                return;
-            }
+            if (!confirm('Are you sure you want to delete this goal?')) return;
             
-            if (confirm('Are you sure you want to delete this goal?')) {
-                // Show loading indicator
-                const goalElement = document.getElementById(`goal-${goalId}`);
-                if (goalElement) {
-                    goalElement.classList.add('opacity-50');
+            fetch('{{ url_for("tracking.api_delete_goal") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    goal_id: goalId
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.reload();
+                } else {
+                    alert(data.error || 'Failed to delete goal');
                 }
-                
-                fetch('{{ url_for("tracking.delete_goal_route") }}', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        goal_id: goalId
-                    })
-                })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`Server responded with status: ${response.status}`);
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    if (data.success) {
-                        // Fade out and remove the goal element
-                        if (goalElement) {
-                            goalElement.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
-                            goalElement.style.opacity = '0';
-                            goalElement.style.transform = 'translateY(-10px)';
-                            
-                            setTimeout(() => {
-                                // Reload the page to update the weekly progress section
-                                window.location.reload();
-                            }, 300);
-                        } else {
-                            // Just reload if we can't find the element
-                            window.location.reload();
-                        }
-                    } else {
-                        // Remove loading indicator
-                        if (goalElement) {
-                            goalElement.classList.remove('opacity-50');
-                        }
-                        alert(data.error || 'Failed to delete goal');
-                    }
-                })
-                .catch(error => {
-                    // Remove loading indicator
-                    if (goalElement) {
-                        goalElement.classList.remove('opacity-50');
-                    }
-                    
-                    console.error('Error deleting goal:', error);
-                    alert(`Failed to delete goal: ${error.message}. Please try again.`);
-                });
-            }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to delete goal. Please try again.');
+            });
         }
-        
+
         // Goal celebration animation
         function showGoalCelebration(goalId) {
-            // Create celebrating circles
             const goalElement = document.getElementById(`goal-${goalId}`);
             if (goalElement) {
-                // Add a congratulatory message
-                const message = document.createElement('div');
-                message.className = 'text-green-400 font-medium text-sm mt-2 mb-2 text-center';
-                message.textContent = '🎉 Goal achieved! Congratulations!';
-                goalElement.appendChild(message);
+                const celebration = document.createElement('div');
+                celebration.innerHTML = '🎉 Goal Completed! 🎉';
+                celebration.style.cssText = `
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    background: rgba(16, 185, 129, 0.9);
+                    color: white;
+                    padding: 1rem 2rem;
+                    border-radius: 12px;
+                    font-weight: bold;
+                    z-index: 1000;
+                    animation: celebrationPop 2s ease-out forwards;
+                `;
                 
-                // Create celebration particles
-                for (let i = 0; i < 12; i++) {
-                    const circle = document.createElement('div');
-                    circle.classList.add('celebration-circle');
-                    
-                    // Random position around the goal
-                    const size = Math.random() * 20 + 10;
-                    circle.style.width = `${size}px`;
-                    circle.style.height = `${size}px`;
-                    circle.style.backgroundColor = getRandomColor();
-                    
-                    // Position the circle
-                    const top = Math.random() * 60 - 30;
-                    const left = Math.random() * 100;
-                    circle.style.top = `${top}%`;
-                    circle.style.left = `${left}%`;
-                    
-                    // Delay the animation slightly
-                    circle.style.animationDelay = `${i * 0.1}s`;
-                    
-                    goalElement.appendChild(circle);
-                    
-                    // Remove the circle after animation completes
-                    setTimeout(() => {
-                        circle.remove();
-                    }, 1500 + i * 100);
-                }
+                goalElement.style.position = 'relative';
+                goalElement.appendChild(celebration);
                 
-                // Remove the message after a delay
                 setTimeout(() => {
-                    message.style.transition = 'opacity 0.5s ease';
-                    message.style.opacity = '0';
-                    setTimeout(() => {
-                        message.remove();
-                    }, 500);
-                }, 3000);
-            }
-        }
-        
-        // Helper function for random colors
-        function getRandomColor() {
-            const colors = [
-                '#10B981', // Green
-                '#3B82F6', // Blue
-                '#F59E0B', // Yellow
-                '#EF4444', // Red
-                '#8B5CF6', // Purple
-                '#EC4899', // Pink
-                '#F97316'  // Orange
-            ];
-            return colors[Math.floor(Math.random() * colors.length)];
-        }
-        
-        // Initialize mood chart for the month view
-        function initializeMoodChart() {
-            try {
-                const ctx = document.getElementById('mood-chart');
-                if (!ctx) return;
-                
-                const ctxContext = ctx.getContext('2d');
-                
-                // Check if chart already exists
-                if (ctx.chart) {
-                    ctx.chart.destroy();
-                }
-                
-                // Default data for the chart
-                let moodData = {
-                    labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
-                    datasets: [
-                        {
-                            label: 'Happy',
-                            backgroundColor: 'rgba(16, 185, 129, 0.2)',
-                            borderColor: 'rgba(16, 185, 129, 1)',
-                            borderWidth: 1,
-                            data: [3, 2, 4, 2]
-                        },
-                        {
-                            label: 'Neutral',
-                            backgroundColor: 'rgba(107, 114, 128, 0.2)',
-                            borderColor: 'rgba(107, 114, 128, 1)',
-                            borderWidth: 1,
-                            data: [2, 3, 1, 3]
-                        },
-                        {
-                            label: 'Sad',
-                            backgroundColor: 'rgba(59, 130, 246, 0.2)',
-                            borderColor: 'rgba(59, 130, 246, 1)',
-                            borderWidth: 1,
-                            data: [1, 1, 0, 2]
-                        },
-                        {
-                            label: 'Stressed',
-                            backgroundColor: 'rgba(239, 68, 68, 0.2)',
-                            borderColor: 'rgba(239, 68, 68, 1)',
-                            borderWidth: 1,
-                            data: [1, 2, 2, 0]
-                        }
-                    ]
-                };
-                
-                // Use custom data if available (added by backend)
-                if (typeof moodChartData !== 'undefined') {
-                    moodData = moodChartData;
-                }
-                
-                ctx.chart = new Chart(ctxContext, {
-                    type: 'bar',
-                    data: moodData,
-                    options: {
-                        title: {
-                            display: true,
-                            text: 'Monthly Mood Distribution',
-                            fontColor: '#e0e7ff'
-                        },
-                        scales: {
-                            yAxes: [{
-                                ticks: {
-                                    beginAtZero: true,
-                                    fontColor: '#a78bfa'
-                                },
-                                scaleLabel: {
-                                    display: true,
-                                    labelString: 'Number of Days',
-                                    fontColor: '#c4b5fd'
-                                },
-                                gridLines: {
-                                    color: 'rgba(255, 255, 255, 0.1)'
-                                }
-                            }],
-                            xAxes: [{
-                                ticks: {
-                                    fontColor: '#a78bfa'
-                                },
-                                scaleLabel: {
-                                    display: true,
-                                    labelString: 'Week',
-                                    fontColor: '#c4b5fd'
-                                },
-                                gridLines: {
-                                    color: 'rgba(255, 255, 255, 0.1)'
-                                }
-                            }]
-                        },
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        tooltips: {
-                            mode: 'index',
-                            intersect: false,
-                            backgroundColor: 'rgba(15, 15, 35, 0.9)',
-                            titleFontColor: '#e0e7ff',
-                            bodyFontColor: '#c4b5fd',
-                            borderColor: 'rgba(139, 92, 246, 0.5)',
-                            borderWidth: 1,
-                            callbacks: {
-                                title: function(tooltipItems, data) {
-                                    return tooltipItems[0].xLabel;
-                                },
-                                label: function(tooltipItem, data) {
-                                    const datasetLabel = data.datasets[tooltipItem.datasetIndex].label || '';
-                                    const value = tooltipItem.yLabel;
-                                    return `${datasetLabel}: ${value} day${value !== 1 ? 's' : ''}`;
-                                }
-                            }
-                        },
-                        legend: {
-                            position: 'top',
-                            labels: {
-                                fontColor: '#c4b5fd'
-                            }
-                        }
+                    if (celebration.parentNode) {
+                        celebration.parentNode.removeChild(celebration);
                     }
-                });
-            } catch (error) {
-                console.error('Error initializing mood chart:', error);
+                }, 2000);
             }
         }
-        
-        // Initialize page
-        console.log('Modern wellness tracker loaded');
+
+        // Add shake animation for trigger limit feedback
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes shake {
+                0%, 100% { transform: translateX(0); }
+                25% { transform: translateX(-5px); }
+                75% { transform: translateX(5px); }
+            }
+            @keyframes celebrationPop {
+                0% { 
+                    opacity: 0; 
+                    transform: translate(-50%, -50%) scale(0.5); 
+                }
+                20% { 
+                    opacity: 1; 
+                    transform: translate(-50%, -50%) scale(1.1); 
+                }
+                100% { 
+                    opacity: 0; 
+                    transform: translate(-50%, -50%) scale(1); 
+                }
+            }
+        `;
+        document.head.appendChild(style);
     </script>
 </body>
 </html>

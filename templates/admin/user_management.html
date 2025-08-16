@@ -663,8 +663,10 @@
             <ul>
                 <li><a href="{{ url_for('admin.dashboard') }}"><i class="fas fa-chart-line"></i> Dashboard</a></li>
                 <li class="active"><a href="{{ url_for('admin.user_management') }}"><i class="fas fa-users"></i> User Management</a></li>
+                <li><a href="{{ url_for('admin.mood_reports') }}"><i class="fas fa-brain"></i> Mood Reports</a></li>
                 <li><a href="{{ url_for('admin.moderation_dashboard') }}"><i class="fas fa-shield-alt"></i> Moderation Center</a></li>
                 <li><a href="{{ url_for('admin.chat_logs') }}"><i class="fas fa-comments"></i> Chat Logs</a></li>
+                <li><a href="{{ url_for('admin.budget_dashboard') }}"><i class="fas fa-dollar-sign"></i> Budget Dashboard</a></li>
                 <li><a href="{{ url_for('admin.resources') }}"><i class="fas fa-book"></i> Resource Management</a></li>
                 <li><a href="{{ url_for('admin.settings') }}"><i class="fas fa-cog"></i> System Settings</a></li>
                 <li><a href="{{ url_for('auth.logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
@@ -1103,6 +1105,12 @@
                 }, 5000);
             }
             
+            // Utility function to validate email format
+            function isValidEmail(email) {
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                return emailRegex.test(email);
+            }
+            
             // Add buttons
             document.getElementById('add-student-btn').addEventListener('click', function() {
                 document.getElementById('student-modal-title').textContent = 'Add New Student';
@@ -1122,7 +1130,7 @@
                 therapistModal.style.display = 'flex';
             });
             
-            // Edit buttons
+            // Edit buttons and other action handlers
             document.addEventListener('click', function(e) {
                 if (e.target.closest('.edit-button')) {
                     const button = e.target.closest('.edit-button');
@@ -1138,9 +1146,24 @@
                         
                         // Populate form
                         const cells = row.querySelectorAll('td');
-                        document.getElementById('student-id').value = cells[0].textContent;
-                        document.getElementById('student-name').value = cells[1].textContent;
-                        document.getElementById('student-email').value = cells[2].textContent;
+                        document.getElementById('student-id').value = cells[0].textContent.trim();
+                        document.getElementById('student-name').value = cells[1].textContent.trim();
+                        document.getElementById('student-email').value = cells[2].textContent.trim();
+                        
+                        // Set assigned therapist if any
+                        const assignedTherapist = cells[3].textContent.trim();
+                        const therapistSelect = document.getElementById('assigned-therapist');
+                        if (assignedTherapist && assignedTherapist !== 'Unassigned') {
+                            // Try to find and select the therapist in the dropdown
+                            for (let option of therapistSelect.options) {
+                                if (option.text.includes(assignedTherapist)) {
+                                    option.selected = true;
+                                    break;
+                                }
+                            }
+                        } else {
+                            therapistSelect.value = '';
+                        }
                         
                         studentModal.style.display = 'flex';
                     } else if (userType === 'therapist') {
@@ -1151,9 +1174,9 @@
                         
                         // Populate form
                         const cells = row.querySelectorAll('td');
-                        document.getElementById('therapist-name').value = cells[0].textContent;
-                        document.getElementById('therapist-email').value = cells[1].textContent;
-                        document.getElementById('therapist-license').value = cells[2].textContent;
+                        document.getElementById('therapist-name').value = cells[0].textContent.trim();
+                        document.getElementById('therapist-email').value = cells[1].textContent.trim();
+                        document.getElementById('therapist-license').value = cells[2].textContent.trim();
                         
                         therapistModal.style.display = 'flex';
                     }
@@ -1172,6 +1195,8 @@
                     document.getElementById('confirm-message').textContent = `Are you sure you want to ${action} this ${userType}?`;
                     
                     document.getElementById('confirm-action').onclick = function() {
+                        console.log(`Toggling ${userType} ${userId} status to ${newStatus}`);
+                        
                         fetch(`/admin/api/users/${userType}/${userId}/status`, {
                             method: 'PUT',
                             headers: {
@@ -1179,8 +1204,12 @@
                             },
                             body: JSON.stringify({ status: newStatus })
                         })
-                        .then(response => response.json())
+                        .then(response => {
+                            console.log('Status toggle response:', response.status);
+                            return response.json();
+                        })
                         .then(data => {
+                            console.log('Status toggle result:', data);
                             if (data.success) {
                                 showAlert('success', data.message);
                                 location.reload(); // Reload to update the display
@@ -1189,7 +1218,8 @@
                             }
                         })
                         .catch(error => {
-                            showAlert('error', 'An error occurred');
+                            console.error('Status toggle error:', error);
+                            showAlert('error', 'An error occurred while updating status');
                         });
                         
                         confirmModal.style.display = 'none';
@@ -1208,11 +1238,17 @@
                     document.getElementById('confirm-message').textContent = `Are you sure you want to delete this ${userType}? This action cannot be undone and will remove all related data.`;
                     
                     document.getElementById('confirm-action').onclick = function() {
+                        console.log(`Deleting ${userType} ${userId}`);
+                        
                         fetch(`/admin/api/users/${userType}/${userId}`, {
                             method: 'DELETE'
                         })
-                        .then(response => response.json())
+                        .then(response => {
+                            console.log('Delete response:', response.status);
+                            return response.json();
+                        })
                         .then(data => {
+                            console.log('Delete result:', data);
                             if (data.success) {
                                 showAlert('success', data.message);
                                 button.closest('tr').remove();
@@ -1221,7 +1257,8 @@
                             }
                         })
                         .catch(error => {
-                            showAlert('error', 'An error occurred');
+                            console.error('Delete error:', error);
+                            showAlert('error', 'An error occurred while deleting');
                         });
                         
                         confirmModal.style.display = 'none';
@@ -1249,7 +1286,7 @@
                 }
             });
             
-            // Form submissions
+            // Enhanced Student form submission
             document.getElementById('student-form').addEventListener('submit', function(e) {
                 e.preventDefault();
                 
@@ -1257,18 +1294,62 @@
                 const isEdit = userId !== '';
                 
                 const formData = {
-                    name: document.getElementById('student-name').value,
-                    email: document.getElementById('student-email').value,
-                    student_id: document.getElementById('student-id').value,
+                    name: document.getElementById('student-name').value.trim(),
+                    email: document.getElementById('student-email').value.trim(),
+                    student_id: document.getElementById('student-id').value.trim(),
                     assigned_therapist_id: document.getElementById('assigned-therapist').value || null
                 };
                 
-                if (document.getElementById('student-password').value) {
-                    formData.password = document.getElementById('student-password').value;
+                // Only include password if it has a value
+                const passwordField = document.getElementById('student-password');
+                if (passwordField.value.trim()) {
+                    formData.password = passwordField.value;
+                }
+                
+                // Validate required fields
+                if (!formData.name) {
+                    showAlert('error', 'Name is required');
+                    return;
+                }
+                
+                if (!formData.email) {
+                    showAlert('error', 'Email is required');
+                    return;
+                }
+                
+                if (!formData.student_id) {
+                    showAlert('error', 'Student ID is required');
+                    return;
+                }
+                
+                // Validate email format
+                if (!isValidEmail(formData.email)) {
+                    showAlert('error', 'Please enter a valid email address');
+                    return;
+                }
+                
+                // Validate password for new students
+                if (!isEdit && !formData.password) {
+                    showAlert('error', 'Password is required for new students');
+                    return;
                 }
                 
                 const url = isEdit ? `/admin/api/users/student/${userId}` : '/admin/api/users/student';
                 const method = isEdit ? 'PUT' : 'POST';
+                
+                // Debug logging
+                console.log('Submitting student form:', {
+                    url: url,
+                    method: method,
+                    data: formData,
+                    isEdit: isEdit
+                });
+                
+                // Show loading state
+                const submitBtn = document.getElementById('submit-student-btn');
+                const originalText = submitBtn.innerHTML;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + (isEdit ? 'Updating...' : 'Adding...');
+                submitBtn.disabled = true;
                 
                 fetch(url, {
                     method: method,
@@ -1277,21 +1358,36 @@
                     },
                     body: JSON.stringify(formData)
                 })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        showAlert('success', data.message);
+                .then(response => {
+                    console.log('Student form response status:', response.status);
+                    return response.json().then(data => ({
+                        status: response.status,
+                        data: data
+                    }));
+                })
+                .then(result => {
+                    console.log('Student form response data:', result.data);
+                    
+                    if (result.status === 200 && result.data.success) {
+                        showAlert('success', result.data.message);
                         studentModal.style.display = 'none';
                         location.reload(); // Reload to show updated data
                     } else {
-                        showAlert('error', data.error);
+                        showAlert('error', result.data.error || 'An error occurred');
                     }
                 })
                 .catch(error => {
-                    showAlert('error', 'An error occurred');
+                    console.error('Student form fetch error:', error);
+                    showAlert('error', 'Network error occurred. Please try again.');
+                })
+                .finally(() => {
+                    // Restore button state
+                    submitBtn.innerHTML = originalText;
+                    submitBtn.disabled = false;
                 });
             });
             
+            // Enhanced Therapist form submission
             document.getElementById('therapist-form').addEventListener('submit', function(e) {
                 e.preventDefault();
                 
@@ -1303,24 +1399,74 @@
                     .map(cb => cb.value);
                 
                 const formData = {
-                    name: document.getElementById('therapist-name').value,
-                    email: document.getElementById('therapist-email').value,
-                    license_number: document.getElementById('therapist-license').value,
-                    phone: document.getElementById('therapist-phone').value,
+                    name: document.getElementById('therapist-name').value.trim(),
+                    email: document.getElementById('therapist-email').value.trim(),
+                    license_number: document.getElementById('therapist-license').value.trim(),
+                    phone: document.getElementById('therapist-phone').value.trim(),
                     gender: document.getElementById('therapist-gender').value,
-                    bio: document.getElementById('therapist-bio').value,
+                    bio: document.getElementById('therapist-bio').value.trim(),
                     max_students: parseInt(document.getElementById('max-students').value) || 20,
                     years_experience: parseInt(document.getElementById('years-experience').value) || 0,
                     specializations: specializations,
                     emergency_hours: document.getElementById('emergency-hours').checked
                 };
                 
-                if (document.getElementById('therapist-password').value) {
-                    formData.password = document.getElementById('therapist-password').value;
+                // Only include password if it has a value
+                const passwordField = document.getElementById('therapist-password');
+                if (passwordField.value.trim()) {
+                    formData.password = passwordField.value;
+                }
+                
+                // Validate required fields
+                if (!formData.name) {
+                    showAlert('error', 'Name is required');
+                    return;
+                }
+                
+                if (!formData.email) {
+                    showAlert('error', 'Email is required');
+                    return;
+                }
+                
+                if (!formData.license_number) {
+                    showAlert('error', 'License number is required');
+                    return;
+                }
+                
+                // Validate email format
+                if (!isValidEmail(formData.email)) {
+                    showAlert('error', 'Please enter a valid email address');
+                    return;
+                }
+                
+                // Validate password for new therapists
+                if (!isEdit && !formData.password) {
+                    showAlert('error', 'Password is required for new therapists');
+                    return;
+                }
+                
+                // Validate max_students
+                if (formData.max_students < 1 || formData.max_students > 100) {
+                    showAlert('error', 'Maximum students must be between 1 and 100');
+                    return;
                 }
                 
                 const url = isEdit ? `/admin/api/users/therapist/${userId}` : '/admin/api/users/therapist';
                 const method = isEdit ? 'PUT' : 'POST';
+                
+                // Debug logging
+                console.log('Submitting therapist form:', {
+                    url: url,
+                    method: method,
+                    data: formData,
+                    isEdit: isEdit
+                });
+                
+                // Show loading state
+                const submitBtn = document.getElementById('submit-therapist-btn');
+                const originalText = submitBtn.innerHTML;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + (isEdit ? 'Updating...' : 'Adding...');
+                submitBtn.disabled = true;
                 
                 fetch(url, {
                     method: method,
@@ -1329,22 +1475,56 @@
                     },
                     body: JSON.stringify(formData)
                 })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        showAlert('success', data.message);
+                .then(response => {
+                    console.log('Therapist form response status:', response.status);
+                    return response.json().then(data => ({
+                        status: response.status,
+                        data: data
+                    }));
+                })
+                .then(result => {
+                    console.log('Therapist form response data:', result.data);
+                    
+                    if (result.status === 200 && result.data.success) {
+                        showAlert('success', result.data.message);
                         therapistModal.style.display = 'none';
                         location.reload(); // Reload to show updated data
                     } else {
-                        showAlert('error', data.error);
+                        showAlert('error', result.data.error || 'An error occurred');
                     }
                 })
                 .catch(error => {
-                    showAlert('error', 'An error occurred');
+                    console.error('Therapist form fetch error:', error);
+                    showAlert('error', 'Network error occurred. Please try again.');
+                })
+                .finally(() => {
+                    // Restore button state
+                    submitBtn.innerHTML = originalText;
+                    submitBtn.disabled = false;
                 });
             });
             
-            console.log('Enhanced user management loaded');
+            // Keyboard shortcuts
+            document.addEventListener('keydown', function(e) {
+                // Escape key closes modals
+                if (e.key === 'Escape') {
+                    studentModal.style.display = 'none';
+                    therapistModal.style.display = 'none';
+                    confirmModal.style.display = 'none';
+                }
+                
+                // Ctrl/Cmd + S to submit forms
+                if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                    e.preventDefault();
+                    if (studentModal.style.display === 'flex') {
+                        document.getElementById('submit-student-btn').click();
+                    } else if (therapistModal.style.display === 'flex') {
+                        document.getElementById('submit-therapist-btn').click();
+                    }
+                }
+            });
+            
+            console.log('Enhanced user management script loaded successfully');
         });
     </script>
 </body>

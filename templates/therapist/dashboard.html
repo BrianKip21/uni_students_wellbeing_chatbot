@@ -150,11 +150,16 @@
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
         }
         
         .btn-primary:hover {
             transform: translateY(-2px);
             box-shadow: 0 10px 25px rgba(139, 92, 246, 0.4);
+            color: white;
+            text-decoration: none;
         }
         
         .btn-success {
@@ -166,11 +171,39 @@
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
         }
         
         .btn-success:hover {
             transform: translateY(-2px);
             box-shadow: 0 10px 25px rgba(16, 185, 129, 0.4);
+            color: white;
+            text-decoration: none;
+        }
+
+        .btn-success.pulse {
+            animation: pulse-green 2s infinite;
+        }
+
+        @keyframes pulse-green {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+            50% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+        }
+        
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            color: #e0e7ff;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
         }
         
         .btn-emergency {
@@ -183,6 +216,9 @@
             cursor: pointer;
             transition: all 0.3s ease;
             animation: emergencyPulse 2s infinite;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
         }
         
         @keyframes emergencyPulse {
@@ -240,6 +276,191 @@
         .suggest-btn:hover {
             background: rgba(59, 130, 246, 0.3);
             transform: translateY(-1px);
+        }
+
+        /* Enhanced Reschedule and notification cards */
+        .reschedule-card {
+            background: rgba(245, 158, 11, 0.1);
+            border-left: 4px solid #f59e0b;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .reschedule-card:hover {
+            background: rgba(245, 158, 11, 0.15);
+            transform: translateY(-1px);
+        }
+
+        .reschedule-card.processing {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+
+        .reschedule-card[data-priority="high"] {
+            border-left-color: #ef4444;
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        .reschedule-card[data-priority="critical"] {
+            border-left-color: #dc2626;
+            background: rgba(220, 38, 38, 0.1);
+            animation: pulse-reschedule 2s infinite;
+        }
+
+        @keyframes pulse-reschedule {
+            0%, 100% { 
+                box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.4);
+            }
+            50% { 
+                box-shadow: 0 0 0 8px rgba(220, 38, 38, 0);
+            }
+        }
+
+        .cancellation-card {
+            background: rgba(239, 68, 68, 0.1);
+            border-left: 4px solid #ef4444;
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        /* Quick Action Buttons */
+        .btn-quick-accept {
+            background: linear-gradient(135deg, #10b981, #059669);
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            font-size: 0.75rem;
+            min-width: 120px;
+            justify-content: center;
+        }
+
+        .btn-quick-accept:hover {
+            background: linear-gradient(135deg, #059669, #047857);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-quick-decline {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            font-size: 0.75rem;
+            min-width: 120px;
+            justify-content: center;
+        }
+
+        .btn-quick-decline:hover {
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+        }
+
+        .btn-respond {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            font-size: 0.75rem;
+            min-width: 120px;
+            justify-content: center;
+        }
+
+        .btn-respond:hover {
+            background: linear-gradient(135deg, #d97706, #b45309);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+        }
+
+        /* Loading and Success States */
+        .btn-loading {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .btn-loading i {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Notification Toast */
+        .notification-toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            max-width: 400px;
+            padding: 1rem;
+            border-radius: 12px;
+            color: white;
+            font-weight: 600;
+            z-index: 10000;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .notification-toast.show {
+            transform: translateX(0);
+        }
+
+        .notification-toast.success {
+            background: linear-gradient(135deg, #10b981, #059669);
+        }
+
+        .notification-toast.error {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+        }
+
+        .notification-toast.info {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+        }
+
+        .success-message {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 8px;
+            padding: 0.75rem;
+            margin-top: 1rem;
+            color: #10b981;
+            font-size: 0.875rem;
+        }
+
+        .error-message {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 8px;
+            padding: 0.75rem;
+            margin-top: 1rem;
+            color: #ef4444;
+            font-size: 0.875rem;
         }
         
         @media (max-width: 1024px) {
@@ -320,6 +541,99 @@
                 </div>
             </div>
 
+            <!-- Enhanced Pending Reschedule Requests with Quick Response -->
+            {% if pending_reschedules %}
+            <div class="glass-card p-6 mb-8">
+                <h3 class="text-xl font-semibold mb-4 text-white">
+                    <i class="fas fa-calendar-alt mr-2 text-orange-400"></i>
+                    Pending Reschedule Requests ({{ pending_reschedules|length }})
+                </h3>
+                {% for request in pending_reschedules %}
+                <div class="reschedule-card" data-request-id="{{ request._id }}" data-priority="{{ request.priority }}">
+                    <div class="flex justify-between items-start">
+                        <div class="flex-1">
+                            <h4 class="font-medium text-white">{{ request.student_name }}</h4>
+                            <p class="text-sm text-orange-200 mt-1">{{ request.missed_reason }}</p>
+                            <span class="text-xs text-orange-300 mt-2 inline-block">
+                                Priority: {{ request.priority.title() }} • 
+                                {{ request.created_at.strftime('%B %d at %I:%M %p') }}
+                            </span>
+                            
+                            <!-- Request Details -->
+                            <div class="mt-3 p-3 bg-black bg-opacity-20 rounded-lg">
+                                <div class="flex items-center text-xs text-orange-200 mb-1">
+                                    <i class="fas fa-clock mr-1"></i>
+                                    <span>Original time: {{ request.original_time.strftime('%A, %B %d at %I:%M %p') if request.original_time else 'Time TBD' }}</span>
+                                </div>
+                                {% if request.priority in ['high', 'critical'] %}
+                                <div class="flex items-center text-xs text-red-300">
+                                    <i class="fas fa-exclamation-triangle mr-1"></i>
+                                    <span>{{ request.priority.title() }} priority request</span>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- Response Actions -->
+                        <div class="flex flex-col gap-2 ml-4">
+                            <!-- Quick Accept Button -->
+                            <button onclick="quickAcceptReschedule('{{ request._id }}')" 
+                                    class="btn-quick-accept" 
+                                    title="Auto-reschedule to next available slot">
+                                <i class="fas fa-magic mr-1"></i>Quick Accept
+                            </button>
+                            
+                            <!-- Quick Decline Button -->
+                            <button onclick="quickDeclineReschedule('{{ request._id }}')" 
+                                    class="btn-quick-decline" 
+                                    title="Decline with standard reason">
+                                <i class="fas fa-times mr-1"></i>Quick Decline
+                            </button>
+                            
+                            <!-- Detailed Response Button -->
+                            <button onclick="respondToReschedule('{{ request._id }}')" 
+                                    class="btn-respond" 
+                                    title="Provide detailed response">
+                                <i class="fas fa-reply mr-1"></i>Detailed Response
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Loading State (Hidden by default) -->
+                    <div class="loading-state hidden mt-4 p-3 bg-blue-600 bg-opacity-20 border border-blue-600 rounded-lg">
+                        <div class="flex items-center text-blue-300">
+                            <i class="fas fa-spinner fa-spin mr-2"></i>
+                            <span>Processing your response...</span>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Recent Cancellations -->
+            {% if recent_cancellations %}
+            <div class="glass-card p-6 mb-8">
+                <h3 class="text-xl font-semibold mb-4 text-white">
+                    <i class="fas fa-times-circle mr-2 text-red-400"></i>
+                    Recent Student Cancellations ({{ recent_cancellations|length }})
+                </h3>
+                {% for cancellation in recent_cancellations %}
+                <div class="cancellation-card">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h4 class="font-medium text-white">{{ cancellation.student_name }}</h4>
+                            <p class="text-sm text-red-200 mt-1">{{ cancellation.cancellation_reason }}</p>
+                            <span class="text-xs text-red-300 mt-2 inline-block">
+                                Cancelled {{ cancellation.cancelled_at.strftime('%I:%M %p') }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
             <!-- Statistics Cards -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 <div class="stat-card primary">
@@ -337,10 +651,10 @@
                     </div>
                 </div>
                 <div class="stat-card warning">
-                    <div class="stat-number">{{ stats.recent_auto_scheduled }}</div>
+                    <div class="stat-number">{{ stats.pending_reschedules or 0 }}</div>
                     <div class="stat-label">
-                        <i class="fas fa-robot mr-1"></i>
-                        Recent Auto-Scheduled
+                        <i class="fas fa-calendar-alt mr-1"></i>
+                        Pending Reschedules
                     </div>
                 </div>
                 <div class="stat-card danger">
@@ -361,12 +675,12 @@
                     </h3>
                     <div class="space-y-3">
                         <div class="flex justify-between">
-                            <span class="text-purple-300">This Week:</span>
-                            <span class="font-semibold">{{ stats.virtual_sessions_this_week }} sessions</span>
+                            <span class="text-purple-300">Auto-Scheduled Today:</span>
+                            <span class="font-semibold">{{ stats.auto_scheduled_today or 0 }}</span>
                         </div>
                         <div class="flex justify-between">
-                            <span class="text-purple-300">Auto-Rescheduled Today:</span>
-                            <span class="font-semibold">{{ stats.rescheduled_today }}</span>
+                            <span class="text-purple-300">Zoom Integrated:</span>
+                            <span class="font-semibold">{{ stats.zoom_integrated_sessions or 0 }}</span>
                         </div>
                         <div class="flex justify-between">
                             <span class="text-purple-300">Status:</span>
@@ -401,15 +715,23 @@
                 <div class="glass-card p-6">
                     <h3 class="text-xl font-bold mb-4 text-white">
                         <i class="fas fa-user-plus mr-2 text-green-400"></i>
-                        New Assignments
+                        Recent Activity
                     </h3>
-                    <div class="text-center">
-                        <div class="text-3xl font-bold text-green-400 mb-2">{{ new_student_assignments|length }}</div>
-                        <p class="text-purple-300 mb-4">Today's New Students</p>
-                        <a href="{{ url_for('therapist.students') }}" class="btn-success">
-                            <i class="fas fa-users mr-2"></i>
-                            View Students
-                        </a>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-purple-300">Cancellations:</span>
+                            <span class="text-red-400">{{ stats.recent_cancellations or 0 }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-purple-300">Reschedules:</span>
+                            <span class="text-orange-400">{{ stats.pending_reschedules or 0 }}</span>
+                        </div>
+                        <div class="text-center mt-4">
+                            <a href="{{ url_for('therapist.students') }}" class="btn-success">
+                                <i class="fas fa-users mr-2"></i>
+                                View Students
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -430,7 +752,8 @@
                 {% if today_appointments %}
                 <div class="space-y-4">
                     {% for appointment in today_appointments %}
-                    <div class="appointment-card {% if appointment.crisis_level in ['high', 'critical'] %}crisis-card{% endif %}">
+                    <div class="appointment-card {% if appointment.crisis_level in ['high', 'critical'] %}crisis-card{% endif %}" 
+                         data-appointment-id="{{ appointment._id }}">
                         <div class="flex items-center justify-between">
                             <div class="flex items-center space-x-4">
                                 <div class="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center">
@@ -448,16 +771,35 @@
                                     <p class="text-purple-300">
                                         {{ appointment.datetime.strftime('%I:%M %p') }} • 
                                         <span class="virtual-badge">Virtual Session</span>
+                                        
+                                        <!-- Add Zoom Status -->
+                                        {% if appointment.zoom_integrated %}
+                                            <span class="ml-2 text-green-400 text-sm">
+                                                <i class="fas fa-video mr-1"></i>Zoom Ready
+                                            </span>
+                                        {% else %}
+                                            <span class="ml-2 text-yellow-400 text-sm">
+                                                <i class="fas fa-exclamation-triangle mr-1"></i>Fallback Link
+                                            </span>
+                                        {% endif %}
                                     </p>
                                 </div>
                             </div>
                             <div class="flex space-x-2">
-                                {% if appointment.meeting_info %}
-                                <a href="{{ appointment.meeting_info.meet_link }}" target="_blank" class="btn-success">
-                                    <i class="fas fa-video mr-2"></i>
-                                    Join Session
-                                </a>
+                                <!-- Enhanced Join Button with Session Controls -->
+                                {% if appointment.session_controls and appointment.session_controls.can_join %}
+                                    <a href="{{ url_for('therapist.join_session', appointment_id=appointment._id) }}" 
+                                       class="{{ appointment.session_controls.button_class }}">
+                                        <i class="{{ appointment.session_controls.icon }} mr-2"></i>
+                                        {{ appointment.session_controls.message }}
+                                    </a>
+                                {% else %}
+                                    <span class="{{ appointment.session_controls.button_class if appointment.session_controls else 'btn-secondary' }}">
+                                        <i class="{{ appointment.session_controls.icon if appointment.session_controls else 'fas fa-clock' }} mr-2"></i>
+                                        {{ appointment.session_controls.message if appointment.session_controls else 'Session Pending' }}
+                                    </span>
                                 {% endif %}
+                                
                                 <a href="{{ url_for('therapist.student_details', student_id=appointment.user_id) }}" class="btn-primary">
                                     <i class="fas fa-user mr-2"></i>
                                     View Student
@@ -476,62 +818,6 @@
                 {% endif %}
             </div>
 
-            <!-- Recent Auto-Scheduled Sessions -->
-            {% if recent_auto_appointments %}
-            <div class="glass-card p-6 mb-8">
-                <div class="flex items-center justify-between mb-6">
-                    <h3 class="text-2xl font-bold text-white">
-                        <i class="fas fa-robot mr-3 text-green-400"></i>
-                        Recent Auto-Scheduled Sessions
-                    </h3>
-                    <span class="bg-green-600 text-white px-3 py-1 rounded-full text-sm font-semibold">
-                        {{ recent_auto_appointments|length }} This Week
-                    </span>
-                </div>
-                
-                <div class="space-y-4">
-                    {% for appointment in recent_auto_appointments %}
-                    <div class="appointment-card {% if appointment.crisis_level in ['high', 'critical'] %}crisis-card{% endif %}">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center space-x-4">
-                                <div class="w-12 h-12 bg-green-600 rounded-full flex items-center justify-center">
-                                    <i class="fas fa-magic text-white"></i>
-                                </div>
-                                <div>
-                                    <h4 class="font-semibold text-white">
-                                        {{ appointment.student_name }}
-                                        {% if appointment.crisis_level in ['high', 'critical'] %}
-                                        <span class="ml-2 px-2 py-1 bg-red-600 text-white text-xs rounded-full">
-                                            <i class="fas fa-exclamation-triangle mr-1"></i>Priority
-                                        </span>
-                                        {% endif %}
-                                    </h4>
-                                    <p class="text-green-300">
-                                        {{ appointment.formatted_time or 'Time confirmed' }} • 
-                                        <span class="virtual-badge">Virtual Session</span>
-                                        <span class="ml-2 text-green-400 text-sm">
-                                            <i class="fas fa-check-circle mr-1"></i>Auto-Confirmed
-                                        </span>
-                                    </p>
-                                </div>
-                            </div>
-                            <div class="flex space-x-2">
-                                <button onclick="autoReschedule('{{ appointment._id }}')" class="auto-action-btn">
-                                    <i class="fas fa-sync mr-1"></i>
-                                    Auto-Reschedule
-                                </button>
-                                <button onclick="suggestAlternative('{{ appointment._id }}')" class="suggest-btn">
-                                    <i class="fas fa-user-friends mr-1"></i>
-                                    Suggest Alternative
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
-            {% endif %}
-
             <!-- Crisis Sessions Alert -->
             {% if crisis_appointments %}
             <div class="glass-card p-6 mb-8 border-2 border-red-500">
@@ -547,7 +833,8 @@
                 
                 <div class="space-y-4">
                     {% for appointment in crisis_appointments %}
-                    <div class="appointment-card crisis-card">
+                    <div class="appointment-card crisis-card" 
+                         data-appointment-id="{{ appointment._id }}">
                         <div class="flex items-center justify-between">
                             <div class="flex items-center space-x-4">
                                 <div class="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center">
@@ -563,16 +850,31 @@
                                     <p class="text-red-300">
                                         {{ appointment.formatted_time or 'ASAP' }} • 
                                         <span class="virtual-badge">Virtual Session</span>
+                                        
+                                        <!-- Zoom Status for Crisis -->
+                                        {% if appointment.zoom_integrated %}
+                                            <span class="ml-2 text-green-300 text-sm">
+                                                <i class="fas fa-video mr-1"></i>Zoom Ready
+                                            </span>
+                                        {% endif %}
                                     </p>
                                 </div>
                             </div>
                             <div class="flex space-x-2">
-                                {% if appointment.meeting_info %}
-                                <a href="{{ appointment.meeting_info.meet_link }}" target="_blank" class="btn-emergency">
-                                    <i class="fas fa-video mr-2"></i>
-                                    Join Now
-                                </a>
+                                <!-- Enhanced Join Button for Crisis Sessions -->
+                                {% if appointment.session_controls and appointment.session_controls.can_join %}
+                                    <a href="{{ url_for('therapist.join_session', appointment_id=appointment._id) }}" 
+                                       class="btn-emergency">
+                                        <i class="{{ appointment.session_controls.icon }} mr-2"></i>
+                                        Join Crisis Session
+                                    </a>
+                                {% else %}
+                                    <span class="btn-emergency opacity-75">
+                                        <i class="{{ appointment.session_controls.icon if appointment.session_controls else 'fas fa-clock' }} mr-2"></i>
+                                        {{ appointment.session_controls.message if appointment.session_controls else 'Crisis Session Pending' }}
+                                    </span>
                                 {% endif %}
+                                
                                 <a href="{{ url_for('therapist.student_details', student_id=appointment.user_id) }}" class="btn-primary">
                                     <i class="fas fa-file-medical mr-2"></i>
                                     View Case
@@ -589,6 +891,294 @@
     </main>
 
     <script>
+        // Enhanced respond to reschedule requests
+        function respondToReschedule(requestId) {
+            // Redirect to detailed response page
+            window.location.href = `/therapist/respond-reschedule/${requestId}`;
+        }
+
+        // Quick accept reschedule request
+        async function quickAcceptReschedule(requestId) {
+            if (!confirm('Auto-reschedule this session to your next available slot?\n\nThis will:\n• Find your next available time slot\n• Create a new Zoom meeting\n• Notify the student immediately')) {
+                return;
+            }
+            
+            try {
+                // Show loading state
+                const card = document.querySelector(`[data-request-id="${requestId}"]`);
+                const button = card.querySelector('.btn-quick-accept');
+                const originalText = button.innerHTML;
+                
+                button.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Processing...';
+                button.disabled = true;
+                card.classList.add('processing');
+                
+                const response = await fetch('/therapist/api/quick-reschedule-response', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({
+                        request_id: requestId,
+                        action: 'quick_accept'
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Show success message
+                    showNotification('success', `✅ Auto-rescheduled successfully!\n\nNew time: ${result.new_time}`);
+                    
+                    // Remove the reschedule request card from UI
+                    removeRescheduleCard(requestId);
+                    
+                    // Update stats
+                    updateRescheduleStats(-1);
+                    
+                } else {
+                    showNotification('error', `❌ Failed to auto-reschedule: ${result.error}`);
+                    // Restore button
+                    button.innerHTML = originalText;
+                    button.disabled = false;
+                    card.classList.remove('processing');
+                }
+                
+            } catch (error) {
+                console.error('Error:', error);
+                showNotification('error', '❌ Network error. Please try again.');
+                
+                // Restore button on error
+                const card = document.querySelector(`[data-request-id="${requestId}"]`);
+                const button = card.querySelector('.btn-quick-accept');
+                if (button) {
+                    button.innerHTML = '<i class="fas fa-check mr-1"></i>Quick Accept';
+                    button.disabled = false;
+                    card.classList.remove('processing');
+                }
+            }
+        }
+
+        // Quick decline reschedule request
+        async function quickDeclineReschedule(requestId) {
+            const reason = prompt('Why are you declining this reschedule request?\n\nCommon reasons:\n• Schedule fully booked\n• Policy violation\n• Insufficient notice\n• Other\n\nPlease provide a brief reason:');
+            
+            if (!reason || reason.trim().length < 5) {
+                alert('Please provide a reason (at least 5 characters)');
+                return;
+            }
+            
+            if (!confirm(`Decline this reschedule request?\n\nReason: ${reason}\n\nThe student will be notified and asked to book a new appointment.`)) {
+                return;
+            }
+            
+            try {
+                // Show loading state
+                const card = document.querySelector(`[data-request-id="${requestId}"]`);
+                const button = card.querySelector('.btn-quick-decline');
+                const originalText = button.innerHTML;
+                
+                button.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Processing...';
+                button.disabled = true;
+                card.classList.add('processing');
+                
+                const response = await fetch('/therapist/api/quick-reschedule-response', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({
+                        request_id: requestId,
+                        action: 'quick_decline',
+                        reason: reason.trim()
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showNotification('info', '✅ Reschedule request declined. Student has been notified.');
+                    
+                    // Remove the reschedule request card from UI
+                    removeRescheduleCard(requestId);
+                    
+                    // Update stats
+                    updateRescheduleStats(-1);
+                    
+                } else {
+                    showNotification('error', `❌ Failed to decline request: ${result.error}`);
+                    // Restore button
+                    button.innerHTML = originalText;
+                    button.disabled = false;
+                    card.classList.remove('processing');
+                }
+                
+            } catch (error) {
+                console.error('Error:', error);
+                showNotification('error', '❌ Network error. Please try again.');
+                
+                // Restore button on error
+                const card = document.querySelector(`[data-request-id="${requestId}"]`);
+                const button = card.querySelector('.btn-quick-decline');
+                if (button) {
+                    button.innerHTML = '<i class="fas fa-times mr-1"></i>Quick Decline';
+                    button.disabled = false;
+                    card.classList.remove('processing');
+                }
+            }
+        }
+
+        // Remove reschedule card from UI
+        function removeRescheduleCard(requestId) {
+            const card = document.querySelector(`[data-request-id="${requestId}"]`);
+            if (card) {
+                card.style.transition = 'all 0.3s ease';
+                card.style.opacity = '0';
+                card.style.transform = 'translateX(-100%)';
+                
+                setTimeout(() => {
+                    card.remove();
+                    
+                    // Check if this was the last card
+                    const remainingCards = document.querySelectorAll('.reschedule-card');
+                    if (remainingCards.length === 0) {
+                        const container = card.closest('.glass-card');
+                        if (container) {
+                            container.style.opacity = '0';
+                            setTimeout(() => container.remove(), 300);
+                        }
+                    }
+                }, 300);
+            }
+        }
+
+        // Update reschedule stats in UI
+        function updateRescheduleStats(change) {
+            const statElement = document.querySelector('.stat-card.warning .stat-number');
+            if (statElement) {
+                const currentValue = parseInt(statElement.textContent) || 0;
+                const newValue = Math.max(0, currentValue + change);
+                statElement.textContent = newValue;
+            }
+        }
+
+        // Show notification toast
+        function showNotification(type, message) {
+            // Remove existing notifications
+            const existingToasts = document.querySelectorAll('.notification-toast');
+            existingToasts.forEach(toast => toast.remove());
+            
+            // Create new notification
+            const toast = document.createElement('div');
+            toast.className = `notification-toast ${type}`;
+            toast.innerHTML = `
+                <div class="flex items-start">
+                    <div class="flex-1">
+                        <div class="font-semibold mb-1">
+                            ${type === 'success' ? '✅ Success' : type === 'error' ? '❌ Error' : 'ℹ️ Info'}
+                        </div>
+                        <div class="text-sm opacity-90">${message}</div>
+                    </div>
+                    <button onclick="this.parentElement.parentElement.remove()" class="ml-2 text-white hover:text-gray-300">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+            
+            document.body.appendChild(toast);
+            
+            // Show toast
+            setTimeout(() => toast.classList.add('show'), 100);
+            
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 5000);
+        }
+
+        // Refresh Zoom meeting
+        async function refreshZoomMeeting(appointmentId) {
+            try {
+                const response = await fetch(`/api/refresh-session-zoom/${appointmentId}`, {
+                    method: 'POST'
+                });
+                const result = await response.json();
+                
+                if (result.success) {
+                    showNotification('success', '✅ Zoom meeting refreshed successfully!');
+                    location.reload();
+                } else {
+                    showNotification('error', '❌ Failed to refresh Zoom meeting: ' + result.message);
+                }
+            } catch (error) {
+                showNotification('error', '❌ Error refreshing Zoom meeting');
+            }
+        }
+
+        // Cancel session
+        async function cancelSession(appointmentId) {
+            const reason = prompt('Please provide a reason for cancellation:');
+            if (!reason || reason.trim().length < 10) {
+                alert('Please provide a detailed reason (at least 10 characters)');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/cancel-session-therapist', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        appointment_id: appointmentId,
+                        reason: reason.trim()
+                    })
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    showNotification('success', '✅ Session cancelled successfully');
+                    location.reload();
+                } else {
+                    showNotification('error', '❌ Failed to cancel session: ' + result.error);
+                }
+            } catch (error) {
+                showNotification('error', '❌ Error cancelling session');
+            }
+        }
+
+        // Real-time session status updates
+        function updateSessionStatus() {
+            document.querySelectorAll('[data-appointment-id]').forEach(async (element) => {
+                const appointmentId = element.dataset.appointmentId;
+                if (!appointmentId) return;
+                
+                try {
+                    const response = await fetch(`/api/session-status/${appointmentId}`);
+                    const status = await response.json();
+                    
+                    // Update session controls based on current status
+                    updateSessionControls(element, status);
+                } catch (error) {
+                    console.error('Error updating session status:', error);
+                }
+            });
+        }
+
+        function updateSessionControls(element, status) {
+            const joinButton = element.querySelector('.btn-success, .btn-emergency');
+            if (joinButton && status.session_controls) {
+                if (status.session_controls.can_join) {
+                    joinButton.classList.remove('opacity-75');
+                    joinButton.href = `/therapist/join-session/${status.session_id}`;
+                } else {
+                    joinButton.classList.add('opacity-75');
+                    joinButton.removeAttribute('href');
+                }
+            }
+        }
+
         // Auto-reschedule appointment
         function autoReschedule(appointmentId) {
             if (confirm('Auto-reschedule this virtual session to the next available slot?')) {
@@ -601,15 +1191,15 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        alert(`✅ Session auto-rescheduled successfully!\n\nNew time: ${data.new_time}`);
+                        showNotification('success', `✅ Session auto-rescheduled successfully!\n\nNew time: ${data.new_time}`);
                         location.reload();
                     } else {
-                        alert('❌ Failed to auto-reschedule: ' + (data.error || 'Unknown error'));
+                        showNotification('error', '❌ Failed to auto-reschedule: ' + (data.error || 'Unknown error'));
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    alert('❌ Failed to auto-reschedule session. Please try again.');
+                    showNotification('error', '❌ Failed to auto-reschedule session. Please try again.');
                 });
             }
         }
@@ -626,23 +1216,26 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        alert(`✅ Alternative therapist options sent to student!\n\n${data.alternatives_count} compatible therapists found.`);
+                        showNotification('success', `✅ Alternative therapist options sent to student!\n\n${data.alternatives_count} compatible therapists found.`);
                         location.reload();
                     } else {
-                        alert('❌ Failed to suggest alternatives: ' + (data.error || 'Unknown error'));
+                        showNotification('error', '❌ Failed to suggest alternatives: ' + (data.error || 'Unknown error'));
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    alert('❌ Failed to suggest alternatives. Please try again.');
+                    showNotification('error', '❌ Failed to suggest alternatives. Please try again.');
                 });
             }
         }
         
-        // Auto-refresh dashboard every 3 minutes
+        // Update session status every 2 minutes
+        setInterval(updateSessionStatus, 120000);
+        
+        // Auto-refresh dashboard every 5 minutes
         setInterval(() => {
             location.reload();
-        }, 180000);
+        }, 300000);
         
         // Real-time notifications (placeholder for WebSocket implementation)
         function setupRealTimeNotifications() {
@@ -652,6 +1245,8 @@
         
         document.addEventListener('DOMContentLoaded', function() {
             setupRealTimeNotifications();
+            // Initial session status update
+            setTimeout(updateSessionStatus, 2000);
         });
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>

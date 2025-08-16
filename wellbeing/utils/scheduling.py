@@ -31,7 +31,8 @@ class AppointmentScheduler:
     def get_therapist_available_slots(self, 
                                     therapist: Dict[str, Any], 
                                     crisis_level: str = 'normal',
-                                    days_ahead: int = 14) -> List[Dict[str, Any]]:
+                                    days_ahead: int = 14,
+                                    limit: int = None) -> List[Dict[str, Any]]:
         """
         Get available time slots for a therapist
         
@@ -39,6 +40,7 @@ class AppointmentScheduler:
             therapist: Therapist document from database
             crisis_level: Priority level affecting slot availability
             days_ahead: Number of days to look ahead
+            limit: Maximum number of slots to return (optional)
             
         Returns:
             List of available time slots
@@ -97,12 +99,21 @@ class AppointmentScheduler:
                                 'crisis_priority': crisis_level == 'high'
                             }
                             available_slots.append(slot_data)
+                            
+                            # Early exit if we've reached the limit
+                            if limit and len(available_slots) >= limit:
+                                logger.info(f"Found {len(available_slots)} available slots for therapist {therapist['_id']} (limited to {limit})")
+                                return available_slots
             
-            # Sort slots - crisis appointments get priority slots first
-            if crisis_level == 'high':
-                available_slots = available_slots[:10]  # Limit to next 10 slots for crisis
+            # Apply default limits based on crisis level if no explicit limit provided
+            if limit is None:
+                if crisis_level == 'high':
+                    available_slots = available_slots[:10]  # Limit to next 10 slots for crisis
+                else:
+                    available_slots = available_slots[:20]  # More options for regular appointments
             else:
-                available_slots = available_slots[:20]  # More options for regular appointments
+                # Apply the explicit limit
+                available_slots = available_slots[:limit]
             
             logger.info(f"Found {len(available_slots)} available slots for therapist {therapist['_id']}")
             return available_slots
@@ -305,10 +316,11 @@ class AppointmentScheduler:
 
 # Legacy function wrappers for backward compatibility
 def get_therapist_available_slots(therapist: Dict[str, Any], 
-                                crisis_level: str = 'normal') -> List[Dict[str, Any]]:
+                                crisis_level: str = 'normal',
+                                limit: int = None) -> List[Dict[str, Any]]:
     """Legacy wrapper for get_therapist_available_slots"""
     scheduler = AppointmentScheduler()
-    return scheduler.get_therapist_available_slots(therapist, crisis_level)
+    return scheduler.get_therapist_available_slots(therapist, crisis_level, limit=limit)
 
 def auto_schedule_best_time(student_id: ObjectId,
                           therapist: Dict[str, Any],
@@ -651,3 +663,26 @@ def refresh_zoom_meeting_for_appointment(appointment_id: ObjectId) -> bool:
     except Exception as e:
         logger.error(f"Error refreshing Zoom meeting: {str(e)}")
         return False
+
+# Additional utility function for finding next available slot
+def find_next_available_slot(therapist_id: ObjectId) -> Optional[datetime]:
+    """Find the next available appointment slot for a therapist"""
+    try:
+        # Get therapist document
+        therapist = mongo.db.therapists.find_one({'_id': ObjectId(therapist_id)})
+        if not therapist:
+            logger.warning(f"Therapist not found: {therapist_id}")
+            return None
+        
+        # Use the scheduler to get available slots
+        scheduler = AppointmentScheduler()
+        available_slots = scheduler.get_therapist_available_slots(therapist, limit=1)
+        
+        if available_slots:
+            return available_slots[0]['datetime']
+        
+        return None
+        
+    except Exception as e:
+        logger.error(f"Error finding next available slot: {str(e)}")
+        return None

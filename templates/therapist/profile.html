@@ -626,56 +626,78 @@
                                 <input type="hidden" name="form_type" value="professional">
                                 
                                 <div class="form-group">
-                                    <label class="form-label">License Number</label>
-                                    <input type="text" class="form-input" value="{{ therapist.license_number or 'Not Set' }}" readonly>
-                                    <p class="text-sm text-purple-400 mt-1">Contact admin to change license information</p>
+                                    <label class="form-label">License Number *</label>
+                                    <input 
+                                        type="text" 
+                                        name="license_number" 
+                                        class="form-input" 
+                                        value="{{ therapist.license_number or '' }}"
+                                        placeholder="Enter your professional license number"
+                                        required
+                                    >
+                                    <p class="text-sm text-purple-400 mt-1">Your professional license number is required</p>
                                 </div>
 
                                 <div class="form-group">
-                                    <label class="form-label">Specializations</label>
-                                    <div class="mb-2">
+                                    <label class="form-label">Specializations *</label>
+                                    <div class="mb-4" id="selected-specializations">
                                         {% if therapist.specializations %}
                                             {% for spec in therapist.specializations %}
-                                            <span class="specialization-tag">
+                                            <span class="specialization-tag" data-value="{{ spec }}">
                                                 {{ spec|title }}
                                                 <span class="remove" onclick="removeSpecialization(this)">&times;</span>
-                                                <input type="hidden" name="specializations[]" value="{{ spec }}">
                                             </span>
                                             {% endfor %}
                                         {% endif %}
                                     </div>
-                                    <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
-                                        <label class="checkbox-custom flex items-center space-x-2">
+                                    <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                        <label class="checkbox-custom flex items-center space-x-3">
                                             <input type="checkbox" value="anxiety" onchange="toggleSpecialization('anxiety')">
                                             <span class="checkmark"></span>
                                             <span class="text-sm">Anxiety</span>
                                         </label>
-                                        <label class="checkbox-custom flex items-center space-x-2">
+                                        <label class="checkbox-custom flex items-center space-x-3">
                                             <input type="checkbox" value="depression" onchange="toggleSpecialization('depression')">
                                             <span class="checkmark"></span>
                                             <span class="text-sm">Depression</span>
                                         </label>
-                                        <label class="checkbox-custom flex items-center space-x-2">
+                                        <label class="checkbox-custom flex items-center space-x-3">
                                             <input type="checkbox" value="trauma" onchange="toggleSpecialization('trauma')">
                                             <span class="checkmark"></span>
                                             <span class="text-sm">Trauma</span>
                                         </label>
-                                        <label class="checkbox-custom flex items-center space-x-2">
+                                        <label class="checkbox-custom flex items-center space-x-3">
                                             <input type="checkbox" value="relationships" onchange="toggleSpecialization('relationships')">
                                             <span class="checkmark"></span>
                                             <span class="text-sm">Relationships</span>
                                         </label>
-                                        <label class="checkbox-custom flex items-center space-x-2">
+                                        <label class="checkbox-custom flex items-center space-x-3">
                                             <input type="checkbox" value="stress" onchange="toggleSpecialization('stress')">
                                             <span class="checkmark"></span>
                                             <span class="text-sm">Stress</span>
                                         </label>
-                                        <label class="checkbox-custom flex items-center space-x-2">
+                                        <label class="checkbox-custom flex items-center space-x-3">
                                             <input type="checkbox" value="addiction" onchange="toggleSpecialization('addiction')">
                                             <span class="checkmark"></span>
                                             <span class="text-sm">Addiction</span>
                                         </label>
+                                        <label class="checkbox-custom flex items-center space-x-3">
+                                            <input type="checkbox" value="grief" onchange="toggleSpecialization('grief')">
+                                            <span class="checkmark"></span>
+                                            <span class="text-sm">Grief & Loss</span>
+                                        </label>
+                                        <label class="checkbox-custom flex items-center space-x-3">
+                                            <input type="checkbox" value="family" onchange="toggleSpecialization('family')">
+                                            <span class="checkmark"></span>
+                                            <span class="text-sm">Family Therapy</span>
+                                        </label>
+                                        <label class="checkbox-custom flex items-center space-x-3">
+                                            <input type="checkbox" value="adolescent" onchange="toggleSpecialization('adolescent')">
+                                            <span class="checkmark"></span>
+                                            <span class="text-sm">Adolescent</span>
+                                        </label>
                                     </div>
+                                    <p class="text-sm text-purple-400 mt-2">Select at least one specialization</p>
                                 </div>
 
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -715,13 +737,14 @@
                                     
                                     {% for day in days %}
                                     {% set day_name = day_names[loop.index0] %}
+                                    {% set is_available = therapist.availability and therapist.availability.get(day) %}
                                     <div class="availability-grid">
                                         <label class="checkbox-custom flex items-center space-x-2">
                                             <input 
                                                 type="checkbox" 
                                                 name="available_days[]" 
                                                 value="{{ day }}"
-                                                {{ 'checked' if therapist.availability and therapist.availability.get(day) else '' }}
+                                                {{ 'checked' if is_available else '' }}
                                                 onchange="toggleDayAvailability('{{ day }}')"
                                             >
                                             <span class="checkmark"></span>
@@ -731,17 +754,17 @@
                                             type="time" 
                                             name="{{ day }}_start" 
                                             class="form-input"
-                                            value="{{ therapist.availability.get(day, {}).get('start', '09:00') if therapist.availability else '09:00' }}"
+                                            value="{{ therapist.availability.get(day, {}).get('start', '09:00') if is_available else '09:00' }}"
                                             id="{{ day }}_start"
-                                            {{ 'disabled' if not (therapist.availability and therapist.availability.get(day)) else '' }}
+                                            {{ 'disabled' if not is_available else '' }}
                                         >
                                         <input 
                                             type="time" 
                                             name="{{ day }}_end" 
                                             class="form-input"
-                                            value="{{ therapist.availability.get(day, {}).get('end', '17:00') if therapist.availability else '17:00' }}"
+                                            value="{{ therapist.availability.get(day, {}).get('end', '17:00') if is_available else '17:00' }}"
                                             id="{{ day }}_end"
-                                            {{ 'disabled' if not (therapist.availability and therapist.availability.get(day)) else '' }}
+                                            {{ 'disabled' if not is_available else '' }}
                                         >
                                     </div>
                                     {% endfor %}
@@ -765,12 +788,12 @@
                                 </div>
                             </div>
 
-                            <form method="POST">
+                            <form method="POST" onsubmit="return validatePasswordForm()">
                                 <input type="hidden" name="form_type" value="password">
                                 
                                 {% if user.password %}
                                 <div class="form-group">
-                                    <label class="form-label">Current Password</label>
+                                    <label class="form-label">Current Password *</label>
                                     <input type="password" name="current_password" class="form-input" required>
                                 </div>
                                 {% else %}
@@ -781,14 +804,31 @@
                                 {% endif %}
 
                                 <div class="form-group">
-                                    <label class="form-label">New Password</label>
-                                    <input type="password" name="new_password" class="form-input" minlength="8" required>
+                                    <label class="form-label">New Password *</label>
+                                    <input 
+                                        type="password" 
+                                        name="new_password" 
+                                        class="form-input" 
+                                        minlength="8" 
+                                        required
+                                        id="new_password"
+                                    >
                                     <p class="text-sm text-purple-400 mt-1">Must be at least 8 characters long</p>
                                 </div>
 
                                 <div class="form-group">
-                                    <label class="form-label">Confirm New Password</label>
-                                    <input type="password" name="confirm_password" class="form-input" minlength="8" required>
+                                    <label class="form-label">Confirm New Password *</label>
+                                    <input 
+                                        type="password" 
+                                        name="confirm_password" 
+                                        class="form-input" 
+                                        minlength="8" 
+                                        required
+                                        id="confirm_password"
+                                    >
+                                    <div id="password-match-error" class="text-red-400 text-sm mt-1" style="display: none;">
+                                        Passwords do not match
+                                    </div>
                                 </div>
 
                                 <div class="border-t border-gray-600 pt-6 mt-6">
@@ -849,32 +889,72 @@
             event.target.classList.add('active');
         }
 
-        // Toggle specialization
+        // Specialization management
         function toggleSpecialization(specialization) {
-            const existingTags = document.querySelectorAll('.specialization-tag input[type="hidden"]');
-            const exists = Array.from(existingTags).some(input => input.value === specialization);
+            const checkbox = event.target;
+            const container = document.getElementById('selected-specializations');
             
-            if (!exists) {
-                addSpecializationTag(specialization);
+            if (checkbox.checked) {
+                addSpecializationTag(specialization, container);
+            } else {
+                removeSpecializationByValue(specialization, container);
             }
         }
 
-        // Add specialization tag
-        function addSpecializationTag(specialization) {
-            const container = document.querySelector('.specialization-tag').parentElement;
+        function addSpecializationTag(specialization, container) {
+            // Check if already exists
+            if (container.querySelector(`[data-value="${specialization}"]`)) {
+                return;
+            }
+            
             const tag = document.createElement('span');
             tag.className = 'specialization-tag';
+            tag.setAttribute('data-value', specialization);
             tag.innerHTML = `
-                ${specialization.charAt(0).toUpperCase() + specialization.slice(1)}
+                ${specialization.charAt(0).toUpperCase() + specialization.slice(1).replace('_', ' ')}
                 <span class="remove" onclick="removeSpecialization(this)">&times;</span>
-                <input type="hidden" name="specializations[]" value="${specialization}">
             `;
             container.appendChild(tag);
         }
 
-        // Remove specialization
         function removeSpecialization(element) {
-            element.parentElement.remove();
+            const tag = element.parentElement;
+            const value = tag.getAttribute('data-value');
+            
+            // Uncheck corresponding checkbox
+            const checkbox = document.querySelector(`input[type="checkbox"][value="${value}"]`);
+            if (checkbox) {
+                checkbox.checked = false;
+            }
+            
+            tag.remove();
+        }
+
+        function removeSpecializationByValue(value, container) {
+            const tag = container.querySelector(`[data-value="${value}"]`);
+            if (tag) {
+                tag.remove();
+            }
+        }
+
+        // Collect selected specializations before form submission
+        function collectSpecializations() {
+            const form = document.querySelector('form[method="POST"]');
+            const specializations = document.querySelectorAll('#selected-specializations .specialization-tag');
+            
+            // Remove existing hidden inputs
+            form.querySelectorAll('input[name="specializations[]"]').forEach(input => {
+                input.remove();
+            });
+            
+            // Add current specializations as hidden inputs
+            specializations.forEach(tag => {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'specializations[]';
+                input.value = tag.getAttribute('data-value');
+                form.appendChild(input);
+            });
         }
 
         // Toggle day availability
@@ -886,47 +966,86 @@
             if (checkbox.checked) {
                 startInput.disabled = false;
                 endInput.disabled = false;
+                startInput.style.opacity = '1';
+                endInput.style.opacity = '1';
             } else {
                 startInput.disabled = true;
                 endInput.disabled = true;
+                startInput.style.opacity = '0.5';
+                endInput.style.opacity = '0.5';
             }
         }
 
-        // Password confirmation validation
-        document.addEventListener('DOMContentLoaded', function() {
-            const newPassword = document.querySelector('input[name="new_password"]');
-            const confirmPassword = document.querySelector('input[name="confirm_password"]');
+        // Password validation
+        function validatePasswordForm() {
+            const newPassword = document.getElementById('new_password');
+            const confirmPassword = document.getElementById('confirm_password');
+            const errorDiv = document.getElementById('password-match-error');
             
-            if (newPassword && confirmPassword) {
-                confirmPassword.addEventListener('input', function() {
-                    if (this.value !== newPassword.value) {
-                        this.setCustomValidity('Passwords do not match');
-                    } else {
-                        this.setCustomValidity('');
-                    }
-                });
-                
-                newPassword.addEventListener('input', function() {
-                    if (confirmPassword.value !== this.value) {
+            if (newPassword.value !== confirmPassword.value) {
+                errorDiv.style.display = 'block';
+                confirmPassword.focus();
+                return false;
+            }
+            
+            errorDiv.style.display = 'none';
+            return true;
+        }
+
+        // Real-time password confirmation check
+        function setupPasswordValidation() {
+            const newPassword = document.getElementById('new_password');
+            const confirmPassword = document.getElementById('confirm_password');
+            const errorDiv = document.getElementById('password-match-error');
+            
+            if (newPassword && confirmPassword && errorDiv) {
+                function checkPasswords() {
+                    if (confirmPassword.value && newPassword.value !== confirmPassword.value) {
+                        errorDiv.style.display = 'block';
                         confirmPassword.setCustomValidity('Passwords do not match');
                     } else {
+                        errorDiv.style.display = 'none';
                         confirmPassword.setCustomValidity('');
                     }
-                });
+                }
+                
+                newPassword.addEventListener('input', checkPasswords);
+                confirmPassword.addEventListener('input', checkPasswords);
             }
+        }
 
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
             // Initialize existing specializations checkboxes
-            const existingSpecs = document.querySelectorAll('.specialization-tag input[type="hidden"]');
-            existingSpecs.forEach(input => {
-                const checkbox = document.querySelector(`input[type="checkbox"][value="${input.value}"]`);
+            const existingSpecs = document.querySelectorAll('#selected-specializations .specialization-tag');
+            existingSpecs.forEach(tag => {
+                const value = tag.getAttribute('data-value');
+                const checkbox = document.querySelector(`input[type="checkbox"][value="${value}"]`);
                 if (checkbox) {
                     checkbox.checked = true;
                 }
             });
-        });
 
-        // Auto-hide alerts after 5 seconds
-        document.addEventListener('DOMContentLoaded', function() {
+            // Setup password validation
+            setupPasswordValidation();
+
+            // Setup form submission handler for professional form
+            const professionalForm = document.querySelector('#professional-tab form');
+            if (professionalForm) {
+                professionalForm.addEventListener('submit', function(e) {
+                    collectSpecializations();
+                    
+                    // Validate at least one specialization is selected
+                    const specializations = document.querySelectorAll('#selected-specializations .specialization-tag');
+                    if (specializations.length === 0) {
+                        e.preventDefault();
+                        alert('Please select at least one specialization.');
+                        return false;
+                    }
+                });
+            }
+
+            // Auto-hide alerts after 5 seconds
             const alerts = document.querySelectorAll('.alert');
             alerts.forEach(alert => {
                 setTimeout(() => {

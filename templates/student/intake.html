@@ -28,6 +28,8 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 20px;
             box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
         }
         
         .form-input, .form-select, .form-textarea {
@@ -38,6 +40,7 @@
             padding: 1rem;
             transition: all 0.3s ease;
             font-size: 1rem;
+            width: 100%;
         }
         
         .form-input:focus, .form-select:focus, .form-textarea:focus {
@@ -84,6 +87,7 @@
             transition: all 0.3s ease;
             display: flex;
             align-items: center;
+            margin-bottom: 0.5rem;
         }
         
         .radio-option:hover, .checkbox-option:hover {
@@ -101,6 +105,7 @@
             border: 1px solid #ef4444;
             border-radius: 16px;
             padding: 1.5rem;
+            margin-bottom: 1.5rem;
             animation: pulseWarning 2s infinite;
         }
         
@@ -109,23 +114,56 @@
             50% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
         }
         
-        .submit-btn {
-            background: linear-gradient(135deg, #10b981, #059669);
+        .btn-primary {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
             border: none;
             padding: 1rem 2rem;
             border-radius: 12px;
             color: white;
             font-weight: 600;
-            font-size: 1.1rem;
             cursor: pointer;
             transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
         }
         
-        .submit-btn:hover {
+        .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(16, 185, 129, 0.4);
+            box-shadow: 0 10px 25px rgba(139, 92, 246, 0.4);
+            color: white;
+            text-decoration: none;
+        }
+        
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .form-section {
+            margin-bottom: 2rem;
+        }
+        
+        .section-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .section-number {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            margin-right: 1rem;
+            color: white;
         }
         
         .progress-bar {
@@ -133,6 +171,7 @@
             background: rgba(255, 255, 255, 0.1);
             border-radius: 2px;
             overflow: hidden;
+            margin-bottom: 1rem;
         }
         
         .progress-fill {
@@ -142,12 +181,37 @@
             transition: width 0.5s ease;
         }
         
-        .virtual-session-highlight {
-            background: linear-gradient(135deg, #3b82f6, #1e40af);
-            border-radius: 16px;
-            padding: 1.5rem;
-            margin: 1rem 0;
+        .highlight-box {
+            background: rgba(59, 130, 246, 0.1);
             border: 1px solid rgba(59, 130, 246, 0.3);
+            border-left: 4px solid #3b82f6;
+            border-radius: 12px;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+
+        .flash-message {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-left: 4px solid #3b82f6;
+            color: #93c5fd;
+            padding: 1rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+        }
+        
+        .flash-success {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: rgba(16, 185, 129, 0.3);
+            border-left-color: #10b981;
+            color: #6ee7b7;
+        }
+        
+        .flash-error {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: rgba(239, 68, 68, 0.3);
+            border-left-color: #ef4444;
+            color: #fca5a5;
         }
     </style>
 </head>
@@ -155,42 +219,31 @@
     <div class="container mx-auto px-4 max-w-4xl">
         <!-- Header -->
         <div class="text-center mb-8">
-            <h1 class="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-purple-400 via-pink-500 to-blue-500 bg-clip-text text-transparent">
-                🧠 AI-Powered Wellbeing Assessment
+            <h1 class="text-4xl font-bold mb-4 bg-gradient-to-r from-purple-400 to-pink-600 bg-clip-text text-transparent">
+                <i class="fas fa-brain mr-3"></i>Wellbeing Assessment
             </h1>
             <p class="text-lg text-purple-300 mb-4">
                 Help us understand your needs so we can provide personalized support
             </p>
-            <div class="progress-bar max-w-md mx-auto mb-4">
+            <div class="progress-bar max-w-md mx-auto">
                 <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
             </div>
-            <p class="text-sm text-purple-400">
-                ⚡ Instant therapist matching • 🤖 AI-powered analysis • 🔒 Completely confidential
+            <p class="text-sm text-purple-400 mt-2">
+                Complete assessment to get matched with a therapist
             </p>
-            
-            <!-- Virtual Session Highlight -->
-            <div class="virtual-session-highlight max-w-lg mx-auto mt-6">
-                <div class="flex items-center justify-center mb-3">
-                    <i class="fas fa-video text-2xl text-white mr-3"></i>
-                    <h3 class="text-lg font-bold text-white">All Sessions Are Virtual</h3>
-                </div>
-                <p class="text-blue-100 text-sm">
-                    🔗 Secure Zoom meetings • 🏠 Join from home • 🌍 Accessible anywhere
-                </p>
-            </div>
         </div>
 
         <!-- Assessment Form -->
-        <div class="glass-card p-8">
-            <form id="intake-form" action="{{ url_for('dashboard.student_intake') }}" method="POST">
-                
-                <!-- Primary Concern -->
-                <div class="form-section mb-8">
-                    <h2 class="text-2xl font-bold mb-6 flex items-center">
-                        <span class="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-sm mr-3">1</span>
-                        What's your primary concern today?
-                    </h2>
-                    <select name="primary_concern" class="form-select w-full" required>
+        <form id="intake-form" action="{{ url_for('dashboard.student_intake') }}" method="POST">
+            
+            <!-- Primary Concern -->
+            <div class="glass-card">
+                <div class="form-section">
+                    <div class="section-header">
+                        <span class="section-number">1</span>
+                        <h2 class="text-xl font-bold text-white">What's your primary concern today?</h2>
+                    </div>
+                    <select name="primary_concern" class="form-select" required>
                         <option value="">Select your main concern...</option>
                         <option value="anxiety">😰 Anxiety & Worry</option>
                         <option value="depression">😔 Depression & Low Mood</option>
@@ -205,24 +258,28 @@
                         <option value="other">🤔 Other</option>
                     </select>
                 </div>
+            </div>
 
-                <!-- Detailed Description -->
-                <div class="form-section mb-8">
-                    <h2 class="text-2xl font-bold mb-6 flex items-center">
-                        <span class="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-sm mr-3">2</span>
-                        Tell us more about what you're experiencing
-                    </h2>
-                    <textarea name="description" rows="4" class="form-textarea w-full" 
+            <!-- Description -->
+            <div class="glass-card">
+                <div class="form-section">
+                    <div class="section-header">
+                        <span class="section-number">2</span>
+                        <h2 class="text-xl font-bold text-white">Tell us more about what you're experiencing</h2>
+                    </div>
+                    <textarea name="description" rows="4" class="form-textarea" 
                               placeholder="Describe your feelings, symptoms, or situations that brought you here..."
                               required></textarea>
                 </div>
+            </div>
 
-                <!-- Severity Rating -->
-                <div class="form-section mb-8">
-                    <h2 class="text-2xl font-bold mb-6 flex items-center">
-                        <span class="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-sm mr-3">3</span>
-                        How would you rate the severity of your concerns?
-                    </h2>
+            <!-- Severity Rating -->
+            <div class="glass-card">
+                <div class="form-section">
+                    <div class="section-header">
+                        <span class="section-number">3</span>
+                        <h2 class="text-xl font-bold text-white">How would you rate the severity of your concerns?</h2>
+                    </div>
                     
                     <div class="flex justify-center space-x-3 mb-4" id="severity-scale">
                         <button type="button" class="severity-btn" data-value="1" onclick="setSeverity(1)">1</button>
@@ -238,19 +295,21 @@
                     </div>
                     <input type="hidden" name="severity" id="severity-input" required>
                     
-                    <div class="flex justify-between text-sm text-purple-300 mb-4">
+                    <div class="flex justify-between text-sm text-purple-300">
                         <span>1 = Mild discomfort</span>
                         <span>10 = Severe, urgent need for help</span>
                     </div>
                 </div>
+            </div>
 
-                <!-- Duration -->
-                <div class="form-section mb-8">
-                    <h2 class="text-2xl font-bold mb-6 flex items-center">
-                        <span class="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-sm mr-3">4</span>
-                        How long have you been experiencing these concerns?
-                    </h2>
-                    <select name="duration" class="form-select w-full" required>
+            <!-- Duration -->
+            <div class="glass-card">
+                <div class="form-section">
+                    <div class="section-header">
+                        <span class="section-number">4</span>
+                        <h2 class="text-xl font-bold text-white">How long have you been experiencing these concerns?</h2>
+                    </div>
+                    <select name="duration" class="form-select" required>
                         <option value="">Select duration...</option>
                         <option value="less_than_week">📅 Less than a week</option>
                         <option value="1-2_weeks">📅 1-2 weeks</option>
@@ -261,13 +320,15 @@
                         <option value="more_than_year">📅 More than a year</option>
                     </select>
                 </div>
+            </div>
 
-                <!-- Previous Therapy -->
-                <div class="form-section mb-8">
-                    <h2 class="text-2xl font-bold mb-6 flex items-center">
-                        <span class="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-sm mr-3">5</span>
-                        Have you received mental health treatment before?
-                    </h2>
+            <!-- Previous Therapy -->
+            <div class="glass-card">
+                <div class="form-section">
+                    <div class="section-header">
+                        <span class="section-number">5</span>
+                        <h2 class="text-xl font-bold text-white">Have you received mental health treatment before?</h2>
+                    </div>
                     <div class="space-y-3">
                         <label class="radio-option cursor-pointer">
                             <input type="radio" name="previous_therapy" value="never" class="mr-3" onchange="selectRadio(this)">
@@ -287,45 +348,46 @@
                         </label>
                     </div>
                 </div>
+            </div>
 
-                <!-- Therapist Preferences -->
-                <div class="form-section mb-8">
-                    <h2 class="text-2xl font-bold mb-6 flex items-center">
-                        <span class="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-sm mr-3">6</span>
-                        Do you have any preferences for your therapist?
-                    </h2>
-                    <div class="grid grid-cols-1 gap-6">
-                        <div>
-                            <label class="block text-sm font-medium mb-2">👤 Gender Preference</label>
-                            <select name="therapist_gender" class="form-select w-full">
-                                <option value="no_preference">No preference</option>
-                                <option value="female">Female</option>
-                                <option value="male">Male</option>
-                                <option value="non_binary">Non-binary</option>
-                            </select>
-                        </div>
-                        
-                        <!-- Virtual Session Notice -->
-                        <div class="bg-blue-600 bg-opacity-20 rounded-lg p-4 border border-blue-400">
-                            <div class="flex items-center">
-                                <i class="fas fa-video text-blue-400 mr-3 text-xl"></i>
-                                <div>
-                                    <h4 class="font-semibold text-blue-200 mb-1">Virtual Sessions Only</h4>
-                                    <p class="text-blue-100 text-sm">
-                                        All therapy sessions are conducted via secure Zoom meetings for your safety and convenience
-                                    </p>
-                                </div>
+            <!-- Therapist Preferences -->
+            <div class="glass-card">
+                <div class="form-section">
+                    <div class="section-header">
+                        <span class="section-number">6</span>
+                        <h2 class="text-xl font-bold text-white">Do you have any preferences for your therapist?</h2>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2 text-purple-300">👤 Gender Preference</label>
+                        <select name="therapist_gender" class="form-select">
+                            <option value="no_preference">No preference</option>
+                            <option value="female">Female</option>
+                            <option value="male">Male</option>
+                            <option value="non_binary">Non-binary</option>
+                        </select>
+                    </div>
+                    
+                    <div class="highlight-box mt-4">
+                        <div class="flex items-center">
+                            <i class="fas fa-video text-blue-400 mr-3 text-xl"></i>
+                            <div>
+                                <h4 class="font-semibold text-blue-200 mb-1">Virtual Sessions Only</h4>
+                                <p class="text-blue-100 text-sm">
+                                    All therapy sessions are conducted via secure Zoom meetings
+                                </p>
                             </div>
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <!-- Safety Assessment -->
-                <div class="form-section mb-8">
-                    <h2 class="text-2xl font-bold mb-6 flex items-center">
-                        <span class="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center text-sm mr-3">7</span>
-                        Safety Assessment (Confidential)
-                    </h2>
+            <!-- Safety Assessment -->
+            <div class="glass-card">
+                <div class="form-section">
+                    <div class="section-header">
+                        <span class="section-number">7</span>
+                        <h2 class="text-xl font-bold text-white">Safety Assessment (Confidential)</h2>
+                    </div>
                     <p class="text-purple-300 mb-4">
                         🔒 This information helps us provide appropriate support and is completely confidential
                     </p>
@@ -348,92 +410,95 @@
                         </label>
                     </div>
                 </div>
+            </div>
 
-                <!-- Crisis Warning -->
-                <div id="crisis-warning" class="crisis-warning mb-8" style="display: none;">
-                    <div class="flex items-start">
-                        <i class="fas fa-shield-alt text-red-300 mr-4 mt-1 text-xl"></i>
-                        <div>
-                            <h4 class="font-bold text-red-200 mb-3 text-lg">🆘 Immediate Support Available</h4>
-                            <p class="mb-4 text-red-100">If you're having thoughts of suicide or self-harm, please reach out for immediate help:</p>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                                <div>
-                                    <p class="font-semibold text-red-200 mb-2">24/7 Crisis Support:</p>
-                                    <ul class="space-y-1 text-red-100">
-                                        <li>📞 National Suicide Prevention: <strong>988</strong></li>
-                                        <li>💬 Crisis Text Line: <strong>Text HOME to 741741</strong></li>
-                                        <li>🚨 Emergency Services: <strong>911</strong></li>
-                                    </ul>
-                                </div>
-                                <div>
-                                    <p class="font-semibold text-red-200 mb-2">Campus Resources:</p>
-                                    <ul class="space-y-1 text-red-100">
-                                        <li>🏫 Campus counseling: Available 24/7</li>
-                                        <li>🏥 Student health services</li>
-                                        <li>👥 Peer support groups</li>
-                                    </ul>
-                                </div>
+            <!-- Crisis Warning -->
+            <div id="crisis-warning" class="crisis-warning" style="display: none;">
+                <div class="flex items-start">
+                    <i class="fas fa-shield-alt text-red-300 mr-4 mt-1 text-xl"></i>
+                    <div>
+                        <h4 class="font-bold text-red-200 mb-3 text-lg">🆘 Immediate Support Available</h4>
+                        <p class="mb-4 text-red-100">If you're having thoughts of suicide or self-harm, please reach out for immediate help:</p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                            <div>
+                                <p class="font-semibold text-red-200 mb-2">24/7 Crisis Support:</p>
+                                <ul class="space-y-1 text-red-100">
+                                    <li>📞 National Suicide Prevention: <strong>988</strong></li>
+                                    <li>💬 Crisis Text Line: <strong>Text HOME to 741741</strong></li>
+                                    <li>🚨 Emergency Services: <strong>911</strong></li>
+                                </ul>
+                            </div>
+                            <div>
+                                <p class="font-semibold text-red-200 mb-2">Campus Resources:</p>
+                                <ul class="space-y-1 text-red-100">
+                                    <li>🏫 Campus counseling: Available 24/7</li>
+                                    <li>🏥 Student health services</li>
+                                    <li>👥 Peer support groups</li>
+                                </ul>
                             </div>
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <!-- Emergency Contact -->
-                <div class="form-section mb-8">
-                    <h2 class="text-2xl font-bold mb-6 flex items-center">
-                        <span class="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-sm mr-3">8</span>
-                        Emergency Contact Information
-                    </h2>
+            <!-- Emergency Contact -->
+            <div class="glass-card">
+                <div class="form-section">
+                    <div class="section-header">
+                        <span class="section-number">8</span>
+                        <h2 class="text-xl font-bold text-white">Emergency Contact Information</h2>
+                    </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-sm font-medium mb-2">👤 Contact Name</label>
+                            <label class="block text-sm font-medium mb-2 text-purple-300">👤 Contact Name</label>
                             <input type="text" name="emergency_contact_name" placeholder="Full Name" 
-                                   class="form-input w-full" required>
+                                   class="form-input" required>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium mb-2">📱 Phone Number</label>
+                            <label class="block text-sm font-medium mb-2 text-purple-300">📱 Phone Number</label>
                             <input type="tel" name="emergency_contact_phone" placeholder="+254..." 
-                                   class="form-input w-full" required>
+                                   class="form-input" required>
                         </div>
                         <div class="md:col-span-2">
-                            <label class="block text-sm font-medium mb-2">🤝 Relationship</label>
+                            <label class="block text-sm font-medium mb-2 text-purple-300">🤝 Relationship</label>
                             <input type="text" name="emergency_contact_relationship" placeholder="e.g., Parent, Sibling, Friend" 
-                                   class="form-input w-full" required>
+                                   class="form-input" required>
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <!-- Submit Button -->
-                <div class="text-center">
-                    <button type="submit" class="submit-btn" id="submit-btn">
-                        <i class="fas fa-brain mr-2"></i>
-                        Complete Assessment & Get Matched
-                    </button>
-                    <p class="text-sm text-purple-300 mt-4">
-                        ⚡ Instant AI matching • 📅 Automatic Zoom scheduling • 🔒 Complete privacy
-                    </p>
-                    
-                    <!-- What Happens Next -->
-                    <div class="mt-6 bg-green-600 bg-opacity-20 rounded-lg p-4 border border-green-400 max-w-md mx-auto">
-                        <h4 class="font-semibold text-green-200 mb-2">
-                            <i class="fas fa-magic mr-2"></i>
-                            What Happens Next?
-                        </h4>
-                        <div class="text-green-100 text-sm space-y-1">
-                            <p>✅ AI analyzes your responses instantly</p>
-                            <p>✅ Perfect therapist match found automatically</p>
-                            <p>✅ Zoom session scheduled immediately</p>
-                            <p>✅ Secure meeting link sent to your email</p>
-                        </div>
+            <!-- Submit Button -->
+            <div class="glass-card text-center">
+                <button type="submit" class="btn-primary" id="submit-btn">
+                    <i class="fas fa-brain mr-2"></i>
+                    Complete Assessment & Get Matched
+                </button>
+                <p class="text-sm text-purple-300 mt-4">
+                    ⚡ Instant AI matching • 📅 Automatic session scheduling • 🔒 Complete privacy
+                </p>
+                
+                <div class="highlight-box mt-4 max-w-md mx-auto">
+                    <h4 class="font-semibold text-blue-200 mb-2">
+                        <i class="fas fa-magic mr-2"></i>What Happens Next?
+                    </h4>
+                    <div class="text-blue-100 text-sm space-y-1">
+                        <p>✅ AI analyzes your responses instantly</p>
+                        <p>✅ Perfect therapist match found automatically</p>
+                        <p>✅ First session scheduled immediately</p>
+                        <p>✅ Secure meeting link sent to your email</p>
                     </div>
                 </div>
-            </form>
-        </div>
+            </div>
+        </form>
     </div>
 
     <script>
+        let currentSeverity = null;
+
         // Severity Scale Selection
         function setSeverity(value) {
+            currentSeverity = value;
             document.getElementById('severity-input').value = value;
             
             // Update button styles
@@ -447,7 +512,7 @@
 
         // Radio button selection
         function selectRadio(element) {
-            const parent = element.closest('.form-section');
+            const parent = element.closest('.glass-card');
             parent.querySelectorAll('.radio-option').forEach(opt => opt.classList.remove('selected'));
             element.closest('.radio-option').classList.add('selected');
             updateProgress();
@@ -488,20 +553,58 @@
             if (document.getElementById('severity-input').value) completedFields++;
             if (document.querySelector('select[name="duration"]').value) completedFields++;
             if (document.querySelector('input[name="previous_therapy"]:checked')) completedFields++;
+            if (document.querySelector('select[name="therapist_gender"]').value) completedFields++;
             if (document.querySelector('input[name="emergency_contact_name"]').value.trim()) completedFields++;
+            if (document.querySelector('input[name="emergency_contact_phone"]').value.trim()) completedFields++;
             
             const progress = (completedFields / totalFields) * 100;
             document.getElementById('progress-fill').style.width = progress + '%';
         }
 
+        // Show flash message
+        function showFlashMessage(message, type = 'info') {
+            const flashContainer = document.createElement('div');
+            flashContainer.className = `flash-message flash-${type}`;
+            flashContainer.innerHTML = `<p>${message}</p>`;
+            
+            const container = document.querySelector('.container');
+            container.insertBefore(flashContainer, container.firstChild);
+            
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                flashContainer.remove();
+            }, 5000);
+        }
+
         // Form Submission
         document.getElementById('intake-form').addEventListener('submit', function(e) {
-            e.preventDefault();
+            // Check if all required fields are filled
+            const requiredFields = ['primary_concern', 'description', 'severity', 'duration', 'previous_therapy', 'emergency_contact_name', 'emergency_contact_phone', 'emergency_contact_relationship'];
+            let allValid = true;
+            
+            requiredFields.forEach(field => {
+                if (field === 'previous_therapy') {
+                    if (!document.querySelector('input[name="previous_therapy"]:checked')) {
+                        allValid = false;
+                    }
+                } else {
+                    const element = document.querySelector(`[name="${field}"], #${field}-input`);
+                    if (!element || !element.value.trim()) {
+                        allValid = false;
+                    }
+                }
+            });
+            
+            if (!allValid) {
+                e.preventDefault();
+                showFlashMessage('Please complete all required fields before submitting.', 'error');
+                return;
+            }
             
             // Show loading state
             const submitBtn = document.getElementById('submit-btn');
             const originalText = submitBtn.innerHTML;
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing with AI...';
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing Assessment...';
             submitBtn.disabled = true;
             
             // Check for crisis indicators
@@ -509,35 +612,31 @@
             const severity = parseInt(document.getElementById('severity-input').value);
             
             if (severity >= 8 || checkedCrisis.length > 0) {
-                if (!confirm('🚨 Based on your responses, we recommend immediate support. Would you like to proceed with priority assignment to a counselor with automatic Zoom scheduling?')) {
+                if (!confirm('🚨 Based on your responses, we recommend priority assignment to a counselor. Would you like to proceed with immediate matching?')) {
+                    e.preventDefault();
                     submitBtn.innerHTML = originalText;
                     submitBtn.disabled = false;
                     return;
                 }
             }
             
-            // Add processing steps simulation
+            // Show processing steps
             setTimeout(() => {
-                submitBtn.innerHTML = '<i class="fas fa-brain mr-2"></i>AI Analyzing Responses...';
+                submitBtn.innerHTML = '<i class="fas fa-brain mr-2"></i>Analyzing Responses...';
             }, 1000);
             
             setTimeout(() => {
-                submitBtn.innerHTML = '<i class="fas fa-user-md mr-2"></i>Finding Perfect Therapist...';
+                submitBtn.innerHTML = '<i class="fas fa-user-md mr-2"></i>Finding Therapist Match...';
             }, 2000);
             
             setTimeout(() => {
-                submitBtn.innerHTML = '<i class="fas fa-video mr-2"></i>Creating Zoom Session...';
+                submitBtn.innerHTML = '<i class="fas fa-calendar mr-2"></i>Scheduling Session...';
             }, 3000);
-            
-            // Submit form
-            setTimeout(() => {
-                this.submit();
-            }, 4000);
         });
 
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
-            // Add event listeners
+            // Add event listeners for progress tracking
             document.querySelectorAll('input, select, textarea').forEach(element => {
                 element.addEventListener('change', updateProgress);
                 element.addEventListener('input', updateProgress);
@@ -545,6 +644,8 @@
             
             // Initial progress update
             updateProgress();
+            
+            console.log('Simplified wellbeing assessment loaded');
         });
     </script>
 </body>

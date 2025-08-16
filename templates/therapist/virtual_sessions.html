@@ -307,7 +307,7 @@
                         </h1>
                         <p class="text-purple-300">
                             <i class="fas fa-video mr-2"></i>
-                            Manage all your virtual therapy sessions • Google Meet Integration
+                            Manage all your virtual therapy sessions • Zoom Integration
                         </p>
                     </div>
                     <div class="virtual-only-badge">
@@ -322,7 +322,7 @@
                 <div class="flex space-x-4 mb-6">
                     <button class="tab-button active" onclick="showTab('confirmed')">
                         <i class="fas fa-check-circle mr-2"></i>
-                        Confirmed ({{ confirmed_sessions|length }})
+                        Confirmed ({{ upcoming_sessions|length }})
                     </button>
                     <button class="tab-button" onclick="showTab('completed')">
                         <i class="fas fa-check-double mr-2"></i>
@@ -341,9 +341,9 @@
                         Confirmed Virtual Sessions
                     </h3>
                     
-                    {% if confirmed_sessions %}
+                    {% if upcoming_sessions %}
                     <div class="space-y-4">
-                        {% for session in confirmed_sessions %}
+                        {% for session in upcoming_sessions %}
                         <div class="session-card session-confirmed">
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center space-x-4">
@@ -369,24 +369,51 @@
                                             {% endif %}
                                         </p>
                                         <p class="text-gray-400 text-sm mt-1">
-                                            Duration: 60 minutes • Platform: Google Meet
+                                            Duration: 60 minutes • Platform: Zoom
                                         </p>
                                     </div>
                                 </div>
                                 <div class="flex flex-col space-y-2">
-                                    {% if session.meeting_info %}
-                                    <a href="{{ session.meeting_info.meet_link }}" target="_blank" class="btn-success">
-                                        <i class="fas fa-video mr-2"></i>
-                                        Join Session
-                                    </a>
+                                    <!-- Enhanced Join Button with Session Controls -->
+                                    {% if session.session_controls and session.session_controls.can_join %}
+                                        {% if session.meeting_info %}
+                                        <a href="{{ url_for('therapist.join_session', appointment_id=session._id) }}" 
+                                        class="{{ session.session_controls.button_class }}">
+                                            <i class="{{ session.session_controls.icon }} mr-2"></i>
+                                            {{ session.session_controls.message }}
+                                        </a>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="{{ session.session_controls.button_class if session.session_controls else 'btn-secondary' }}">
+                                            <i class="{{ session.session_controls.icon if session.session_controls else 'fas fa-clock' }} mr-2"></i>
+                                            {{ session.session_controls.message if session.session_controls else 'Session Pending' }}
+                                        </span>
                                     {% endif %}
+                                    
+                                    <!-- Zoom Status and Refresh -->
+                                    {% if session.zoom_integrated %}
+                                        <span class="text-green-400 text-sm">
+                                            <i class="fas fa-video mr-1"></i>Zoom Integrated
+                                        </span>
+                                    {% else %}
+                                        <div class="flex gap-2">
+                                            <span class="text-yellow-400 text-sm">
+                                                <i class="fas fa-exclamation-triangle mr-1"></i>Fallback Link
+                                            </span>
+                                            <button onclick="refreshZoomMeeting('{{ session._id }}')" class="text-blue-400 hover:text-blue-300 text-sm">
+                                                <i class="fas fa-refresh mr-1"></i>Refresh Zoom
+                                            </button>
+                                        </div>
+                                    {% endif %}
+                                    
+                                    <!-- Action Buttons -->
                                     <button onclick="autoReschedule('{{ session._id }}')" class="auto-action-btn">
                                         <i class="fas fa-sync mr-2"></i>
                                         Auto-Reschedule
                                     </button>
-                                    <button onclick="suggestAlternative('{{ session._id }}')" class="suggest-btn">
-                                        <i class="fas fa-user-friends mr-2"></i>
-                                        Suggest Alternative
+                                    <button onclick="cancelSession('{{ session._id }}')" class="suggest-btn">
+                                        <i class="fas fa-times mr-2"></i>
+                                        Cancel Session
                                     </button>
                                 </div>
                             </div>
@@ -536,7 +563,7 @@
                     <div class="space-y-3">
                         <div class="flex justify-between">
                             <span class="text-purple-300">Virtual Sessions:</span>
-                            <span class="font-semibold">{{ confirmed_sessions|length + completed_sessions|length }}</span>
+                            <span class="font-semibold">{{ upcoming_sessions|length + completed_sessions|length }}</span>
                         </div>
                         <div class="flex justify-between">
                             <span class="text-purple-300">Avg Duration:</span>
@@ -544,7 +571,7 @@
                         </div>
                         <div class="flex justify-between">
                             <span class="text-purple-300">Platform:</span>
-                            <span class="font-semibold text-blue-400">Google Meet</span>
+                            <span class="font-semibold text-blue-400">Zoom</span>
                         </div>
                     </div>
                 </div>
@@ -558,7 +585,7 @@
                         <div class="flex justify-between">
                             <span class="text-purple-300">Auto-Confirmed:</span>
                             <span class="font-semibold text-green-400">
-                                {{ (confirmed_sessions)|selectattr('auto_scheduled')|list|length }}
+                                {{ (upcoming_sessions)|selectattr('auto_scheduled')|list|length }}
                             </span>
                         </div>
                         <div class="flex justify-between">
@@ -581,7 +608,7 @@
                         <div class="flex justify-between">
                             <span class="text-purple-300">High Priority:</span>
                             <span class="font-semibold text-red-400">
-                                {{ (confirmed_sessions + cancelled_sessions)|selectattr('crisis_level', 'in', ['high', 'critical'])|list|length }}
+                                {{ (upcoming_sessions + cancelled_sessions)|selectattr('crisis_level', 'in', ['high', 'critical'])|list|length }}
                             </span>
                         </div>
                         <div class="flex justify-between">
@@ -690,7 +717,54 @@
                 alert('Failed to copy link. Please copy manually.');
             });
         }
+            // Refresh Zoom meeting
+    async function refreshZoomMeeting(appointmentId) {
+        try {
+            const response = await fetch(`/api/refresh-session-zoom/${appointmentId}`, {
+                method: 'POST'
+            });
+            const result = await response.json();
+            
+            if (result.success) {
+                alert('✅ Zoom meeting refreshed successfully!');
+                location.reload();
+            } else {
+                alert('❌ Failed to refresh Zoom meeting: ' + result.message);
+            }
+        } catch (error) {
+            alert('❌ Error refreshing Zoom meeting');
+        }
+    }
+
+    // Cancel session
+    async function cancelSession(appointmentId) {
+        const reason = prompt('Please provide a reason for cancellation:');
+        if (!reason || reason.trim().length < 10) {
+            alert('Please provide a detailed reason (at least 10 characters)');
+            return;
+        }
         
+        try {
+            const response = await fetch('/api/cancel-session-therapist', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    appointment_id: appointmentId,
+                    reason: reason.trim()
+                })
+            });
+            
+            const result = await response.json();
+            if (result.success) {
+                alert('✅ Session cancelled successfully');
+                location.reload();
+            } else {
+                alert('❌ Failed to cancel session: ' + result.error);
+            }
+        } catch (error) {
+            alert('❌ Error cancelling session');
+        }
+         }
         // Auto-refresh sessions every 3 minutes for confirmed sessions
         setInterval(() => {
             const currentTab = document.querySelector('.tab-button.active').textContent.toLowerCase();

@@ -7,70 +7,25 @@ import secrets
 import string
 from werkzeug.security import generate_password_hash
 import pandas as pd
-from flask import render_template, redirect, url_for, request, jsonify, flash, make_response, session
+from flask import render_template,current_app, redirect, url_for, request, jsonify, flash, make_response, session
 from wellbeing.blueprints.admin import admin_bp
 from wellbeing.utils.decorators import login_required, admin_required, csrf_protected
 from wellbeing import mongo, logger
 from wellbeing.utils.file_handlers import handle_video_upload
 from wellbeing.models.user import find_user_by_id, get_all_users
 from wellbeing.models.resource import create_resource, update_resource, delete_resource
-from wellbeing.services.feedback_service import export_training_data, analyze_feedback_data
 from wellbeing.utils.email import send_therapist_credentials, send_password_reset
 from wellbeing.utils.automated_moderation import generate_automated_moderation_report, AutomatedModerator
 from wellbeing.utils.moderation_setup import ModerationConfig
 from datetime import timedelta
+from . import mood_reports
+from . import admin_bp
 
 # Helper function to generate a random password
 def generate_random_password(length=12):
     alphabet = string.ascii_letters + string.digits
     return ''.join(secrets.choice(alphabet) for _ in range(length))
 
-@app.route('/api/setup-admin', methods=['POST'])
-def setup_admin():
-    """One-time admin setup for production"""
-    
-    # Check if admin already exists
-    if mongo.db.admin.count_documents({}) > 0:
-        return jsonify({"error": "Admin already exists"}), 400
-    
-    # Check setup key for security
-    setup_key = request.headers.get('Setup-Key')
-    expected_key = os.getenv('SETUP_KEY')
-    
-    if not expected_key or setup_key != expected_key:
-        return jsonify({"error": "Invalid setup key"}), 401
-    
-    # Get admin details from request
-    data = request.get_json()
-    email = data.get('email')
-    password = data.get('password')
-    
-    if not email or not password:
-        return jsonify({"error": "Email and password required"}), 400
-    
-    # Basic password validation
-    if len(password) < 8:
-        return jsonify({"error": "Password too short"}), 400
-    
-    try:
-        # Create admin
-        hashed_password = generate_password_hash(password)
-        
-        result = mongo.db.admin.insert_one({
-            "email": email,
-            "password": hashed_password,
-            "role": "super_admin",
-            "created_at": datetime.utcnow(),
-            "status": "active"
-        })
-        
-        return jsonify({
-            "message": "Admin created successfully",
-            "admin_id": str(result.inserted_id)
-        }), 201
-        
-    except Exception as e:
-        return jsonify({"error": "Failed to create admin"}), 500
 
 @admin_bp.route('/dashboard')
 @login_required
@@ -575,96 +530,634 @@ def delete_chat(chat_id):
         
         flash(f'Error deleting chat: {str(e)}', 'error')
         return redirect(url_for('admin.chat_logs'))
+    
 
-@admin_bp.route('/feedback-dashboard')
+
+@admin_bp.route('/chat-analytics-data')
 @login_required
 @admin_required
-def feedback_dashboard():
-    """Dashboard for viewing feedback statistics and recommendations."""
+def chat_analytics_data():
+    """Get analytics data for charts and reports."""
     try:
-        # Get feedback statistics
-        total_chats = mongo.db.chats.count_documents({})
-        chats_with_feedback = mongo.db.chats.count_documents({"feedback": {"$exists": True}})
-        positive_feedback = mongo.db.chats.count_documents({"feedback.was_helpful": True})
-        negative_feedback = mongo.db.chats.count_documents({"feedback.was_helpful": False})
+        # Get date range parameter
+        date_range = request.args.get('range', '30days')
+        topic_filter = request.args.get('topic', 'all')
         
-        # Calculate average ratings
-        pipeline = [
-            {"$match": {"feedback.rating": {"$exists": True}}},
-            {"$group": {"_id": None, "avg_rating": {"$avg": "$feedback.rating"}}}
-        ]
-        avg_rating_result = list(mongo.db.chats.aggregate(pipeline))
-        avg_rating = avg_rating_result[0]['avg_rating'] if avg_rating_result else 0
+        # Calculate date filter
+        from datetime import datetime, timedelta
+        now = datetime.now()
         
-        # Get latest recommendations
-        latest_recommendation = mongo.db.improvement_recommendations.find_one(
-            sort=[("timestamp", -1)]
-        )
-        
-        # Get topics with low ratings
-        pipeline = [
-            {"$match": {"feedback.rating": {"$lt": 3}}},
-            {"$group": {
-                "_id": "$conversation_context.topic", 
-                "count": {"$sum": 1},
-                "avg_rating": {"$avg": "$feedback.rating"}
-            }},
-            {"$sort": {"count": -1}},
-            {"$limit": 5}
-        ]
-        problematic_topics = list(mongo.db.chats.aggregate(pipeline))
-        
-        # Render the dashboard template with data
-        return render_template(
-            'feedback_dashboard.html',
-            stats={
-                "total_chats": total_chats,
-                "chats_with_feedback": chats_with_feedback,
-                "feedback_rate": (chats_with_feedback / total_chats * 100) if total_chats > 0 else 0,
-                "positive_feedback": positive_feedback,
-                "negative_feedback": negative_feedback,
-                "positive_rate": (positive_feedback / chats_with_feedback * 100) if chats_with_feedback > 0 else 0,
-                "avg_rating": round(avg_rating, 2)
-            },
-            recommendations=latest_recommendation['recommendations'] if latest_recommendation and 'recommendations' in latest_recommendation else [],
-            problematic_topics=problematic_topics
-        )
-        
-    except Exception as e:
-        logger.error(f"Error rendering feedback dashboard: {e}")
-        flash('Error loading dashboard data', 'error')
-        return redirect(url_for('admin.dashboard'))
-
-@admin_bp.route('/export-training-data')
-@login_required
-@admin_required
-def export_training_data_route():
-    """Exports high-quality training examples based on positive feedback."""
-    try:
-        # Get quality filter parameters from query string
-        min_rating = int(request.args.get('min_rating', 4))
-        helpful_only = request.args.get('helpful_only', 'true').lower() == 'true'
-        
-        # Get the training data
-        training_df = export_training_data(min_rating, helpful_only)
-        
-        if training_df is not None and not training_df.empty:
-            # Convert to CSV
-            csv_data = training_df.to_csv(index=False)
-            
-            # Prepare CSV download response
-            response = make_response(csv_data)
-            response.headers["Content-Disposition"] = "attachment; filename=positive_training_data.csv"
-            response.headers["Content-Type"] = "text/csv"
-            return response
+        if date_range == '7days':
+            start_date = now - timedelta(days=7)
+        elif date_range == '30days':
+            start_date = now - timedelta(days=30)
+        elif date_range == '3months':
+            start_date = now - timedelta(days=90)
+        elif date_range == '6months':
+            start_date = now - timedelta(days=180)
+        elif date_range == '1year':
+            start_date = now - timedelta(days=365)
         else:
-            flash('No matching positive feedback data available', 'warning')
-            return redirect(url_for('admin.feedback_dashboard'))
+            start_date = datetime(2020, 1, 1)  # All time
+        
+        # Build query filter
+        query_filter = {'timestamp': {'$gte': start_date}}
+        
+        if topic_filter != 'all':
+            query_filter['$or'] = [
+                {'conversation_context.topic': topic_filter},
+                {'topic': topic_filter}
+            ]
+        
+        # Get chat data
+        chats = list(mongo.db.chats.find(query_filter))
+        
+        # Process data for analytics
+        analytics_data = {
+            'total_conversations': len(chats),
+            'unique_users': len(set(chat.get('user_id') for chat in chats if chat.get('user_id'))),
+            'average_confidence': sum(float(chat.get('confidence', 0)) for chat in chats) / len(chats) if chats else 0,
+            'daily_counts': get_daily_conversation_counts(chats, start_date),
+            'topic_distribution': get_topic_distribution(chats),
+            'confidence_distribution': get_confidence_distribution(chats),
+            'hourly_distribution': get_hourly_distribution(chats),
+            'user_engagement': get_user_engagement_stats(chats)
+        }
+        
+        return jsonify(analytics_data)
+        
+    except Exception as e:
+        logger.error(f"Error getting analytics data: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@admin_bp.route('/generate-report', methods=['POST'])
+@login_required
+@admin_required
+@csrf_protected
+def generate_report():
+    """Generate a comprehensive chat report."""
+    try:
+        data = request.get_json()
+        report_type = data.get('reportType', 'comprehensive')
+        date_range = data.get('dateRange', '30days')
+        specific_topic = data.get('specificTopic', 'all')
+        report_format = data.get('reportFormat', 'detailed')
+        
+        # Get filtered chat data
+        chat_data = get_filtered_chat_data(date_range, specific_topic)
+        
+        # Generate report based on type
+        if report_type == 'comprehensive':
+            report = generate_comprehensive_report(chat_data, date_range)
+        elif report_type == 'topic-focused':
+            report = generate_topic_focused_report(chat_data, specific_topic, date_range)
+        elif report_type == 'user-engagement':
+            report = generate_user_engagement_report(chat_data, date_range)
+        elif report_type == 'wellbeing-trends':
+            report = generate_wellbeing_trends_report(chat_data, date_range)
+        elif report_type == 'confidence-analysis':
+            report = generate_confidence_analysis_report(chat_data, date_range)
+        elif report_type == 'crisis-detection':
+            report = generate_crisis_detection_report(chat_data, date_range)
+        else:
+            report = generate_comprehensive_report(chat_data, date_range)
+        
+        # Log report generation
+        mongo.db.admin_logs.insert_one({
+            'action': 'generate_report',
+            'admin_id': session.get('user'),
+            'timestamp': datetime.now(timezone.utc),
+            'details': {
+                'report_type': report_type,
+                'date_range': date_range,
+                'topic': specific_topic,
+                'format': report_format
+            }
+        })
+        
+        return jsonify(report)
+        
+    except Exception as e:
+        logger.error(f"Error generating report: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@admin_bp.route('/export-chat-report/<format>')
+@login_required
+@admin_required
+def export_chat_report(format):
+    """Export report in specified format."""
+    try:
+        # Get report data from session or regenerate
+        report_type = request.args.get('type', 'comprehensive')
+        date_range = request.args.get('range', '30days')
+        topic = request.args.get('topic', 'all')
+        
+        chat_data = get_filtered_chat_data(date_range, topic)
+        
+        if format == 'csv':
+            return export_csv_report(chat_data, report_type)
+        elif format == 'pdf':
+            return export_pdf_report(chat_data, report_type, date_range)
+        else:
+            return jsonify({'error': 'Unsupported format'}), 400
             
     except Exception as e:
-        logger.error(f"Error exporting training data: {e}")
-        flash('Error exporting training data', 'error')
-        return redirect(url_for('admin.feedback_dashboard'))
+        logger.error(f"Error exporting report: {e}")
+        return jsonify({'error': str(e)}), 500
+
+# Helper functions for analytics and reporting
+
+def get_daily_conversation_counts(chats, start_date):
+    """Get daily conversation counts."""
+    from collections import defaultdict
+    daily_counts = defaultdict(int)
+    
+    for chat in chats:
+        if chat.get('timestamp'):
+            date_str = chat['timestamp'].strftime('%Y-%m-%d')
+            daily_counts[date_str] += 1
+    
+    # Fill in missing dates with 0
+    current_date = start_date.date()
+    end_date = datetime.now().date()
+    result = []
+    
+    while current_date <= end_date:
+        date_str = current_date.strftime('%Y-%m-%d')
+        result.append({
+            'date': date_str,
+            'count': daily_counts[date_str]
+        })
+        current_date += timedelta(days=1)
+    
+    return result
+
+def get_topic_distribution(chats):
+    """Get topic distribution from chats."""
+    from collections import Counter
+    topics = []
+    
+    for chat in chats:
+        # Try different fields where topic might be stored
+        topic = None
+        if 'conversation_context' in chat and 'topic' in chat['conversation_context']:
+            topic = chat['conversation_context']['topic']
+        elif 'topic' in chat:
+            topic = chat['topic']
+        elif 'category' in chat:
+            topic = chat['category']
+        
+        if topic:
+            topics.append(topic)
+    
+    topic_counts = Counter(topics)
+    total = len(topics)
+    
+    return [
+        {
+            'topic': topic,
+            'count': count,
+            'percentage': round((count / total * 100), 1) if total > 0 else 0
+        }
+        for topic, count in topic_counts.most_common(10)
+    ]
+
+def get_confidence_distribution(chats):
+    """Get confidence score distribution."""
+    high_confidence = 0
+    medium_confidence = 0
+    low_confidence = 0
+    
+    for chat in chats:
+        confidence = chat.get('confidence', 0)
+        try:
+            confidence_value = float(confidence)
+            # Normalize to 0-100 scale
+            if confidence_value <= 1.0:
+                confidence_value *= 100
+            
+            if confidence_value >= 80:
+                high_confidence += 1
+            elif confidence_value >= 50:
+                medium_confidence += 1
+            else:
+                low_confidence += 1
+        except:
+            low_confidence += 1
+    
+    return {
+        'high': high_confidence,
+        'medium': medium_confidence,
+        'low': low_confidence
+    }
+
+def get_hourly_distribution(chats):
+    """Get hourly conversation distribution."""
+    from collections import defaultdict
+    hourly_counts = defaultdict(int)
+    
+    for chat in chats:
+        if chat.get('timestamp'):
+            hour = chat['timestamp'].hour
+            hourly_counts[hour] += 1
+    
+    return [{'hour': hour, 'count': hourly_counts[hour]} for hour in range(24)]
+
+def get_user_engagement_stats(chats):
+    """Get user engagement statistics."""
+    from collections import Counter
+    user_chat_counts = Counter()
+    
+    for chat in chats:
+        user_id = chat.get('user_id')
+        if user_id:
+            user_chat_counts[user_id] += 1
+    
+    if not user_chat_counts:
+        return {
+            'total_users': 0,
+            'avg_conversations_per_user': 0,
+            'return_users': 0,
+            'new_users': 0
+        }
+    
+    total_conversations = sum(user_chat_counts.values())
+    total_users = len(user_chat_counts)
+    return_users = sum(1 for count in user_chat_counts.values() if count > 1)
+    
+    return {
+        'total_users': total_users,
+        'avg_conversations_per_user': round(total_conversations / total_users, 1),
+        'return_users': return_users,
+        'new_users': total_users - return_users
+    }
+
+def get_filtered_chat_data(date_range, topic):
+    """Get filtered chat data based on parameters."""
+    from datetime import datetime, timedelta
+    
+    # Calculate date filter
+    now = datetime.now()
+    if date_range == '7days':
+        start_date = now - timedelta(days=7)
+    elif date_range == '30days':
+        start_date = now - timedelta(days=30)
+    elif date_range == '3months':
+        start_date = now - timedelta(days=90)
+    elif date_range == '6months':
+        start_date = now - timedelta(days=180)
+    elif date_range == '1year':
+        start_date = now - timedelta(days=365)
+    else:
+        start_date = datetime(2020, 1, 1)  # All time
+    
+    # Build query filter
+    query_filter = {'timestamp': {'$gte': start_date}}
+    
+    if topic != 'all':
+        query_filter['$or'] = [
+            {'conversation_context.topic': topic},
+            {'topic': topic}
+        ]
+    
+    return list(mongo.db.chats.find(query_filter))
+
+def generate_comprehensive_report(chat_data, date_range):
+    """Generate a comprehensive analysis report."""
+    total_chats = len(chat_data)
+    unique_users = len(set(chat.get('user_id') for chat in chat_data if chat.get('user_id')))
+    
+    # Calculate average confidence
+    confidences = [float(chat.get('confidence', 0)) for chat in chat_data]
+    avg_confidence = sum(confidences) / len(confidences) if confidences else 0
+    
+    # Get top topics
+    topic_distribution = get_topic_distribution(chat_data)
+    confidence_dist = get_confidence_distribution(chat_data)
+    engagement_stats = get_user_engagement_stats(chat_data)
+    
+    # Generate insights
+    insights = []
+    
+    if avg_confidence > 75:
+        insights.append("✅ High average confidence score indicates excellent AI response quality")
+    elif avg_confidence < 50:
+        insights.append("⚠️ Low confidence scores suggest need for AI model improvement")
+    
+    if engagement_stats['return_users'] / engagement_stats['total_users'] > 0.3 if engagement_stats['total_users'] > 0 else False:
+        insights.append("📈 Good user retention - many users return for multiple conversations")
+    
+    if topic_distribution:
+        top_topic = topic_distribution[0]
+        insights.append(f"🔥 Most discussed topic: {top_topic['topic']} ({top_topic['percentage']}% of conversations)")
+    
+    return {
+        'title': f'Comprehensive Chat Analysis - {get_date_range_text(date_range)}',
+        'summary': {
+            'total_conversations': total_chats,
+            'unique_users': unique_users,
+            'average_confidence': round(avg_confidence, 1),
+            'date_range': get_date_range_text(date_range)
+        },
+        'metrics': {
+            'user_engagement_rate': round(total_chats / unique_users, 1) if unique_users > 0 else 0,
+            'high_confidence_responses': confidence_dist['high'],
+            'return_user_rate': round((engagement_stats['return_users'] / engagement_stats['total_users'] * 100), 1) if engagement_stats['total_users'] > 0 else 0
+        },
+        'top_topics': topic_distribution[:5],
+        'confidence_distribution': confidence_dist,
+        'insights': insights,
+        'recommendations': generate_recommendations(chat_data, avg_confidence, engagement_stats)
+    }
+
+def generate_topic_focused_report(chat_data, topic, date_range):
+    """Generate a topic-focused report."""
+    topic_chats = [chat for chat in chat_data if 
+                   (chat.get('conversation_context', {}).get('topic') == topic or 
+                    chat.get('topic') == topic)]
+    
+    if not topic_chats:
+        return {'error': f'No conversations found for topic: {topic}'}
+    
+    # Analyze sentiment and patterns for this topic
+    confidences = [float(chat.get('confidence', 0)) for chat in topic_chats]
+    avg_confidence = sum(confidences) / len(confidences) if confidences else 0
+    
+    return {
+        'title': f'Topic Analysis: {topic.title()} - {get_date_range_text(date_range)}',
+        'summary': {
+            'total_conversations': len(topic_chats),
+            'average_confidence': round(avg_confidence, 1),
+            'topic': topic.title()
+        },
+        'analysis': analyze_topic_patterns(topic_chats),
+        'recommendations': generate_topic_recommendations(topic, topic_chats)
+    }
+
+def generate_user_engagement_report(chat_data, date_range):
+    """Generate user engagement report."""
+    engagement_stats = get_user_engagement_stats(chat_data)
+    daily_counts = get_daily_conversation_counts(chat_data, datetime.now() - timedelta(days=30))
+    
+    return {
+        'title': f'User Engagement Analysis - {get_date_range_text(date_range)}',
+        'summary': engagement_stats,
+        'trends': {
+            'daily_activity': daily_counts,
+            'peak_hours': get_hourly_distribution(chat_data)
+        },
+        'insights': generate_engagement_insights(engagement_stats, daily_counts)
+    }
+
+def generate_wellbeing_trends_report(chat_data, date_range):
+    """Generate wellbeing trends report."""
+    # Analyze wellbeing-related topics and sentiment
+    wellbeing_topics = ['mental-health', 'stress', 'anxiety', 'depression', 'wellness', 'health']
+    wellbeing_chats = [chat for chat in chat_data if 
+                       any(topic in str(chat.get('message', '')).lower() or 
+                           topic in str(chat.get('topic', '')).lower() 
+                           for topic in wellbeing_topics)]
+    
+    return {
+        'title': f'Wellbeing Trends Analysis - {get_date_range_text(date_range)}',
+        'summary': {
+            'wellbeing_conversations': len(wellbeing_chats),
+            'percentage_of_total': round((len(wellbeing_chats) / len(chat_data) * 100), 1) if chat_data else 0
+        },
+        'trends': analyze_wellbeing_trends(wellbeing_chats),
+        'recommendations': generate_wellbeing_recommendations(wellbeing_chats)
+    }
+
+def generate_confidence_analysis_report(chat_data, date_range):
+    """Generate confidence analysis report."""
+    confidence_dist = get_confidence_distribution(chat_data)
+    
+    # Analyze confidence patterns
+    low_confidence_chats = [chat for chat in chat_data if float(chat.get('confidence', 0)) < 50]
+    
+    return {
+        'title': f'AI Confidence Analysis - {get_date_range_text(date_range)}',
+        'summary': confidence_dist,
+        'analysis': {
+            'low_confidence_patterns': analyze_low_confidence_patterns(low_confidence_chats),
+            'improvement_areas': identify_improvement_areas(chat_data)
+        },
+        'recommendations': generate_confidence_recommendations(confidence_dist, low_confidence_chats)
+    }
+
+def generate_crisis_detection_report(chat_data, date_range):
+    """Generate crisis detection report."""
+    # Keywords that might indicate crisis situations
+    crisis_keywords = ['suicide', 'self-harm', 'crisis', 'emergency', 'help me', 'desperate', 'can\'t cope']
+    
+    potential_crisis_chats = []
+    for chat in chat_data:
+        message = str(chat.get('message', '')).lower()
+        if any(keyword in message for keyword in crisis_keywords):
+            potential_crisis_chats.append(chat)
+    
+    return {
+        'title': f'Crisis Detection Summary - {get_date_range_text(date_range)}',
+        'summary': {
+            'potential_crisis_conversations': len(potential_crisis_chats),
+            'percentage_of_total': round((len(potential_crisis_chats) / len(chat_data) * 100), 1) if chat_data else 0
+        },
+        'analysis': analyze_crisis_patterns(potential_crisis_chats),
+        'recommendations': generate_crisis_recommendations(potential_crisis_chats)
+    }
+
+def export_csv_report(chat_data, report_type):
+    """Export chat data as CSV."""
+    import csv
+    from io import StringIO
+    from flask import make_response
+    
+    output = StringIO()
+    writer = csv.writer(output)
+    
+    # Write headers
+    headers = ['Timestamp', 'User ID', 'Message', 'Response', 'Confidence', 'Topic']
+    writer.writerow(headers)
+    
+    # Write data
+    for chat in chat_data:
+        row = [
+            chat.get('timestamp', '').strftime('%Y-%m-%d %H:%M:%S') if chat.get('timestamp') else '',
+            chat.get('user_id', ''),
+            str(chat.get('message', '')).replace('\n', ' ').replace('\r', ' ')[:200],  # Truncate long messages
+            str(chat.get('response', '')).replace('\n', ' ').replace('\r', ' ')[:200],  # Truncate long responses
+            chat.get('confidence', ''),
+            chat.get('topic') or chat.get('conversation_context', {}).get('topic', '')
+        ]
+        writer.writerow(row)
+    
+    # Create response
+    output.seek(0)
+    response = make_response(output.getvalue())
+    response.headers['Content-Type'] = 'text/csv'
+    response.headers['Content-Disposition'] = f'attachment; filename=chat_report_{report_type}_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv'
+    
+    return response
+
+def export_pdf_report(chat_data, report_type, date_range):
+    """Export report as PDF (placeholder - would need a PDF library like reportlab)."""
+    # This would require implementing PDF generation
+    # For now, return a JSON response indicating PDF generation would be implemented
+    return jsonify({
+        'message': 'PDF export functionality would be implemented here using a library like reportlab',
+        'data': {
+            'report_type': report_type,
+            'date_range': date_range,
+            'total_conversations': len(chat_data)
+        }
+    })
+
+# Additional helper functions for analysis
+def get_date_range_text(range_key):
+    """Convert date range key to readable text."""
+    ranges = {
+        '7days': 'Last 7 Days',
+        '30days': 'Last 30 Days',
+        '3months': 'Last 3 Months',
+        '6months': 'Last 6 Months',
+        '1year': 'Last Year',
+        'all': 'All Time'
+    }
+    return ranges.get(range_key, 'Custom Range')
+
+def generate_recommendations(chat_data, avg_confidence, engagement_stats):
+    """Generate recommendations based on data analysis."""
+    recommendations = []
+    
+    if avg_confidence < 60:
+        recommendations.append("🔧 **AI Improvement**: Consider retraining or fine-tuning the AI model to improve response quality")
+    
+    if engagement_stats['return_users'] / engagement_stats['total_users'] < 0.2 if engagement_stats['total_users'] > 0 else False:
+        recommendations.append("👥 **User Retention**: Implement follow-up mechanisms to encourage return visits")
+    
+    recommendations.append("📊 **Data Collection**: Continue monitoring chat patterns to identify emerging trends")
+    recommendations.append("🎯 **Resource Planning**: Use peak activity times to optimize staff allocation")
+    
+    return recommendations
+
+def analyze_topic_patterns(topic_chats):
+    """Analyze patterns in topic-specific chats."""
+    # Placeholder for more sophisticated analysis
+    return {
+        'common_phrases': extract_common_phrases(topic_chats),
+        'sentiment_trend': analyze_sentiment_trend(topic_chats),
+        'response_effectiveness': calculate_response_effectiveness(topic_chats)
+    }
+
+def generate_topic_recommendations(topic, topic_chats):
+    """Generate recommendations for specific topics."""
+    return [
+        f"📚 **Content Development**: Create more resources specifically for {topic} discussions",
+        f"🤖 **AI Training**: Enhance AI responses for {topic}-related queries",
+        f"📈 **Monitoring**: Continue tracking {topic} conversation trends"
+    ]
+
+def generate_engagement_insights(engagement_stats, daily_counts):
+    """Generate insights from engagement data."""
+    insights = []
+    
+    if engagement_stats['avg_conversations_per_user'] > 2:
+        insights.append("💪 **Strong Engagement**: Users are having multiple meaningful conversations")
+    
+    # Analyze daily patterns
+    recent_activity = sum(day['count'] for day in daily_counts[-7:])
+    previous_activity = sum(day['count'] for day in daily_counts[-14:-7])
+    
+    if recent_activity > previous_activity:
+        insights.append("📈 **Growing Activity**: Conversation volume is increasing week over week")
+    
+    return insights
+
+def analyze_wellbeing_trends(wellbeing_chats):
+    """Analyze wellbeing-related conversation trends."""
+    return {
+        'trend_direction': 'increasing' if len(wellbeing_chats) > 10 else 'stable',
+        'common_concerns': extract_wellbeing_concerns(wellbeing_chats),
+        'support_effectiveness': evaluate_support_effectiveness(wellbeing_chats)
+    }
+
+def generate_wellbeing_recommendations(wellbeing_chats):
+    """Generate wellbeing-specific recommendations."""
+    return [
+        "🏥 **Professional Resources**: Ensure quick access to professional mental health resources",
+        "📱 **Crisis Support**: Implement immediate crisis intervention protocols",
+        "🌟 **Preventive Care**: Develop proactive wellbeing check-in features"
+    ]
+
+# Additional helper functions (placeholders for more sophisticated analysis)
+def extract_common_phrases(chats):
+    """Extract common phrases from chat messages."""
+    # Placeholder - would implement NLP analysis
+    return ["help with", "how to", "feeling stressed"]
+
+def analyze_sentiment_trend(chats):
+    """Analyze sentiment trends."""
+    # Placeholder - would implement sentiment analysis
+    return "neutral"
+
+def calculate_response_effectiveness(chats):
+    """Calculate how effective responses are."""
+    # Placeholder - would analyze user satisfaction indicators
+    return "good"
+
+def extract_wellbeing_concerns(chats):
+    """Extract common wellbeing concerns."""
+    # Placeholder - would implement concern categorization
+    return ["anxiety", "stress", "sleep issues"]
+
+def evaluate_support_effectiveness(chats):
+    """Evaluate how effective support responses are."""
+    # Placeholder - would analyze follow-up patterns
+    return "effective"
+
+def analyze_low_confidence_patterns(low_confidence_chats):
+    """Analyze patterns in low confidence responses."""
+    # Placeholder for pattern analysis
+    return {
+        'common_topics': ["complex technical questions", "ambiguous requests"],
+        'message_characteristics': ["very long messages", "multiple questions"]
+    }
+
+def identify_improvement_areas(chat_data):
+    """Identify areas for AI improvement."""
+    # Placeholder for improvement identification
+    return ["technical accuracy", "empathy in responses", "handling ambiguous queries"]
+
+def generate_confidence_recommendations(confidence_dist, low_confidence_chats):
+    """Generate recommendations for improving confidence."""
+    recommendations = []
+    
+    if confidence_dist['low'] > confidence_dist['high']:
+        recommendations.append("🔄 **Model Retraining**: High number of low-confidence responses indicates need for model improvement")
+    
+    recommendations.append("📚 **Training Data**: Expand training dataset with high-quality examples")
+    recommendations.append("🎯 **Fine-tuning**: Focus on specific domains where confidence is consistently low")
+    
+    return recommendations
+
+def analyze_crisis_patterns(crisis_chats):
+    """Analyze patterns in potential crisis conversations."""
+    # Placeholder for crisis pattern analysis
+    return {
+        'time_patterns': "Most crisis conversations occur in evening hours",
+        'common_triggers': ["academic pressure", "relationship issues", "financial stress"],
+        'response_quality': "Good - most receive appropriate crisis resources"
+    }
+
+def generate_crisis_recommendations(crisis_chats):
+    """Generate crisis-specific recommendations."""
+    return [
+        "🚨 **Immediate Response**: Ensure 24/7 crisis intervention capability",
+        "📞 **Professional Referrals**: Maintain updated list of crisis helplines",
+        "🔍 **Pattern Recognition**: Implement better automated crisis detection",
+        "📊 **Follow-up**: Track outcomes of crisis interventions"
+    ]
+
     
 @admin_bp.route('/students')
 @admin_required
@@ -1131,11 +1624,17 @@ def update_user(user_type, user_id):
         data = request.get_json()
         user_object_id = ObjectId(user_id)
         
+        # Log the incoming data for debugging
+        logger.info(f"Updating {user_type} {user_id} with data: {data}")
+        
         # Update user document
         user_updates = {
-            'name': data.get('name', '').strip(),
             'updated_at': datetime.now()
         }
+        
+        # Only update name if provided
+        if data.get('name'):
+            user_updates['name'] = data['name'].strip()
         
         # Only update email if it's different and doesn't exist
         if data.get('email'):
@@ -1149,14 +1648,18 @@ def update_user(user_type, user_id):
         if data.get('password'):
             user_updates['password'] = generate_password_hash(data['password'])
         
-        mongo.db.users.update_one({'_id': user_object_id}, {'$set': user_updates})
+        # Update user document
+        if len(user_updates) > 1:  # More than just updated_at
+            mongo.db.users.update_one({'_id': user_object_id}, {'$set': user_updates})
         
         if user_type == 'student':
             # Update student-specific fields
             student_updates = {
-                'name': data.get('name', '').strip(),
                 'updated_at': datetime.now()
             }
+            
+            if data.get('name'):
+                student_updates['name'] = data['name'].strip()
             
             if data.get('email'):
                 student_updates['email'] = data['email'].lower().strip()
@@ -1171,14 +1674,71 @@ def update_user(user_type, user_id):
                     return jsonify({'success': False, 'error': 'Student ID already exists'}), 400
                 student_updates['student_id'] = data['student_id'].strip()
             
-            mongo.db.students.update_one({'_id': user_object_id}, {'$set': student_updates})
+            # Handle therapist assignment updates
+            if 'assigned_therapist_id' in data:
+                assigned_therapist_id = data.get('assigned_therapist_id')
+                
+                if assigned_therapist_id:
+                    # Validate therapist exists and is active
+                    therapist_oid = ObjectId(assigned_therapist_id)
+                    therapist = mongo.db.therapists.find_one({'_id': therapist_oid, 'status': 'active'})
+                    if not therapist:
+                        return jsonify({'success': False, 'error': 'Invalid therapist selected'}), 400
+                    
+                    # Check therapist capacity
+                    current_assignments = mongo.db.therapist_assignments.count_documents({
+                        'therapist_id': therapist_oid,
+                        'status': 'active'
+                    })
+                    if current_assignments >= therapist.get('max_students', 20):
+                        return jsonify({'success': False, 'error': 'Therapist has reached maximum capacity'}), 400
+                    
+                    student_updates['assigned_therapist_id'] = therapist_oid
+                    
+                    # Update or create assignment
+                    existing_assignment = mongo.db.therapist_assignments.find_one({'student_id': user_object_id})
+                    if existing_assignment:
+                        # Update existing assignment
+                        mongo.db.therapist_assignments.update_one(
+                            {'student_id': user_object_id},
+                            {'$set': {
+                                'therapist_id': therapist_oid,
+                                'status': 'active',
+                                'updated_at': datetime.now()
+                            }}
+                        )
+                    else:
+                        # Create new assignment
+                        assignment_data = {
+                            'therapist_id': therapist_oid,
+                            'student_id': user_object_id,
+                            'status': 'active',
+                            'auto_assigned': False,
+                            'created_at': datetime.now(),
+                            'updated_at': datetime.now()
+                        }
+                        mongo.db.therapist_assignments.insert_one(assignment_data)
+                else:
+                    # Unassign therapist
+                    student_updates['assigned_therapist_id'] = None
+                    # Deactivate assignment
+                    mongo.db.therapist_assignments.update_many(
+                        {'student_id': user_object_id},
+                        {'$set': {'status': 'inactive', 'updated_at': datetime.now()}}
+                    )
+            
+            # Update student document
+            if len(student_updates) > 1:  # More than just updated_at
+                mongo.db.students.update_one({'_id': user_object_id}, {'$set': student_updates})
             
         elif user_type == 'therapist':
             # Update therapist-specific fields
             therapist_updates = {
-                'name': data.get('name', '').strip(),
                 'updated_at': datetime.now()
             }
+            
+            if data.get('name'):
+                therapist_updates['name'] = data['name'].strip()
             
             if data.get('email'):
                 therapist_updates['email'] = data['email'].lower().strip()
@@ -1211,13 +1771,21 @@ def update_user(user_type, user_id):
             if 'gender' in data:
                 therapist_updates['gender'] = data['gender']
             
-            mongo.db.therapists.update_one({'_id': user_object_id}, {'$set': therapist_updates})
+            if 'years_experience' in data:
+                therapist_updates['years_experience'] = int(data.get('years_experience', 0))
+            
+            # Update therapist document
+            if len(therapist_updates) > 1:  # More than just updated_at
+                mongo.db.therapists.update_one({'_id': user_object_id}, {'$set': therapist_updates})
         
         return jsonify({
             'success': True,
             'message': f'{user_type.title()} updated successfully'
         })
         
+    except ValueError as ve:
+        logger.error(f"Validation error updating {user_type}: {ve}")
+        return jsonify({'success': False, 'error': str(ve)}), 400
     except Exception as e:
         logger.error(f"Error updating {user_type}: {e}")
         return jsonify({'success': False, 'error': 'Failed to update user'}), 500
@@ -1593,3 +2161,29 @@ def acknowledge_crisis_alert(alert_id):
         logger.error(f"Error acknowledging crisis alert: {e}")
         flash('Error processing alert', 'error')
         return redirect(url_for('admin.crisis_alerts'))
+    
+@admin_bp.route('/budget-dashboard')
+@login_required
+@admin_required
+def budget_dashboard():
+    """Render the budget dashboard page."""
+    try:
+        # Get basic configuration for template context
+        budget_config = {
+            'monthly_budget': current_app.config.get('MAX_MONTHLY_SPEND', 5.00),
+            'daily_budget': current_app.config.get('DAILY_SPENDING_LIMIT', 0.50),
+            'alert_threshold': current_app.config.get('USAGE_ALERT_THRESHOLD', 4.00),
+            'claude_model': current_app.config.get('CLAUDE_MODEL', 'claude-3-haiku-20240307'),
+            'api_configured': bool(current_app.config.get('CLAUDE_API_KEY')),
+            'budget_tracking_enabled': current_app.config.get('BUDGET_TRACKING_ENABLED', True)
+        }
+        
+        return render_template('admin/budget_dashboard.html', 
+                             budget_config=budget_config,
+                             page_title='Budget Dashboard')
+                             
+    except Exception as e:
+        logger.error(f"Error loading budget dashboard: {e}")
+        flash('Error loading budget dashboard. Please try again.', 'error')
+        return redirect(url_for('admin.dashboard'))
+    

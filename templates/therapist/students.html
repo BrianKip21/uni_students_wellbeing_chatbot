@@ -277,6 +277,41 @@
             font-weight: 500;
         }
         
+        .session-join-btn {
+            transition: all 0.3s ease;
+            min-width: 140px;
+            text-align: left;
+        }
+        
+        .session-join-btn.pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        .session-join-btn.urgent {
+            background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+            color: white !important;
+            border-color: #ef4444 !important;
+        }
+        
+        .session-join-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .session-join-btn:disabled:hover {
+            transform: none;
+            box-shadow: none;
+        }
+        
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.7;
+            }
+        }
+        
         @media (max-width: 1024px) {
             .sidebar {
                 transform: translateX(-100%);
@@ -344,7 +379,7 @@
                     </div>
                     <div class="text-right">
                         <p class="text-sm text-purple-300">Total Students</p>
-                        <p class="text-3xl font-bold">{{ students_data|length }}</p>
+                        <p class="text-3xl font-bold">{{ students_data|length if students_data else 0 }}</p>
                     </div>
                 </div>
             </div>
@@ -352,28 +387,37 @@
             <!-- Statistics Cards -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 <div class="stat-card primary">
-                    <div class="stat-number">{{ students_data|length }}</div>
+                    <div class="stat-number">{{ students_data|length if students_data else 0 }}</div>
                     <div class="stat-label">
                         <i class="fas fa-users mr-1"></i>
                         Total Students
                     </div>
                 </div>
                 <div class="stat-card danger">
-                    <div class="stat-number">{{ students_data|selectattr('crisis_level', 'in', ['critical', 'high'])|list|length }}</div>
+                    <div class="stat-number">
+                        {% set crisis_count = students_data|selectattr('crisis_level', 'in', ['critical', 'high'])|list|length if students_data else 0 %}
+                        {{ crisis_count }}
+                    </div>
                     <div class="stat-label">
                         <i class="fas fa-exclamation-triangle mr-1"></i>
                         Crisis/High Priority
                     </div>
                 </div>
                 <div class="stat-card secondary">
-                    <div class="stat-number">{{ students_data|selectattr('next_appointment')|list|length }}</div>
+                    <div class="stat-number">
+                        {% set upcoming_count = students_data|selectattr('next_appointment')|list|length if students_data else 0 %}
+                        {{ upcoming_count }}
+                    </div>
                     <div class="stat-label">
                         <i class="fas fa-video mr-1"></i>
                         Upcoming Sessions
                     </div>
                 </div>
                 <div class="stat-card warning">
-                    <div class="stat-number">{{ students_data|map(attribute='unread_messages')|sum }}</div>
+                    <div class="stat-number">
+                        {% set total_unread = students_data|map(attribute='unread_messages')|sum if students_data else 0 %}
+                        {{ total_unread }}
+                    </div>
                     <div class="stat-label">
                         <i class="fas fa-message mr-1"></i>
                         Unread Messages
@@ -461,7 +505,11 @@
                                         <div>
                                             <p class="text-purple-300 mb-1">📅 Assigned</p>
                                             <p class="font-semibold">
-                                                {{ student_data.assigned_at.strftime('%b %d, %Y') if student_data.assigned_at else 'N/A' }}
+                                                {% if student_data.assigned_at %}
+                                                    {{ student_data.assigned_at.strftime('%b %d, %Y') }}
+                                                {% else %}
+                                                    N/A
+                                                {% endif %}
                                             </p>
                                         </div>
                                         
@@ -492,13 +540,25 @@
                                             <i class="fas fa-video mr-1"></i>Next Virtual Session:
                                         </p>
                                         <p class="text-white font-semibold">
-                                            {{ student_data.next_appointment.datetime.strftime('%A, %B %d at %I:%M %p') }}
+                                            {% if student_data.next_appointment.datetime %}
+                                                {{ student_data.next_appointment.datetime.strftime('%A, %B %d at %I:%M %p') }}
+                                            {% else %}
+                                                Time to be confirmed
+                                            {% endif %}
                                         </p>
                                         <div class="flex items-center mt-2 space-x-2">
                                             <span class="virtual-badge">Virtual Session</span>
                                             {% if student_data.next_appointment.auto_scheduled %}
                                             <span class="text-green-400 text-xs">
                                                 <i class="fas fa-magic mr-1"></i>Auto-Scheduled
+                                            </span>
+                                            {% endif %}
+                                            {% if student_data.next_appointment.datetime %}
+                                            <span class="text-blue-400 text-xs">
+                                                <i class="fas fa-clock mr-1"></i>
+                                                <span class="session-countdown" data-time="{{ student_data.next_appointment.datetime.isoformat() }}">
+                                                    Calculating...
+                                                </span>
                                             </span>
                                             {% endif %}
                                         </div>
@@ -539,12 +599,16 @@
                                 </a>
                                 
                                 {% if student_data.next_appointment and student_data.next_appointment.meeting_info %}
-                                <a href="{{ student_data.next_appointment.meeting_info.meet_link }}" 
-                                   target="_blank" 
-                                   class="btn-secondary">
-                                    <i class="fas fa-video mr-2"></i>
-                                    Join Session
-                                </a>
+                                <div class="session-control" 
+                                     data-appointment-time="{{ student_data.next_appointment.datetime.isoformat() if student_data.next_appointment.datetime else '' }}"
+                                     data-meeting-link="{{ student_data.next_appointment.meeting_info.meet_link }}">
+                                    <button id="join-btn-{{ student_data.student._id }}" 
+                                            class="btn-secondary session-join-btn" 
+                                            disabled>
+                                        <i class="fas fa-clock mr-2"></i>
+                                        <span class="session-status">Checking...</span>
+                                    </button>
+                                </div>
                                 {% endif %}
                             </div>
                         </div>
@@ -591,6 +655,92 @@
     </main>
 
     <script>
+        // Session control logic matching backend
+        function updateSessionControls() {
+            const sessionControls = document.querySelectorAll('.session-control');
+            const sessionCountdowns = document.querySelectorAll('.session-countdown');
+            
+            // Update join buttons
+            sessionControls.forEach(control => {
+                const appointmentTimeStr = control.getAttribute('data-appointment-time');
+                const meetingLink = control.getAttribute('data-meeting-link');
+                const button = control.querySelector('.session-join-btn');
+                const statusSpan = button.querySelector('.session-status');
+                const icon = button.querySelector('i');
+                
+                if (!appointmentTimeStr) {
+                    statusSpan.textContent = 'Time TBD';
+                    button.disabled = true;
+                    return;
+                }
+                
+                const appointmentTime = new Date(appointmentTimeStr);
+                const now = new Date();
+                const timeDiffMinutes = (appointmentTime - now) / (1000 * 60); // minutes
+                
+                // 5-minute window logic from backend
+                const joinWindowStart = 5; // 5 minutes before
+                const joinWindowEnd = 5;   // 5 minutes after start
+                
+                if (timeDiffMinutes > joinWindowStart) {
+                    // Too early - show countdown
+                    const minutesToWait = Math.ceil(timeDiffMinutes - joinWindowStart);
+                    statusSpan.textContent = `Available in ${minutesToWait} min`;
+                    icon.className = 'fas fa-clock mr-2';
+                    button.className = 'btn-secondary session-join-btn';
+                    button.disabled = true;
+                    
+                } else if (timeDiffMinutes >= -joinWindowEnd && timeDiffMinutes <= joinWindowStart) {
+                    // Within join window - allow joining
+                    statusSpan.textContent = 'Join Zoom Session';
+                    icon.className = 'fas fa-video mr-2';
+                    button.className = 'btn-primary session-join-btn pulse';
+                    button.disabled = false;
+                    
+                    // Add click handler for joining
+                    button.onclick = function() {
+                        window.open(meetingLink, '_blank');
+                    };
+                    
+                    // Add urgent styling if session has started
+                    if (timeDiffMinutes <= 0) {
+                        button.classList.add('urgent');
+                        statusSpan.textContent = 'Session Started - Join Now';
+                    }
+                    
+                } else {
+                    // Session window closed
+                    statusSpan.textContent = 'Session Window Closed';
+                    icon.className = 'fas fa-exclamation-triangle mr-2';
+                    button.className = 'btn-secondary session-join-btn opacity-50';
+                    button.disabled = true;
+                }
+            });
+            
+            // Update countdown displays
+            sessionCountdowns.forEach(countdown => {
+                const appointmentTimeStr = countdown.getAttribute('data-time');
+                if (!appointmentTimeStr) return;
+                
+                const appointmentTime = new Date(appointmentTimeStr);
+                const now = new Date();
+                const timeDiffMinutes = (appointmentTime - now) / (1000 * 60);
+                
+                if (timeDiffMinutes > 60) {
+                    const hours = Math.floor(timeDiffMinutes / 60);
+                    countdown.textContent = `in ${hours}h ${Math.floor(timeDiffMinutes % 60)}m`;
+                } else if (timeDiffMinutes > 0) {
+                    countdown.textContent = `in ${Math.floor(timeDiffMinutes)}m`;
+                } else if (timeDiffMinutes > -60) {
+                    countdown.textContent = `started ${Math.abs(Math.floor(timeDiffMinutes))}m ago`;
+                    countdown.parentElement.classList.add('text-red-400');
+                } else {
+                    countdown.textContent = 'completed';
+                    countdown.parentElement.classList.add('text-gray-400');
+                }
+            });
+        }
+        
         // Filter students by name
         function filterStudents() {
             const searchValue = document.getElementById('student-search').value.toLowerCase();
@@ -643,9 +793,15 @@
             location.reload();
         }, 300000);
         
+        // Update session controls every minute
+        setInterval(updateSessionControls, 60000);
+        
         // Initialize tooltips or other interactive elements
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('Students page loaded with {{ students_data|length }} students');
+            console.log('Students page loaded with {{ students_data|length if students_data else 0 }} students');
+            
+            // Initial session control update
+            updateSessionControls();
             
             // Highlight crisis students on page load
             const crisisCards = document.querySelectorAll('.crisis-card');

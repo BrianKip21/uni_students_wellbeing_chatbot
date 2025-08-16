@@ -1,4 +1,6 @@
+# add real-time WebSocket communication
 from flask_socketio import SocketIO
+
 from flask_pymongo import PyMongo
 from apscheduler.schedulers.background import BackgroundScheduler
 import logging

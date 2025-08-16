@@ -20,77 +20,27 @@
             background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 50%, #2d1b69 100%);
             color: #e0e7ff;
             min-height: 100vh;
-            position: relative;
-            overflow-x: hidden;
         }
         
-        /* Animated background particles */
-        .particles {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 0;
-        }
-        
-        .particle {
-            position: absolute;
-            width: 4px;
-            height: 4px;
-            background: rgba(139, 92, 246, 0.3);
-            border-radius: 50%;
-            animation: float 6s ease-in-out infinite;
-        }
-        
-        @keyframes float {
-            0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.3; }
-            50% { transform: translateY(-20px) rotate(180deg); opacity: 1; }
-        }
-        
-        /* Success animation */
-        .success-animation {
-            animation: successPulse 2s ease-out;
-        }
-        
-        @keyframes successPulse {
-            0% { transform: scale(0) rotate(-180deg); opacity: 0; }
-            50% { transform: scale(1.1) rotate(-90deg); opacity: 0.8; }
-            100% { transform: scale(1) rotate(0deg); opacity: 1; }
-        }
-        
-        /* Card styles */
         .glass-card {
             background: rgba(255, 255, 255, 0.05);
             backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 24px;
+            border-radius: 20px;
             box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
         }
         
-        .gradient-border {
-            background: linear-gradient(135deg, #8b5cf6, #3b82f6, #10b981);
-            padding: 2px;
-            border-radius: 24px;
-        }
-        
-        .gradient-border-inner {
-            background: rgba(15, 15, 35, 0.9);
-            border-radius: 22px;
-        }
-        
-        /* Success checkmark */
         .success-checkmark {
-            width: 100px;
-            height: 100px;
+            width: 80px;
+            height: 80px;
             border-radius: 50%;
             background: linear-gradient(135deg, #10b981, #059669);
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 0 auto 2rem;
-            position: relative;
+            margin: 0 auto 1.5rem;
             animation: checkmarkBounce 0.8s ease-out;
             box-shadow: 0 20px 40px rgba(16, 185, 129, 0.3);
         }
@@ -101,563 +51,429 @@
             100% { transform: scale(1); }
         }
         
-        .success-checkmark::before {
-            content: '';
-            position: absolute;
-            width: 120px;
-            height: 120px;
-            border-radius: 50%;
-            background: rgba(16, 185, 129, 0.2);
-            animation: ripple 2s infinite;
-        }
-        
-        @keyframes ripple {
-            0% { transform: scale(1); opacity: 0.6; }
-            100% { transform: scale(1.5); opacity: 0; }
-        }
-        
-        /* Meeting link card */
-        .meeting-card {
-            background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
-            border-radius: 20px;
-            padding: 2rem;
-            text-align: center;
-            position: relative;
-            overflow: hidden;
-            transition: all 0.3s ease;
-        }
-        
-        .meeting-card::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-            transform: rotate(45deg);
-            transition: all 0.5s ease;
-        }
-        
-        .meeting-card:hover::before {
-            animation: shimmer 1.5s ease-in-out infinite;
-        }
-        
-        @keyframes shimmer {
-            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
-            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
-        }
-        
-        .meeting-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 25px 50px rgba(59, 130, 246, 0.4);
-        }
-        
-        /* Zoom integration status indicator */
-        .zoom-status-indicator {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.5rem 1rem;
-            border-radius: 12px;
-            font-size: 0.875rem;
-            font-weight: 600;
-            margin-bottom: 1rem;
-        }
-        
-        .zoom-integrated {
-            background: rgba(16, 185, 129, 0.2);
-            color: #10b981;
-            border: 1px solid rgba(16, 185, 129, 0.3);
-        }
-        
-        .zoom-fallback {
-            background: rgba(245, 158, 11, 0.2);
-            color: #f59e0b;
-            border: 1px solid rgba(245, 158, 11, 0.3);
-        }
-        
-        /* Countdown timer */
-        .countdown-timer {
-            background: linear-gradient(135deg, #f59e0b, #d97706);
-            border-radius: 16px;
-            padding: 1.5rem;
-            text-align: center;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .countdown-timer::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-            animation: countdownShine 3s infinite;
-        }
-        
-        @keyframes countdownShine {
-            0% { left: -100%; }
-            100% { left: 100%; }
-        }
-        
-        /* Buttons */
         .btn-primary {
             background: linear-gradient(135deg, #8b5cf6, #7c3aed);
             border: none;
-            padding: 0.75rem 2rem;
+            padding: 0.75rem 1.5rem;
             border-radius: 12px;
             color: white;
             font-weight: 600;
+            cursor: pointer;
             transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
             text-decoration: none;
-            display: inline-block;
-        }
-        
-        .btn-primary::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-            transition: left 0.5s ease;
-        }
-        
-        .btn-primary:hover::before {
-            left: 100%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 140px;
         }
         
         .btn-primary:hover {
             transform: translateY(-2px);
             box-shadow: 0 10px 25px rgba(139, 92, 246, 0.4);
+            color: white;
+            text-decoration: none;
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #10b981, #059669);
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 140px;
+        }
+        
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(16, 185, 129, 0.4);
+            color: white;
+            text-decoration: none;
         }
         
         .btn-secondary {
             background: rgba(255, 255, 255, 0.1);
             border: 1px solid rgba(255, 255, 255, 0.2);
-            padding: 0.75rem 2rem;
+            padding: 0.75rem 1.5rem;
             border-radius: 12px;
             color: #e0e7ff;
             font-weight: 600;
+            cursor: pointer;
             transition: all 0.3s ease;
             text-decoration: none;
-            display: inline-block;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 140px;
         }
         
         .btn-secondary:hover {
             background: rgba(255, 255, 255, 0.15);
             border-color: #8b5cf6;
             transform: translateY(-2px);
+            color: #e0e7ff;
+            text-decoration: none;
         }
         
-        /* Responsive design */
-        @media (max-width: 768px) {
-            .glass-card {
-                margin: 1rem;
-                border-radius: 16px;
-            }
-            
-            .success-checkmark {
-                width: 80px;
-                height: 80px;
-            }
-        }
-        
-        /* Status indicators */
         .status-indicator {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
             padding: 0.25rem 0.75rem;
-            border-radius: 12px;
-            font-size: 0.875rem;
-            font-weight: 500;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
         }
         
         .status-confirmed {
             background: rgba(16, 185, 129, 0.2);
-            color: #10b981;
-            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: #6ee7b7;
         }
         
-        .status-virtual {
-            background: rgba(59, 130, 246, 0.2);
-            color: #3b82f6;
+        .status-priority {
+            background: rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .countdown-display {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            border-radius: 12px;
+            padding: 1rem;
+            text-align: center;
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+        
+        .meeting-link-card {
+            background: linear-gradient(135deg, #3b82f6, #1e40af);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+        }
+        
+        .meeting-link-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.4);
+        }
+        
+        .crisis-card {
+            border: 2px solid #ef4444;
+            background: rgba(239, 68, 68, 0.1);
+        }
+        
+        .highlight-box {
+            background: rgba(59, 130, 246, 0.1);
             border: 1px solid rgba(59, 130, 246, 0.3);
+            border-left: 4px solid #3b82f6;
+            border-radius: 12px;
+            padding: 1rem;
+        }
+        
+        .warning-box {
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            border-left: 4px solid #f59e0b;
+            border-radius: 12px;
+            padding: 1rem;
+        }
+        
+        .flash-message {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-left: 4px solid #3b82f6;
+            color: #93c5fd;
+            padding: 1rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+        }
+        
+        .flash-success {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: rgba(16, 185, 129, 0.3);
+            border-left-color: #10b981;
+            color: #6ee7b7;
         }
     </style>
 </head>
-<body>
-    <!-- Animated background particles -->
-    <div class="particles" id="particles"></div>
-    
-    <div class="min-h-screen flex items-center justify-center p-4 relative z-10">
-        <div class="max-w-4xl w-full">
+<body class="min-h-screen py-8">
+    <div class="container mx-auto px-4 max-w-4xl">
+        
+        <!-- Success Header -->
+        <div class="text-center mb-8">
+            <div class="success-checkmark">
+                <i class="fas fa-check text-3xl text-white"></i>
+            </div>
             
-            <!-- Success Header -->
-            <div class="text-center mb-8 success-animation">
-                <div class="success-checkmark">
-                    <i class="fas fa-check text-4xl text-white"></i>
-                </div>
-                
-                {% if crisis_level == 'high' or crisis_level == 'critical' %}
-                <div class="inline-flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-full font-semibold mb-6 animate-pulse">
-                    <i class="fas fa-bolt"></i>
-                    PRIORITY SESSION SCHEDULED
-                </div>
-                {% endif %}
-                
-                <h1 class="text-5xl md:text-6xl font-bold mb-4 bg-gradient-to-r from-purple-400 via-pink-500 to-blue-500 bg-clip-text text-transparent">
-                    🎉 You're All Set!
-                </h1>
-                <p class="text-xl text-purple-200 mb-2">
-                    Your therapy session has been automatically scheduled
-                </p>
-                <p class="text-lg text-green-400 font-semibold">
-                    ✨ Everything is ready - just show up and heal!
-                </p>
-            </div>
-
-            <!-- Main Appointment Card -->
-            <div class="gradient-border mb-8">
-                <div class="gradient-border-inner p-8">
-                    <div class="text-center mb-8">
-                        <h2 class="text-3xl font-bold text-white mb-2">Your Session Details</h2>
-                        <p class="text-purple-300">AI-powered matching • Instant scheduling • Seamless experience</p>
-                        
-                        <!-- Zoom Integration Status -->
-                        {% if zoom_integrated %}
-                        <div class="zoom-status-indicator zoom-integrated">
-                            <i class="fas fa-video"></i>
-                            Real Zoom Meeting Created
-                        </div>
-                        {% else %}
-                        <div class="zoom-status-indicator zoom-fallback">
-                            <i class="fas fa-exclamation-triangle"></i>
-                            Therapist will provide meeting link
-                        </div>
-                        {% endif %}
-                    </div>
-
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        
-                        <!-- Session Information -->
-                        <div class="glass-card p-6">
-                            <h3 class="text-xl font-bold text-white mb-6 flex items-center">
-                                <i class="fas fa-calendar-alt mr-3 text-green-400"></i>
-                                Session Information
-                            </h3>
-                            
-                            <div class="space-y-4">
-                                <div class="flex items-start space-x-4">
-                                    <div class="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center flex-shrink-0">
-                                        <i class="fas fa-clock text-white"></i>
-                                    </div>
-                                    <div>
-                                        <div class="font-semibold text-white text-lg">{{ appointment.formatted_time }}</div>
-                                        <div class="text-sm text-purple-300">
-                                            {% if crisis_level in ['high', 'critical'] %}
-                                                ⚡ Priority scheduling - sooner than usual
-                                            {% else %}
-                                                🎯 Perfect timing for your schedule
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <div class="flex items-start space-x-4">
-                                    <div class="w-10 h-10 rounded-lg bg-green-600 flex items-center justify-center flex-shrink-0">
-                                        <i class="fas fa-user-md text-white"></i>
-                                    </div>
-                                    <div>
-                                        <div class="font-semibold text-white text-lg">{{ therapist.name }}</div>
-                                        <div class="text-sm text-purple-300">Licensed Mental Health Professional</div>
-                                        <div class="flex items-center mt-1">
-                                            <div class="flex text-yellow-400 mr-2">
-                                                {% for i in range(5) %}
-                                                    {% if i < (therapist.rating|round|int) %}
-                                                        <i class="fas fa-star text-xs"></i>
-                                                    {% else %}
-                                                        <i class="far fa-star text-xs"></i>
-                                                    {% endif %}
-                                                {% endfor %}
-                                            </div>
-                                            <span class="text-xs text-purple-300">({{ therapist.rating or 'New' }})</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <div class="flex items-start space-x-4">
-                                    <div class="w-10 h-10 rounded-lg bg-purple-600 flex items-center justify-center flex-shrink-0">
-                                        <i class="fas fa-video text-white"></i>
-                                    </div>
-                                    <div>
-                                        <div class="font-semibold text-white text-lg">Virtual Session</div>
-                                        <div class="text-sm text-purple-300">
-                                            🌐 Zoom video call - join from anywhere, anytime
-                                        </div>
-                                        <div class="status-virtual mt-2">
-                                            <i class="fas fa-check-circle"></i>
-                                            Confirmed & Ready
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <div class="flex items-start space-x-4">
-                                    <div class="w-10 h-10 rounded-lg bg-yellow-500 flex items-center justify-center flex-shrink-0">
-                                        <i class="fas fa-hourglass-half text-white"></i>
-                                    </div>
-                                    <div>
-                                        <div class="font-semibold text-white text-lg">60 Minutes</div>
-                                        <div class="text-sm text-purple-300">Standard session duration • Full confidentiality</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Meeting Access & Countdown -->
-                        <div class="space-y-6">
-                            {% if appointment.meeting_info %}
-                            <!-- Meeting Link Card -->
-                            <div class="meeting-card">
-                                <h3 class="text-xl font-bold text-white mb-4">
-                                    <i class="fas fa-video mr-2"></i>
-                                    Join Your Session
-                                </h3>
-                                
-                                {% if zoom_integrated %}
-                                <!-- Real Zoom Meeting -->
-                                <div class="bg-white bg-opacity-20 rounded-lg p-4 mb-4">
-                                    <p class="text-sm text-blue-100 mb-2">🔗 Zoom Meeting Link:</p>
-                                    <div class="flex items-center space-x-2">
-                                        <input type="text" 
-                                               value="{{ appointment.meeting_info.meet_link }}" 
-                                               id="meet-link" 
-                                               class="bg-transparent text-white text-sm flex-1 p-2 border border-blue-300 rounded font-mono" 
-                                               readonly>
-                                        <button onclick="copyMeetLink()" 
-                                                class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-3 py-2 rounded text-sm transition-all">
-                                            <i class="fas fa-copy"></i>
-                                        </button>
-                                    </div>
-                                    {% if appointment.meeting_info.meeting_password %}
-                                    <p class="text-xs text-blue-100 mt-2">
-                                        🔐 Meeting ID: {{ appointment.zoom_meeting_id }} | Password: {{ appointment.meeting_info.meeting_password }}
-                                    </p>
-                                    {% endif %}
-                                </div>
-                                
-                                <a href="{{ appointment.meeting_info.meet_link }}" 
-                                   target="_blank" 
-                                   class="btn-primary inline-flex items-center">
-                                    <i class="fas fa-external-link-alt mr-2"></i>
-                                    Open Zoom Meeting
-                                </a>
-                                
-                                {% if appointment.meeting_info.dial_in %}
-                                <div class="mt-4 text-xs text-blue-100">
-                                    📞 Dial-in: {{ appointment.meeting_info.dial_in }}
-                                </div>
-                                {% endif %}
-                                {% else %}
-                                <!-- Fallback Meeting Info -->
-                                <div class="bg-yellow-600 bg-opacity-20 rounded-lg p-4 mb-4">
-                                    <p class="text-sm text-yellow-100 mb-2">⚠️ Meeting Setup:</p>
-                                    <p class="text-yellow-200 text-sm">{{ appointment.meeting_info.note or 'Your therapist will provide the actual Zoom meeting link before your session.' }}</p>
-                                </div>
-                                
-                                <div class="bg-blue-600 bg-opacity-20 rounded-lg p-3 mb-4">
-                                    <p class="text-blue-200 text-sm">
-                                        <i class="fas fa-info-circle mr-2"></i>
-                                        Meeting details will be sent to your email or provided by your therapist.
-                                    </p>
-                                </div>
-                                
-                                <button onclick="refreshMeetingInfo()" class="btn-primary inline-flex items-center">
-                                    <i class="fas fa-refresh mr-2"></i>
-                                    Refresh Meeting Info
-                                </button>
-                                {% endif %}
-                            </div>
-                            {% endif %}
-                            
-                            <!-- Countdown Timer -->
-                            <div class="countdown-timer" id="countdown">
-                                <div class="text-sm font-medium text-white mb-1">⏰ Session starts in:</div>
-                                <div id="countdown-display" class="text-2xl font-bold text-white">
-                                    Loading...
-                                </div>
-                                <div class="text-xs text-orange-100 mt-2">
-                                    Join 5 minutes early to test your connection
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Preparation Tips -->
-            <div class="glass-card p-6 mb-8">
-                <h3 class="text-xl font-bold text-white mb-6 flex items-center">
-                    <i class="fas fa-lightbulb mr-3 text-yellow-400"></i>
-                    🚀 How to Prepare for Success
-                </h3>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="flex items-start space-x-4">
-                        <div class="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
-                            <i class="fas fa-clock text-white"></i>
-                        </div>
-                        <div>
-                            <h4 class="font-semibold text-white mb-1">Join 5 Minutes Early</h4>
-                            <p class="text-sm text-purple-300">Test your Zoom connection, get comfortable, and settle in</p>
-                        </div>
-                    </div>
-                    
-                    <div class="flex items-start space-x-4">
-                        <div class="w-12 h-12 bg-gradient-to-r from-green-500 to-teal-600 rounded-full flex items-center justify-center flex-shrink-0">
-                            <i class="fas fa-home text-white"></i>
-                        </div>
-                        <div>
-                            <h4 class="font-semibold text-white mb-1">Find Your Safe Space</h4>
-                            <p class="text-sm text-purple-300">Private, quiet area where you can speak freely</p>
-                        </div>
-                    </div>
-                    
-                    <div class="flex items-start space-x-4">
-                        <div class="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full flex items-center justify-center flex-shrink-0">
-                            <i class="fas fa-video text-white"></i>
-                        </div>
-                        <div>
-                            <h4 class="font-semibold text-white mb-1">Test Your Setup</h4>
-                            <p class="text-sm text-purple-300">Check camera, microphone, and internet connection</p>
-                        </div>
-                    </div>
-                    
-                    <div class="flex items-start space-x-4">
-                        <div class="w-12 h-12 bg-gradient-to-r from-red-500 to-orange-600 rounded-full flex items-center justify-center flex-shrink-0">
-                            <i class="fas fa-heart text-white"></i>
-                        </div>
-                        <div>
-                            <h4 class="font-semibold text-white mb-1">Be Authentic</h4>
-                            <p class="text-sm text-purple-300">The more open you are, the more we can help you grow</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Crisis Support (if high priority) -->
-            {% if crisis_level in ['high', 'critical'] %}
-            <div class="glass-card border-red-500 border-2 p-6 mb-8">
-                <h3 class="text-lg font-bold text-red-300 mb-4 flex items-center">
-                    <i class="fas fa-shield-alt mr-3"></i>
-                    🆘 Immediate Support Always Available
-                </h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
-                    <div>
-                        <p class="font-semibold text-red-200 mb-2">24/7 Crisis Support:</p>
-                        <div class="space-y-1 text-red-100">
-                            <p>• 📞 Call or text <strong class="text-white">988</strong> anytime</p>
-                            <p>• 🚨 Emergency services: <strong class="text-white">911</strong></p>
-                            <p>• 💬 Crisis text: <strong class="text-white">Text HOME to 741741</strong></p>
-                        </div>
-                    </div>
-                    <div>
-                        <p class="font-semibold text-red-200 mb-2">Campus Resources:</p>
-                        <div class="space-y-1 text-red-100">
-                            <p>• 🏫 Campus counseling: Available 24/7</p>
-                            <p>• 🏥 Student health services</p>
-                            <p>• 👥 Peer support groups</p>
-                        </div>
-                    </div>
-                </div>
+            {% if crisis_level == 'high' or crisis_level == 'critical' %}
+            <div class="status-indicator status-priority mb-4">
+                <i class="fas fa-bolt mr-1"></i>
+                PRIORITY SESSION SCHEDULED
             </div>
             {% endif %}
+            
+            <h1 class="text-4xl font-bold mb-4 bg-gradient-to-r from-purple-400 to-pink-600 bg-clip-text text-transparent">
+                <i class="fas fa-check-circle mr-3"></i>Session Confirmed!
+            </h1>
+            <p class="text-lg text-purple-300 mb-2">
+                Your therapy session has been automatically scheduled
+            </p>
+            <p class="text-green-400 font-semibold">
+                Everything is ready - just show up and heal!
+            </p>
+        </div>
 
-            <!-- Action Buttons -->
-            <div class="text-center space-y-6">
-                <div class="flex flex-wrap justify-center gap-4">
-                    {% if appointment.meeting_info %}
-                        {% if zoom_integrated %}
-                        <a href="{{ appointment.meeting_info.meet_link }}" 
-                           target="_blank"
-                           class="btn-primary">
-                            <i class="fas fa-video mr-2"></i>
-                            Join Zoom Session
-                        </a>
-                        {% else %}
-                        <button onclick="refreshMeetingInfo()" class="btn-primary">
-                            <i class="fas fa-refresh mr-2"></i>
-                            Refresh Meeting Info
-                        </button>
-                        {% endif %}
-                    {% endif %}
-                    
-                    <a href="{{ url_for('dashboard.therapist_info') }}" 
-                       class="btn-secondary">
-                        <i class="fas fa-user-md mr-2"></i>
-                        View Therapist Profile
-                    </a>
-                    
-                    <a href="{{ url_for('dashboard.index') }}" 
-                       class="btn-secondary">
-                        <i class="fas fa-home mr-2"></i>
-                        Back to Dashboard
-                    </a>
+        <!-- Session Details -->
+        <div class="glass-card">
+            <h2 class="text-2xl font-bold text-white mb-6 flex items-center">
+                <i class="fas fa-calendar-alt mr-3 text-green-400"></i>
+                Your Session Details
+            </h2>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                
+                <!-- Session Information -->
+                <div>
+                    <div class="space-y-4">
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center mr-4">
+                                <i class="fas fa-clock text-white"></i>
+                            </div>
+                            <div>
+                                <div class="font-semibold text-white text-lg">{{ appointment.formatted_time }}</div>
+                                <div class="text-sm text-purple-300">
+                                    {% if crisis_level in ['high', 'critical'] %}
+                                        Priority scheduling - sooner than usual
+                                    {% else %}
+                                        Perfect timing for your schedule
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 rounded-lg bg-green-600 flex items-center justify-center mr-4">
+                                <i class="fas fa-user-md text-white"></i>
+                            </div>
+                            <div>
+                                <div class="font-semibold text-white text-lg">{{ therapist.name }}</div>
+                                <div class="text-sm text-purple-300">Licensed Mental Health Professional</div>
+                                <div class="flex items-center mt-1">
+                                    <div class="flex text-yellow-400 mr-2">
+                                        {% for i in range(5) %}
+                                            {% if i < (therapist.rating|round|int) %}
+                                                <i class="fas fa-star text-xs"></i>
+                                            {% else %}
+                                                <i class="far fa-star text-xs"></i>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                    <span class="text-xs text-purple-300">({{ therapist.rating or 'New' }})</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 rounded-lg bg-purple-600 flex items-center justify-center mr-4">
+                                <i class="fas fa-video text-white"></i>
+                            </div>
+                            <div>
+                                <div class="font-semibold text-white text-lg">Virtual Session</div>
+                                <div class="text-sm text-purple-300">60-minute Zoom video call</div>
+                                <span class="status-indicator status-confirmed">
+                                    <i class="fas fa-check-circle mr-1"></i>Confirmed
+                                </span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 
-                <div class="text-sm text-purple-300 space-y-2">
-                    {% if zoom_integrated %}
-                    <p>
-                        <i class="fas fa-envelope mr-2"></i>
-                        📧 Zoom meeting details sent to your email
-                    </p>
-                    <p>
-                        <i class="fas fa-video mr-2"></i>
-                        🔗 Real Zoom meeting created with password protection
-                    </p>
-                    {% else %}
-                    <p>
-                        <i class="fas fa-envelope mr-2"></i>
-                        📧 Confirmation details sent to your email
-                    </p>
-                    <p>
-                        <i class="fas fa-user-md mr-2"></i>
-                        👨‍⚕️ Your therapist will provide the Zoom meeting link
-                    </p>
-                    {% endif %}
-                    <p>
-                        <i class="fas fa-bell mr-2"></i>
-                        🔔 You'll receive reminders 24h and 1h before your session
-                    </p>
+                <!-- Countdown Timer -->
+                <div>
+                    <div class="countdown-display" id="countdown">
+                        <div class="text-sm font-medium mb-1">Session starts in:</div>
+                        <div id="countdown-display">Loading...</div>
+                        <div class="text-xs mt-2 opacity-75">Join 5 minutes early</div>
+                    </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- Meeting Access -->
+        <div class="glass-card">
+            <h3 class="text-xl font-bold text-white mb-4 flex items-center">
+                <i class="fas fa-video mr-3 text-blue-400"></i>
+                Join Your Session
+            </h3>
+            
+            <!-- Session Controls (similar to therapist_info) -->
+            <div id="session-controls" class="text-center">
+                <!-- This will be populated by JavaScript based on session timing -->
+            </div>
+            
+            <!-- Meeting Info (hidden until session time) -->
+            <div id="meeting-info" style="display: none;">
+                {% if appointment.meeting_info and zoom_integrated %}
+                <div class="meeting-link-card mb-4">
+                    <h4 class="text-lg font-bold text-white mb-3">Zoom Meeting Ready</h4>
+                    <div class="bg-white bg-opacity-20 rounded-lg p-3 mb-4">
+                        <div class="flex items-center space-x-2">
+                            <input type="text" 
+                                   value="{{ appointment.meeting_info.meet_link }}" 
+                                   id="meet-link" 
+                                   class="bg-transparent text-white text-sm flex-1 p-2 border border-blue-300 rounded font-mono" 
+                                   readonly>
+                            <button onclick="copyMeetLink()" 
+                                    class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-3 py-2 rounded text-sm">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                        {% if appointment.meeting_info.meeting_password %}
+                        <p class="text-xs text-blue-100 mt-2">
+                            Meeting ID: {{ appointment.zoom_meeting_id }} | Password: {{ appointment.meeting_info.meeting_password }}
+                        </p>
+                        {% endif %}
+                    </div>
+                    
+                    <a href="{{ appointment.meeting_info.meet_link }}" 
+                       target="_blank" 
+                       class="btn-success">
+                        <i class="fas fa-external-link-alt mr-2"></i>
+                        Open Zoom Meeting
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- Default message when not session time -->
+            <div class="highlight-box" id="session-info">
+                <p class="text-blue-200 text-sm">
+                    <i class="fas fa-info-circle mr-2"></i>
+                    Meeting link will be available 5 minutes before your session starts.
+                </p>
+            </div>
+        </div>
+
+        <!-- Preparation Tips -->
+        <div class="glass-card">
+            <h3 class="text-xl font-bold text-white mb-4 flex items-center">
+                <i class="fas fa-lightbulb mr-3 text-yellow-400"></i>
+                How to Prepare
+            </h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="flex items-center">
+                    <div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center mr-3">
+                        <i class="fas fa-clock text-white text-sm"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold text-white">Join 5 Minutes Early</h4>
+                        <p class="text-sm text-purple-300">Test your connection</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center">
+                    <div class="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center mr-3">
+                        <i class="fas fa-home text-white text-sm"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold text-white">Find Quiet Space</h4>
+                        <p class="text-sm text-purple-300">Private area to speak freely</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center">
+                    <div class="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center mr-3">
+                        <i class="fas fa-video text-white text-sm"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold text-white">Test Your Setup</h4>
+                        <p class="text-sm text-purple-300">Check camera and microphone</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center">
+                    <div class="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center mr-3">
+                        <i class="fas fa-heart text-white text-sm"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold text-white">Be Authentic</h4>
+                        <p class="text-sm text-purple-300">Open communication helps</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Crisis Support (if high priority) -->
+        {% if crisis_level in ['high', 'critical'] %}
+        <div class="glass-card crisis-card">
+            <h3 class="text-lg font-bold text-red-300 mb-4 flex items-center">
+                <i class="fas fa-shield-alt mr-3"></i>
+                Immediate Support Available
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div>
+                    <p class="font-semibold text-red-200 mb-2">24/7 Crisis Support:</p>
+                    <div class="space-y-1 text-red-100">
+                        <p>📞 Call or text <strong>988</strong> anytime</p>
+                        <p>🚨 Emergency services: <strong>911</strong></p>
+                        <p>💬 Crisis text: <strong>HOME to 741741</strong></p>
+                    </div>
+                </div>
+                <div>
+                    <p class="font-semibold text-red-200 mb-2">Campus Resources:</p>
+                    <div class="space-y-1 text-red-100">
+                        <p>🏫 Campus counseling: 24/7</p>
+                        <p>🏥 Student health services</p>
+                        <p>👥 Peer support groups</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Action Buttons -->
+        <div class="glass-card text-center">
+            <div class="flex flex-wrap justify-center gap-4 mb-4">
+                <a href="{{ url_for('dashboard.therapist_info') }}" class="btn-secondary">
+                    <i class="fas fa-user-md mr-2"></i>
+                    View Therapist
+                </a>
+                
+                <a href="{{ url_for('dashboard.index') }}" class="btn-secondary">
+                    <i class="fas fa-home mr-2"></i>
+                    Dashboard
+                </a>
+                
+                <button onclick="refreshMeetingInfo()" class="btn-primary">
+                    <i class="fas fa-refresh mr-2"></i>
+                    Refresh Session Info
+                </button>
+            </div>
+            
+            <div class="text-sm text-purple-300 space-y-1">
+                {% if zoom_integrated %}
+                <p><i class="fas fa-envelope mr-2"></i>Meeting details sent to your email</p>
+                <p><i class="fas fa-video mr-2"></i>Real Zoom meeting created</p>
+                {% else %}
+                <p><i class="fas fa-envelope mr-2"></i>Confirmation sent to your email</p>
+                <p><i class="fas fa-user-md mr-2"></i>Therapist will provide meeting link</p>
+                {% endif %}
+                <p><i class="fas fa-bell mr-2"></i>Reminders 24h and 1h before session</p>
             </div>
         </div>
     </div>
 
     <script>
-        // Create animated particles
-        function createParticles() {
-            const particles = document.getElementById('particles');
-            const particleCount = 50;
-            
-            for (let i = 0; i < particleCount; i++) {
-                const particle = document.createElement('div');
-                particle.className = 'particle';
-                particle.style.left = Math.random() * 100 + '%';
-                particle.style.top = Math.random() * 100 + '%';
-                particle.style.animationDelay = Math.random() * 6 + 's';
-                particle.style.animationDuration = (Math.random() * 3 + 3) + 's';
-                particles.appendChild(particle);
-            }
-        }
-        
         // Copy meeting link functionality
         function copyMeetLink() {
             const linkInput = document.getElementById('meet-link');
@@ -677,45 +493,89 @@
             });
         }
 
-        // Refresh meeting info functionality
-        function refreshMeetingInfo() {
-            const appointmentId = '{{ appointment._id }}';
+        // Update session controls based on timing (like therapist_info page)
+        function updateSessionControls() {
+            {% if appointment.datetime %}
+            const sessionTime = new Date('{{ appointment.datetime.isoformat() }}');
+            const now = new Date();
+            const timeDiff = (sessionTime - now) / (1000 * 60); // minutes
             
-            // Show loading state
-            const refreshBtn = event.target;
-            const originalHTML = refreshBtn.innerHTML;
-            refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Refreshing...';
-            refreshBtn.disabled = true;
+            const sessionControls = document.getElementById('session-controls');
+            const meetingInfo = document.getElementById('meeting-info');
+            const sessionInfo = document.getElementById('session-info');
             
-            fetch(`/api/refresh-zoom-meeting`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    appointment_id: appointmentId
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert('✅ Meeting info refreshed! Reloading page...');
-                    window.location.reload();
-                } else {
-                    alert('⚠️ Could not refresh meeting info. Your therapist will provide the link.');
-                }
-            })
-            .catch(error => {
-                console.error('Error refreshing meeting info:', error);
-                alert('⚠️ Could not refresh meeting info. Your therapist will provide the link.');
-            })
-            .finally(() => {
-                refreshBtn.innerHTML = originalHTML;
-                refreshBtn.disabled = false;
-            });
+            if (timeDiff > 5) {
+                // More than 5 minutes before session
+                const minutes = Math.ceil(timeDiff - 5);
+                sessionControls.innerHTML = `
+                    <button class="btn-secondary opacity-50" disabled>
+                        <i class="fas fa-clock mr-2"></i>
+                        Available in ${minutes} minutes
+                    </button>
+                `;
+                meetingInfo.style.display = 'none';
+                sessionInfo.style.display = 'block';
+            } else if (timeDiff >= -5) {
+                // Within 5 minutes before or after session start
+                sessionControls.innerHTML = `
+                    <button onclick="joinSession()" class="btn-success">
+                        <i class="fas fa-video mr-2"></i>
+                        Join Session Now
+                    </button>
+                `;
+                meetingInfo.style.display = 'block';
+                sessionInfo.style.display = 'none';
+            } else {
+                // More than 5 minutes after session time
+                sessionControls.innerHTML = `
+                    <button class="btn-secondary opacity-50" disabled>
+                        <i class="fas fa-times mr-2"></i>
+                        Session Window Closed
+                    </button>
+                `;
+                meetingInfo.style.display = 'none';
+                sessionInfo.innerHTML = `
+                    <p class="text-red-200 text-sm">
+                        <i class="fas fa-exclamation-triangle mr-2"></i>
+                        Session time has passed. Please contact your therapist to reschedule.
+                    </p>
+                `;
+                sessionInfo.style.display = 'block';
+            }
+            {% else %}
+            document.getElementById('session-controls').innerHTML = `
+                <button class="btn-secondary opacity-50" disabled>
+                    <i class="fas fa-clock mr-2"></i>
+                    Session Time Pending
+                </button>
+            `;
+            {% endif %}
         }
 
-        // Enhanced countdown timer
+        // Join session function
+        function joinSession() {
+            {% if appointment.meeting_info and zoom_integrated %}
+            window.open('{{ appointment.meeting_info.meet_link }}', '_blank');
+            {% else %}
+            showFlashMessage('Meeting link not available yet. Please check with your therapist.', 'warning');
+            {% endif %}
+        }
+
+        // Show flash message
+        function showFlashMessage(message, type = 'info') {
+            const flashContainer = document.createElement('div');
+            flashContainer.className = `flash-message flash-${type}`;
+            flashContainer.innerHTML = `<p>${message}</p>`;
+            
+            const container = document.querySelector('.container');
+            container.insertBefore(flashContainer, container.firstChild);
+            
+            setTimeout(() => {
+                flashContainer.remove();
+            }, 5000);
+        }
+
+        // Countdown timer
         function updateCountdown() {
             {% if appointment.datetime %}
             const sessionTime = new Date('{{ appointment.datetime.isoformat() }}');
@@ -735,36 +595,71 @@
                 
                 document.getElementById('countdown-display').textContent = display;
                 
-                // Change countdown styling as session approaches
-                const countdownEl = document.getElementById('countdown');
+                // Change color as session approaches
+                const countdownEl = document.querySelector('.countdown-display');
                 if (timeDiff < 15 * 60 * 1000) { // Less than 15 minutes
                     countdownEl.style.background = 'linear-gradient(135deg, #10b981, #059669)';
-                    countdownEl.innerHTML = countdownEl.innerHTML.replace('Session starts in:', '🟢 Ready to join!');
                 } else if (timeDiff < 60 * 60 * 1000) { // Less than 1 hour
                     countdownEl.style.background = 'linear-gradient(135deg, #f59e0b, #d97706)';
                 }
             } else {
-                document.getElementById('countdown-display').textContent = '🎉 Session time!';
-                document.getElementById('countdown').style.background = 'linear-gradient(135deg, #10b981, #059669)';
+                document.getElementById('countdown-display').textContent = 'Session time!';
+                document.querySelector('.countdown-display').style.background = 'linear-gradient(135deg, #10b981, #059669)';
             }
             {% else %}
-            document.getElementById('countdown-display').textContent = 'Time will be confirmed soon';
+            document.getElementById('countdown-display').textContent = 'Time confirming...';
             {% endif %}
         }
 
-        // Initialize everything
-        document.addEventListener('DOMContentLoaded', function() {
-            createParticles();
-            updateCountdown();
-            setInterval(updateCountdown, 1000);
+        // Refresh meeting info functionality
+        function refreshMeetingInfo() {
+            const appointmentId = '{{ appointment._id }}';
             
-            // Success animation
-            setTimeout(() => {
-                document.querySelector('.success-animation').style.transform = 'scale(1.02)';
-                setTimeout(() => {
-                    document.querySelector('.success-animation').style.transform = 'scale(1)';
-                }, 300);
-            }, 1000);
+            const refreshBtn = event.target;
+            const originalHTML = refreshBtn.innerHTML;
+            refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Refreshing...';
+            refreshBtn.disabled = true;
+            
+            fetch(`/api/refresh-zoom-meeting`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    appointment_id: appointmentId
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showFlashMessage('Session info updated! Reloading...', 'success');
+                    setTimeout(() => window.location.reload(), 1500);
+                } else {
+                    showFlashMessage('No updates available. Session info unchanged.', 'info');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showFlashMessage('Could not refresh session info. Try again later.', 'error');
+            })
+            .finally(() => {
+                refreshBtn.innerHTML = originalHTML;
+                refreshBtn.disabled = false;
+            });
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            updateCountdown();
+            updateSessionControls();
+            
+            // Update both countdown and session controls every 30 seconds
+            setInterval(() => {
+                updateCountdown();
+                updateSessionControls();
+            }, 30000);
+            
+            console.log('Session confirmation page loaded with timed meeting access');
         });
     </script>
 </body>
